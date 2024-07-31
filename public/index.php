@@ -1,11 +1,19 @@
 <?php
-require '../vendor/autoload.php';
+// index.php
 
-use Dotenv\Dotenv;
-use App\Controller\HomeController;
+require_once 'database.php';
 
-$dotenv = Dotenv::createImmutable(__DIR__ . '/../');
-$dotenv->load();
+// Get the bank ID from the query parameter
+$bankId = $_GET['bankid'] ?? null;
 
-$controller = new HomeController();
-$controller->index();
+if (!$bankId) {
+    die("Bank ID is required");
+}
+
+try {
+    // Attempt to establish a connection
+    $pdo = Database::getConnection($bankId);
+    echo "Connection established successfully for bank ID: $bankId";
+} catch (Exception $e) {
+    echo "Error: " . $e->getMessage();
+}
