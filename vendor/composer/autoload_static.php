@@ -7,9 +7,9 @@ namespace Composer\Autoload;
 class ComposerStaticInite8eb34eaa347c17e51ffc9916307c11f
 {
     public static $files = array (
+        '7b11c4dc42b3b3023073cb14e519683c' => __DIR__ . '/..' . '/ralouphie/getallheaders/src/getallheaders.php',
         'a4a119a56e50fbb293281d9a48007e0e' => __DIR__ . '/..' . '/symfony/polyfill-php80/bootstrap.php',
         '253c157292f75eb38082b5acb06f3f01' => __DIR__ . '/..' . '/nikic/fast-route/src/functions.php',
-        '7b11c4dc42b3b3023073cb14e519683c' => __DIR__ . '/..' . '/ralouphie/getallheaders/src/getallheaders.php',
         '320cde22f66dd4f5d3fd621d3e88b98f' => __DIR__ . '/..' . '/symfony/polyfill-ctype/bootstrap.php',
         '0e6d7bf4a5811bfa5cf40c5ccd6fae6a' => __DIR__ . '/..' . '/symfony/polyfill-mbstring/bootstrap.php',
     );
@@ -23,6 +23,10 @@ class ComposerStaticInite8eb34eaa347c17e51ffc9916307c11f
             'Slim\\Psr7\\' => 10,
             'Slim\\' => 5,
         ),
+        'R' => 
+        array (
+            'Rakit\\Validation\\' => 17,
+        ),
         'P' => 
         array (
             'Psr\\Log\\' => 8,
@@ -31,8 +35,14 @@ class ComposerStaticInite8eb34eaa347c17e51ffc9916307c11f
             'Psr\\Container\\' => 14,
             'PhpOption\\' => 10,
         ),
+        'N' => 
+        array (
+            'Nyholm\\Psr7\\' => 12,
+            'Nyholm\\Psr7Server\\' => 18,
+        ),
         'G' => 
         array (
+            'GuzzleHttp\\Psr7\\' => 16,
             'GrahamCampbell\\ResultType\\' => 26,
         ),
         'F' => 
@@ -71,6 +81,10 @@ class ComposerStaticInite8eb34eaa347c17e51ffc9916307c11f
         array (
             0 => __DIR__ . '/..' . '/slim/slim/Slim',
         ),
+        'Rakit\\Validation\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/rakit/validation/src',
+        ),
         'Psr\\Log\\' => 
         array (
             0 => __DIR__ . '/..' . '/psr/log/src',
@@ -92,6 +106,18 @@ class ComposerStaticInite8eb34eaa347c17e51ffc9916307c11f
         'PhpOption\\' => 
         array (
             0 => __DIR__ . '/..' . '/phpoption/phpoption/src/PhpOption',
+        ),
+        'Nyholm\\Psr7\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/nyholm/psr7/src',
+        ),
+        'Nyholm\\Psr7Server\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/nyholm/psr7-server/src',
+        ),
+        'GuzzleHttp\\Psr7\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/guzzlehttp/psr7/src',
         ),
         'GrahamCampbell\\ResultType\\' => 
         array (

@@ -3,7 +3,7 @@
         'name' => 'stmaan/vino-server-3-new',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => 'c2851b93f6afc199004c19d1aa2f353121d47fe5',
+        'reference' => '931935965b7ebe8a08f3e126ba79227aff4c0dcc',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -28,6 +28,15 @@
             'aliases' => array(),
             'dev_requirement' => false,
         ),
+        'guzzlehttp/psr7' => array(
+            'pretty_version' => '2.6.2',
+            'version' => '2.6.2.0',
+            'reference' => '45b30f99ac27b5ca93cb4831afe16285f57b8221',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../guzzlehttp/psr7',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
         'nikic/fast-route' => array(
             'pretty_version' => 'v1.3.0',
             'version' => '1.3.0.0',
@@ -36,6 +45,30 @@
             'install_path' => __DIR__ . '/../nikic/fast-route',
             'aliases' => array(),
             'dev_requirement' => false,
+        ),
+        'nyholm/psr7' => array(
+            'pretty_version' => '1.8.1',
+            'version' => '1.8.1.0',
+            'reference' => 'aa5fc277a4f5508013d571341ade0c3886d4d00e',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../nyholm/psr7',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'nyholm/psr7-server' => array(
+            'pretty_version' => '1.1.0',
+            'version' => '1.1.0.0',
+            'reference' => '4335801d851f554ca43fa6e7d2602141538854dc',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../nyholm/psr7-server',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'php-http/message-factory-implementation' => array(
+            'dev_requirement' => false,
+            'provided' => array(
+                0 => '1.0',
+            ),
         ),
         'phpoption/phpoption' => array(
             'pretty_version' => '1.9.3',
@@ -68,6 +101,7 @@
             'dev_requirement' => false,
             'provided' => array(
                 0 => '^1.0',
+                1 => '1.0',
             ),
         ),
         'psr/http-message' => array(
@@ -83,6 +117,7 @@
             'dev_requirement' => false,
             'provided' => array(
                 0 => '^1.0 || ^2.0',
+                1 => '1.0',
             ),
         ),
         'psr/http-server-handler' => array(
@@ -109,6 +144,15 @@
             'reference' => 'fe5ea303b0887d5caefd3d431c3e61ad47037001',
             'type' => 'library',
             'install_path' => __DIR__ . '/../psr/log',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'rakit/validation' => array(
+            'pretty_version' => 'v1.4.0',
+            'version' => '1.4.0.0',
+            'reference' => 'ff003a35cdf5030a5f2482299f4c93f344a35b29',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../rakit/validation',
             'aliases' => array(),
             'dev_requirement' => false,
         ),
@@ -142,7 +186,7 @@
         'stmaan/vino-server-3-new' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => 'c2851b93f6afc199004c19d1aa2f353121d47fe5',
+            'reference' => '931935965b7ebe8a08f3e126ba79227aff4c0dcc',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

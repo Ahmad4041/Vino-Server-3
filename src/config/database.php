@@ -144,13 +144,22 @@ class Database
         $dsn = self::buildDsn($config);
 
         try {
+            // Attempt to establish a connection
             $pdo = new PDO($dsn, $config['username'], $config['password']);
             $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+            // Check if the connection is successful
+            if (!$pdo) {
+                throw new Exception("Failed to connect to the database");
+            }
+
             return $pdo;
         } catch (PDOException $e) {
+            // PDOException handles connection issues
             throw new Exception("Connection failed: " . $e->getMessage());
         }
     }
+
 
     private static function buildDsn($config)
     {
