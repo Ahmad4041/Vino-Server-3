@@ -3,7 +3,7 @@
         'name' => 'stmaan/vino-server-3-new',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '931935965b7ebe8a08f3e126ba79227aff4c0dcc',
+        'reference' => 'b8ec6aecccb18ef0acef8d695028d2976e3b3a32',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -29,9 +29,9 @@
             'dev_requirement' => false,
         ),
         'guzzlehttp/psr7' => array(
-            'pretty_version' => '2.6.2',
-            'version' => '2.6.2.0',
-            'reference' => '45b30f99ac27b5ca93cb4831afe16285f57b8221',
+            'pretty_version' => '2.7.0',
+            'version' => '2.7.0.0',
+            'reference' => 'a70f5c95fb43bc83f07c9c948baa0dc1829bf201',
             'type' => 'library',
             'install_path' => __DIR__ . '/../guzzlehttp/psr7',
             'aliases' => array(),
@@ -100,8 +100,8 @@
         'psr/http-factory-implementation' => array(
             'dev_requirement' => false,
             'provided' => array(
-                0 => '^1.0',
-                1 => '1.0',
+                0 => '1.0',
+                1 => '^1.0',
             ),
         ),
         'psr/http-message' => array(
@@ -116,8 +116,8 @@
         'psr/http-message-implementation' => array(
             'dev_requirement' => false,
             'provided' => array(
-                0 => '^1.0 || ^2.0',
-                1 => '1.0',
+                0 => '1.0',
+                1 => '^1.0 || ^2.0',
             ),
         ),
         'psr/http-server-handler' => array(
@@ -186,7 +186,7 @@
         'stmaan/vino-server-3-new' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '931935965b7ebe8a08f3e126ba79227aff4c0dcc',
+            'reference' => 'b8ec6aecccb18ef0acef8d695028d2976e3b3a32',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
