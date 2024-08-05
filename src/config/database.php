@@ -153,6 +153,10 @@ class Database
             $pdo = new PDO($dsn, $config['username'], $config['password']);
             $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
+            if ($config['driver'] === 'sqlsrv') {
+                $pdo->setAttribute(PDO::ATTR_STRINGIFY_FETCHES, false);
+            }
+
             // Check if the connection is successful
             if (!$pdo) {
                 throw new Exception("Failed to connect to the database");

@@ -4,8 +4,8 @@
 require_once '../src/config/database.php';
 require_once '../src/helpers/returnResponse.php';
 require_once '../src/helpers/errorCodes.php';
-// require_once '../src/controllers/AppApiController.php';
 
+require '../src/controllers/AppApiController.php';
 require '../vendor/autoload.php';
 // require __DIR__ . '/vendor/autoload.php';
 
@@ -21,6 +21,8 @@ use Rakit\Validation\Validator;
 
 
 $app = AppFactory::create();
+
+$appController = new AppApiController();
 
 ?>
 
@@ -100,6 +102,25 @@ $app->get('/{bankId}/validate-connection', function (Request $request, Response 
     }
 });
 
+
+$app->post('/{bankId}/auth/register-user-customer-new', function (Request $request, Response $response, array $args) use ($appController) {
+    $bankId = (int)$args['bankId'];
+    $rawBody = $request->getBody()->__toString();
+    // var_dump($rawBody);
+    
+    // Decode the raw body content
+    $data = json_decode($rawBody, true);
+    // var_dump($data);
+
+    // Register the new customer
+    $result = $appController->registerNewCustomer($bankId, $data);
+
+    if ($result['code'] == 200) {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    } else {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    }
+});
 
 // // Route to fetch data from external API
 // $app->get('/fetch-data', function (Request $request, Response $response, array $args) {

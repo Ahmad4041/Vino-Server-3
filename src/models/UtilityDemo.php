@@ -10,7 +10,8 @@ class UtilityDemo
         if (!$localConnection) {
             if ($bankId !== null) {
                 $bankDbConnection = $bankId;
-                return $bankDbConnection;
+                // return $bankDbConnection;
+                return Database::getConnection($bankDbConnection);
             }
             return self::$bankDb;
         } else {
