@@ -1,1 +1,16 @@
+# Ignore configuration files
+config/*.php
+
+# Ignore log files
+logs/
+*.log
+
+# Ignore temporary files
+temp/
+*.tmp
+
+# Ignore vendor folder (if using Composer)
 vendor/
+
+# Ignore environment file
+.env

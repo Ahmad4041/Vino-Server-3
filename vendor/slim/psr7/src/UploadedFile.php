@@ -111,7 +111,7 @@ class UploadedFile implements UploadedFileInterface
      * {@inheritdoc}
      * @return StreamInterface
      */
-    public function getStream(): StreamInterface
+    public function getStream()
     {
         if ($this->moved) {
             throw new RuntimeException(sprintf('Uploaded file %s has already been moved', $this->name));

@@ -3,7 +3,7 @@
         'name' => 'stmaan/vino-server-3-new',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => 'b8ec6aecccb18ef0acef8d695028d2976e3b3a32',
+        'reference' => '9d1b66e17cefd74981c6e45fbe677765ce705f6e',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -101,13 +101,12 @@
             'dev_requirement' => false,
             'provided' => array(
                 0 => '1.0',
-                1 => '^1.0',
             ),
         ),
         'psr/http-message' => array(
-            'pretty_version' => '2.0',
-            'version' => '2.0.0.0',
-            'reference' => '402d35bcb92c70c026d1a6a9883f06b2ead23d71',
+            'pretty_version' => '1.1',
+            'version' => '1.1.0.0',
+            'reference' => 'cb6ce4845ce34a8ad9e68117c10ee90a29919eba',
             'type' => 'library',
             'install_path' => __DIR__ . '/../psr/http-message',
             'aliases' => array(),
@@ -117,7 +116,6 @@
             'dev_requirement' => false,
             'provided' => array(
                 0 => '1.0',
-                1 => '^1.0 || ^2.0',
             ),
         ),
         'psr/http-server-handler' => array(
@@ -139,9 +137,9 @@
             'dev_requirement' => false,
         ),
         'psr/log' => array(
-            'pretty_version' => '3.0.0',
-            'version' => '3.0.0.0',
-            'reference' => 'fe5ea303b0887d5caefd3d431c3e61ad47037001',
+            'pretty_version' => '1.1.4',
+            'version' => '1.1.4.0',
+            'reference' => 'd49695b909c3b7628b6289db5479a1c204601f11',
             'type' => 'library',
             'install_path' => __DIR__ . '/../psr/log',
             'aliases' => array(),
@@ -166,9 +164,9 @@
             'dev_requirement' => false,
         ),
         'slim/psr7' => array(
-            'pretty_version' => '1.7.0',
-            'version' => '1.7.0.0',
-            'reference' => '753e9646def5ff4db1a06e5cf4ef539bfd30f467',
+            'pretty_version' => '1.6.1',
+            'version' => '1.6.1.0',
+            'reference' => '72d2b2bac94ab4575d369f605dbfafbe168d3163',
             'type' => 'library',
             'install_path' => __DIR__ . '/../slim/psr7',
             'aliases' => array(),
@@ -186,7 +184,7 @@
         'stmaan/vino-server-3-new' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => 'b8ec6aecccb18ef0acef8d695028d2976e3b3a32',
+            'reference' => '9d1b66e17cefd74981c6e45fbe677765ce705f6e',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
