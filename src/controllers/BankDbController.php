@@ -165,7 +165,7 @@ class BankDbController
             }
 
             // Check mobile registration eligibility
-            if (!$this->checkMobileRegistration($requestData['accountID'], $requestData['internetID'])) {
+            if ($this->checkMobileRegistration($requestData['accountID'], $requestData['internetID'])) {
                 return [
                     'code' => ErrorCodes::$FAIL_USER_MOBILE_REGISTRATION_ELIGIBILITY[0],
                     'message' => ErrorCodes::$FAIL_USER_MOBILE_REGISTRATION_ELIGIBILITY[1],
@@ -189,7 +189,7 @@ class BankDbController
                 ];
             } else {
                 return [
-                    'code' => 404,
+                    'code' => 201,
                     'message' => 'Data Insertion Fail',
                 ];
             }
