@@ -1,18 +1,14 @@
 <?php
 
 // require __DIR__ . '/../models/UtilityDemo.php';
+require 'LocalDbController.php';
+// require 'BankDbController.php';
 use Firebase\JWT\JWT;
-use Firebase\JWT\Key;
+// use Firebase\JWT\Key;
 use Rakit\Validation\Validator;
 
 class AuthController
 {
-    private $dbConnection;
-
-    public function __construct($dbConnection)
-    {
-        $this->dbConnection = $dbConnection;
-    }
 
     private function checkUserRegisterUpdatedLogic($data, $bankId)
     {
@@ -36,6 +32,11 @@ class AuthController
         ];
 
         return JWT::encode($payload, $key, 'HS256');
+    }
+
+    private function generateRequestID()
+    {
+        return bin2hex(random_bytes(12));  // Generates a random request ID
     }
 
 
@@ -94,7 +95,7 @@ class AuthController
                     'AType' => $loginCheck['data']['AType'],
                     'PIN' => $loginCheck['data']['PIN']
                 ];
-                $requestId = generateRequestID();
+                $requestId = $this->generateRequestID();
 
                 // $mobileLogData = [
                 //     'ClientID' => $bankId,

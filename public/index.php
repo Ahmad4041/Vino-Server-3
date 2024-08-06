@@ -6,6 +6,8 @@ require_once '../src/helpers/returnResponse.php';
 require_once '../src/helpers/errorCodes.php';
 
 require '../src/controllers/AppApiController.php';
+require '../src/controllers/AuthController.php';
+
 require '../vendor/autoload.php';
 // require __DIR__ . '/vendor/autoload.php';
 
@@ -23,6 +25,7 @@ use Rakit\Validation\Validator;
 $app = AppFactory::create();
 
 $appController = new AppApiController();
+$authController = new AuthController();
 
 ?>
 
@@ -146,8 +149,8 @@ $app->post('/{bankId}/auth/generate-token', function (Request $request, Response
     $rawBody = $request->getBody()->__toString();
     $data = json_decode($rawBody, true);
 
-
-    $result = $appController->mobileLoginNewLogic($bankId, $data);
+    $authController = new AuthController();
+    $result = $authController->mobileLoginNewLogic($bankId, $data);
 
     if ($result['code'] == 200) {
         return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
