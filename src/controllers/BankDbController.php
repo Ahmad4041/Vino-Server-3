@@ -61,6 +61,12 @@ class BankDbController
         $stmt->execute([$accountID, $internetID]);
         return $stmt->fetch();
     }
+    private function checkUserAuthCreds($username, $password)
+    {
+        $stmt = $this->dbConnection->prepare("SELECT * FROM tblMobileUsers WHERE Username = ? AND Password = ?");
+        $stmt->execute([$username, $password]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
 
     public function registerNewCustomer($request)
     {
@@ -197,6 +203,26 @@ class BankDbController
             return [
                 'code' => 500,
                 'message' => $e->getMessage(),
+            ];
+        }
+    }
+
+    public function authUser($request)
+    {
+        $username = $request['username'];
+        $password = $request['password'];
+
+        $user = $this->checkUserAuthCreds($username, $password);
+        if ($user) {
+            return [
+                'code' => 200,
+                'message' => 'Login Successful',
+                'data' => $user,
+            ];
+        } else {
+            return [
+                'code' => 403,
+                'message' => 'Invalid Username or Password',
             ];
         }
     }

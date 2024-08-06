@@ -139,7 +139,22 @@ $app->post('/{bankId}/auth/register-user-customer-exist', function (Request $req
     }
 });
 
+// generate user app token
 
+$app->post('/{bankId}/auth/generate-token', function (Request $request, Response $response, array $args) use ($appController) {
+    $bankId = (int)$args['bankId'];
+    $rawBody = $request->getBody()->__toString();
+    $data = json_decode($rawBody, true);
+
+
+    $result = $appController->mobileLoginNewLogic($bankId, $data);
+
+    if ($result['code'] == 200) {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    } else {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    }
+});
 
 
 // // Route to fetch data from external API

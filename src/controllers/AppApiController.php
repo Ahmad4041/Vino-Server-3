@@ -155,4 +155,63 @@ class AppApiController
             ];
         }
     }
+
+
+    public function mobileLoginNewLogic($bankid, $request)
+    {
+        try {
+            $data = [
+                'username' => $request['username'] ?? null,
+                'accountID' => $request['accountID'] ?? null,
+                'internetID' => $request['internetID'] ?? null,
+                'password' => $request['password'] ?? null,
+            ];
+
+            $rules = [
+                'username' => 'required|min:4',
+                'password' => 'required|min:5',
+                'accountID' => 'required',
+                'internetID' => 'required',
+            ];
+
+            $validator = new Validator();
+            $validation = $validator->make($data, $rules);
+
+            $validation->validate();
+
+            if ($validation->fails()) {
+                return [
+                    'message' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[1],
+                    'data' => $validation->errors()->toArray(),
+                    'dcode' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[0],
+                    'code' => 422,
+                ];
+            }
+            $bankDbConnection = new BankDbController(Database::getConnection($bankid));
+            $regExistCustomer = $bankDbConnection->registerExistCustomerBank($data);
+
+            if ($regExistCustomer['code'] == 200) {
+                return [
+                    'dcode' => ErrorCodes::$SUCCESS_USER_CREATED[0],
+                    'code' => 200,
+                    'message' => ErrorCodes::$SUCCESS_USER_CREATED[1],
+                    'data' => null
+                ];
+            } else {
+                return [
+                    'dcode' => $regExistCustomer['code'],
+                    'code' => 203,
+                    'message' => $regExistCustomer['message'],
+                    'data' => null
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'dcode' => 500,
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null
+            ];
+        }
+    }
 }
