@@ -33,26 +33,26 @@ $app->get('/{bankid}/hello', function (Request $request, Response $response, arr
     $queryParams = $request->getQueryParams();
     $data = array_merge(['bankid' => $bankid], $queryParams);
     $validator = new Validator();
-        $validation = $validator->make($data, [
-            'bankid' => 'required',
-            'testcode' => 'required|numeric'
-        ]);
-    
-        // Perform validation
-        $validation->validate();
-    
-        // Check if validation fails
-        if ($validation->fails()) {
-            $errors = $validation->errors()->all();
-            return sendCustomResponse("Validation Error", $errors, 400, 400);
-        }
+    $validation = $validator->make($data, [
+        'bankid' => 'required',
+        'testcode' => 'required|numeric'
+    ]);
 
-        $responseData = [
-                    'bankId' => $bankid,
-                    'testcode' => $queryParams['testcode'] ?? null
-                ];
-            
-    
+    // Perform validation
+    $validation->validate();
+
+    // Check if validation fails
+    if ($validation->fails()) {
+        $errors = $validation->errors()->all();
+        return sendCustomResponse("Validation Error", $errors, 400, 400);
+    }
+
+    $responseData = [
+        'bankId' => $bankid,
+        'testcode' => $queryParams['testcode'] ?? null
+    ];
+
+
     return sendCustomResponse('Hello world', $responseData, 1002, 200);
 });
 
@@ -102,17 +102,16 @@ $app->get('/{bankId}/validate-connection', function (Request $request, Response 
     }
 });
 
+// ******************************************** Auth endpoimts ************************************************
 
+
+// register new customer
 $app->post('/{bankId}/auth/register-user-customer-new', function (Request $request, Response $response, array $args) use ($appController) {
     $bankId = (int)$args['bankId'];
     $rawBody = $request->getBody()->__toString();
-    // var_dump($rawBody);
-    
-    // Decode the raw body content
     $data = json_decode($rawBody, true);
-    // var_dump($data);
 
-    // Register the new customer
+
     $result = $appController->registerNewCustomer($bankId, $data);
 
     if ($result['code'] == 200) {
@@ -121,6 +120,27 @@ $app->post('/{bankId}/auth/register-user-customer-new', function (Request $reque
         return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
     }
 });
+
+
+
+// register existing customer
+$app->post('/{bankId}/auth/register-user-customer-exist', function (Request $request, Response $response, array $args) use ($appController) {
+    $bankId = (int)$args['bankId'];
+    $rawBody = $request->getBody()->__toString();
+    $data = json_decode($rawBody, true);
+
+
+    $result = $appController->registerExistCustomer($bankId, $data);
+
+    if ($result['code'] == 200) {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    } else {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    }
+});
+
+
+
 
 // // Route to fetch data from external API
 // $app->get('/fetch-data', function (Request $request, Response $response, array $args) {

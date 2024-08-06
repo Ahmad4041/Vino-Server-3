@@ -3,7 +3,6 @@
 class BankDbController
 {
     private $dbConnection;
-    private $dbname;
 
     public function __construct($dbConnection)
     {
@@ -47,6 +46,20 @@ class BankDbController
         $sql = "INSERT INTO tblMobileUsers ($columns) VALUES ($placeholders)";
         $stmt = $this->dbConnection->prepare($sql);
         return $stmt->execute(array_values($data));
+    }
+
+    private function checkCustomerExists($accountID, $internetID)
+    {
+        $stmt = $this->dbConnection->prepare("SELECT * FROM tblMobileUsers WHERE AccountID = ? AND InternetID = ?");
+        $stmt->execute([$accountID, $internetID]);
+        return $stmt->fetch();
+    }
+
+    private function checkMobileRegistration($accountID, $internetID)
+    {
+        $stmt = $this->dbConnection->prepare("SELECT * FROM tblMobileReg WHERE AccountID = ? AND InternetID = ?");
+        $stmt->execute([$accountID, $internetID]);
+        return $stmt->fetch();
     }
 
     public function registerNewCustomer($request)
@@ -129,5 +142,62 @@ class BankDbController
             'code' => 402,
             'message' => 'Data insertion failed for Saving Account',
         ];
+    }
+
+
+    public function registerExistCustomerBank($requestData)
+    {
+        try {
+            // Check if customer already exists
+            if ($this->checkCustomerExists($requestData['accountID'], $requestData['internetID'])) {
+                return [
+                    'code' => ErrorCodes::$FAIL_CUSTOMER_EXIST[0],
+                    'message' => ErrorCodes::$FAIL_CUSTOMER_EXIST[1],
+                ];
+            }
+
+            // Check if user already exists
+            if ($this->checkUserExists($requestData['username'])) {
+                return [
+                    'code' => ErrorCodes::$FAIL_USER_ALREADY_EXIST[0],
+                    'message' => ErrorCodes::$FAIL_USER_ALREADY_EXIST[1],
+                ];
+            }
+
+            // Check mobile registration eligibility
+            if (!$this->checkMobileRegistration($requestData['accountID'], $requestData['internetID'])) {
+                return [
+                    'code' => ErrorCodes::$FAIL_USER_MOBILE_REGISTRATION_ELIGIBILITY[0],
+                    'message' => ErrorCodes::$FAIL_USER_MOBILE_REGISTRATION_ELIGIBILITY[1],
+                ];
+            }
+
+            $newUser = [
+                'Username' => $requestData['username'],
+                'Password' => $requestData['password'],
+                'AccountID' => $requestData['accountID'],
+                'InternetID' => $requestData['internetID'],
+                'Ddate' => date('Y-m-d H:i:s'),
+                'Active' => 1,
+                'AType' => 'Default',
+            ];
+
+            if ($this->insertIntoMobileUser($newUser)) {
+                return [
+                    'code' => 200,
+                    'message' => 'Data Inserted',
+                ];
+            } else {
+                return [
+                    'code' => 404,
+                    'message' => 'Data Insertion Fail',
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'code' => 500,
+                'message' => $e->getMessage(),
+            ];
+        }
     }
 }
