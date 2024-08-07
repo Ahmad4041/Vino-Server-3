@@ -22,11 +22,11 @@ class AuthController
 
     private function generateToken($username, $bankId)
     {
-        $key = 'your-secret-key';  // Replace with your actual secret key
+        $key = '00112233445566778899';
         $payload = [
-            // 'iss' => 'your-domain.com',
+            'iss' => 'vino.viralcomputers.com:9000',
             'iat' => time(),
-            'exp' => time() + (60 * 60), // Token expiration time
+            'exp' => time() + (60 * 60),
             'username' => $username,
             'bankId' => $bankId
         ];
@@ -38,7 +38,6 @@ class AuthController
     {
         return bin2hex(random_bytes(12));  // Generates a random request ID
     }
-
 
 
     public function mobileLoginNewLogic($bankId, $request)

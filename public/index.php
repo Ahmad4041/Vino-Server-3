@@ -105,7 +105,7 @@ $app->get('/{bankId}/validate-connection', function (Request $request, Response 
     }
 });
 
-// ******************************************** Auth endpoimts ************************************************
+// ******************************************** Auth endpoimts START ************************************************
 
 
 // register new customer
@@ -159,6 +159,46 @@ $app->post('/{bankId}/auth/generate-token', function (Request $request, Response
     }
 });
 
+// ******************************************** Auth endpoimts END ************************************************
+
+// ********************************************************************************************
+// **************************************************************************************
+// ********************************************************************************
+// ******************************************** User endpoimts START ************************************************
+
+
+$app->post('/{bankId}/app/user/current', function (Request $request, Response $response, array $args) use ($appController) {
+
+    session_start();
+
+    $jwtToken = getBearerToken();
+    $user = authenticateUser($jwtToken);
+
+    if (!$user) {
+        sendCustomResponse('Unauthorized', null, 401, 401);
+    }
+
+    $result = $appController->currentUser((int)$args['bankId'], $user);
+
+    if ($result['code'] == 200) {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    } else {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // // Route to fetch data from external API
 // $app->get('/fetch-data', function (Request $request, Response $response, array $args) {
@@ -176,166 +216,10 @@ $app->post('/{bankId}/auth/generate-token', function (Request $request, Response
 // });
 
 
-// $app->get('/{bankId}/hello', function (Request $request, Response $response, array $args) {
-//     $bankId = $args['bankId'];
-//     $queryParams = $request->getQueryParams();
-
-//     // Combine path and query parameters for validation
-//     $data = array_merge(['bankId' => $bankId], $queryParams);
-
-//     $validator = new Validator();
-//     $validation = $validator->make($data, [
-//         'bankId' => 'required',
-//         'name' => 'required|alpha_spaces',
-//         'number' => 'required|numeric'
-//     ]);
-
-//     // Perform validation
-//     $validation->validate();
-
-//     // Check if validation fails
-//     if ($validation->fails()) {
-//         $errors = $validation->errors()->all();
-//         return sendCustomResponse("Validation Error", $errors, 400, 400);
-//     }
-
-//     // If validation passes, proceed with the main logic
-//     $responseData = [
-//         'bankId' => $bankId,
-//         'name' => $queryParams['name'] ?? null,
-//         'number' => $queryParams['number'] ?? null
-//     ];
-
-//     return sendCustomResponse('Hello World', $responseData, 1002, 200);
-// });
-
-
-// $app->post('/{bankId}/auth/register-user-customer-new', function (Request $request, Response $response, array $args) {
-//     public function registerNewCustomer($bankid, $request)
-//     {
-//         try {
-//             $data = [
-//                 'username' => $request['username'] ?? null,
-//                 'password' => $request['password'] ?? null,
-//                 'surname' => $request['surname'] ?? null,
-//                 'otherName' => $request['otherName'] ?? null,
-//                 'gender' => $request['gender'] ?? null,
-//                 'dob' => $request['dob'] ?? null,
-//                 'nationality' => $request['nationality'] ?? null,
-//                 'residentialAddress' => $request['residentialAddress'] ?? null,
-//                 'contact' => $request['contact'] ?? null,
-//                 'email' => $request['email'] ?? null,
-//                 'bvn' => $request['bvn'] ?? null,
-//                 'nin' => $request['nin'] ?? null,
-//                 'occupation' => $request['occupation'] ?? null,
-//                 'accountType' => $request['accountType'] ?? null,
-//                 'userFileId' => $request['userFileId'] ?? null,
-//                 'signatureFileId' => $request['signatureFileId'] ?? null,
-//                 'nicFileId' => $request['nicFileId'] ?? null,
-//             ];
-
-//             $rules = [
-//                 'username' => 'required|string|min:4',
-//                 'password' => 'required|string|min:5',
-//                 'surname' => 'required|string',
-//                 'otherName' => 'string|nullable',
-//                 'gender' => 'required|string',
-//                 'dob' => ['required', 'date', 'before:18 years ago'],
-//                 'nationality' => 'required|string',
-//                 'residentialAddress' => 'required|string',
-//                 'contact' => 'required|string',
-//                 'email' => 'required|email',
-//                 'bvn' => 'string',
-//                 'nin' => 'required|string',
-//                 'occupation' => 'string',
-//                 'accountType' => 'required|string',
-//                 'userFileId' => 'string|nullable',
-//                 'signatureFileId' => 'string|nullable',
-//                 'nicFileId' => 'string|nullable',
-//             ];
-
-//             $validator = new Validator();
-//             $validation = $validator->make($data, $rules);
-
-//             if (!$validation->validate()) {
-//                 $message = ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[1];
-//                 $data = $validation->errors();
-//                 $dcode = ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[0];
-//                 return $this->sendCustomResponse($message, $data, $dcode, 422);
-//             }
-
-//             $bankDbConnection = new BankDbController(UtilityDemo::getDatabaseConnection($bankid));
-//             $newCustomer = $bankDbConnection->registerNewCustomer($request);
-
-//             if ($newCustomer['code'] == 200) {
-//                 $message = ErrorCodes::$SUCCESS_USER_CREATED[1];
-//                 $data = null;
-//                 $dcode = ErrorCodes::$SUCCESS_USER_CREATED[0];
-//                 $code = 200;
-//                 return $this->sendCustomResponse($message, $data, $dcode, $code);
-//             } else {
-//                 $errorRes = $newCustomer;
-//                 $message = $errorRes['message'];
-//                 $data = $errorRes['message'];
-//                 $dcode = $errorRes['code'];
-//                 $code = 404;
-//                 return $this->sendCustomResponse($message, $data, $dcode, $code);
-//             }
-//         } catch (Exception $e) {
-//             $r = $this->handleCatch($e);
-//             return $this->sendError($r, $r['code']);
-//         }
-// });
-
-
-
-// // Define a route
-// $app->get('/hello', function (Request $request, Response $response, array $args) {
-
-//     return sendCustomResponse("Hello World", null, 1002, 200);
-// });
 
 
 
 
-
-// $bankId = $_GET['bankid'] ?? null;
-
-// $validator = new Validator();
-// $validation = $validator->make($_GET, [
-//     'bankid' => 'required', // Define validation rules for bankid
-// ]);
-
-// // Perform validation
-// $validation->validate();
-
-// // Check if validation fails
-// if ($validation->fails()) {
-//     $errors = $validation->errors()->all();
-//     sendCustomResponse("Error", $errors, 400, 400);
-// }
-// try {
-//     // Attempt to establish a connection
-//     clearstatcache();
-//     $pdo = Database::getConnection($bankId);
-
-//     // If connection is successful
-//     sendCustomResponse(
-//         ErrorCodes::$SUCCESS_FETCH[1],
-//         "Connection established successfully for bank ID: $bankId",
-//         ErrorCodes::$SUCCESS_FETCH[0],
-//         200
-//     );
-// } catch (Exception $e) {
-//     // If there's an error
-//     sendCustomResponse(
-//         ErrorCodes::$FAIL_MESSAGES_FETCH[1],
-//         $e->getMessage(),
-//         ErrorCodes::$FAIL_MESSAGES_FETCH[0],
-//         500
-//     );
-// }
-// $app->addErrorMiddleware(true, true, true);
 
 $app->run();
 ?>

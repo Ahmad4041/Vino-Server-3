@@ -98,8 +98,6 @@ class AppApiController
 
     public function registerExistCustomer($bankid, $request)
     {
-
-
         try {
             $data = [
                 'username' => $request['username'] ?? null,
@@ -157,53 +155,32 @@ class AppApiController
     }
 
 
-    public function mobileLoginNewLogic($bankid, $request)
+    public function currentUser($bankid, $user)
     {
         try {
-            $data = [
-                'username' => $request['username'] ?? null,
-                'accountID' => $request['accountID'] ?? null,
-                'internetID' => $request['internetID'] ?? null,
-                'password' => $request['password'] ?? null,
-            ];
 
-            $rules = [
-                'username' => 'required|min:4',
-                'password' => 'required|min:5',
-                'accountID' => 'required',
-                'internetID' => 'required',
-            ];
-
-            $validator = new Validator();
-            $validation = $validator->make($data, $rules);
-
-            $validation->validate();
-
-            if ($validation->fails()) {
-                return [
-                    'message' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[1],
-                    'data' => $validation->errors()->toArray(),
-                    'dcode' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[0],
-                    'code' => 422,
-                ];
-            }
             $bankDbConnection = new BankDbController(Database::getConnection($bankid));
-            $regExistCustomer = $bankDbConnection->registerExistCustomerBank($data);
+            $customerInfo = $bankDbConnection->accountEnquiry($user['accountId']);
+            $accounts = $bankDbConnection->getAllcustomerAccounts($user['username'], ['AccountID', 'AType', 'AccountType', 'BalC1', 'LastD', 'LastW', 'BalC2', 'BalL1']);
+            $statistics = $bankDbConnection->statement_summary($accounts['accounts']);
+            $loanData = $bankDbConnection->loanDataDetails($accounts['accounts']);
 
-            if ($regExistCustomer['code'] == 200) {
-                return [
-                    'dcode' => ErrorCodes::$SUCCESS_USER_CREATED[0],
-                    'code' => 200,
-                    'message' => ErrorCodes::$SUCCESS_USER_CREATED[1],
-                    'data' => null
+            if ($customerInfo['code'] == 200 && $accounts['code'] == 200 && $statistics['code'] == 200 && $loanData['code'] == 200) {
+                $response = [
+                    'id' => (int) $customerInfo['data']['id'],
+                    'pinCode' => $customerInfo['data']['pinCode'],
+                    'customer' => $customerInfo['data']['customer'],
+                    'accounts' => $accounts['accountdata'],
+                    'statistics' => [
+                        'lastTransactionForAllAccount' => $statistics['data']
+                    ],
+                    'loans' => $loanData['data'],
+                    'notification' => 0,
                 ];
+
+                sendCustomResponse(ErrorCodes::$SUCCESS_USER_FOUND[1], $response, ErrorCodes::$SUCCESS_USER_FOUND[0], 200);
             } else {
-                return [
-                    'dcode' => $regExistCustomer['code'],
-                    'code' => 203,
-                    'message' => $regExistCustomer['message'],
-                    'data' => null
-                ];
+                sendCustomResponse('Error in account enquiry or accounts retrieval', null, 500, 500);
             }
         } catch (Exception $e) {
             return [
