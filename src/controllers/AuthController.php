@@ -20,15 +20,16 @@ class AuthController
         $LocalDbConnection->checkAppUserExistUpdatedLogic($username, $accountId, $bankId, $password);
     }
 
-    private function generateToken($username, $bankId)
+    private function generateToken($username, $bankId, $accountId)
     {
         $key = '00112233445566778899';
         $payload = [
             'iss' => 'vino.viralcomputers.com:9000',
             'iat' => time(),
-            'exp' => time() + (60 * 60),
+            'exp' => time() + (5 * 60),
             'username' => $username,
-            'bankId' => $bankId
+            'bankId' => $bankId,
+            'accountId' => $accountId,
         ];
 
         return JWT::encode($payload, $key, 'HS256');
@@ -81,7 +82,7 @@ class AuthController
                 $combinedString = $loginCheck['data']['Username'] . ':' . $credentials['bankId'];
                 $credentials['password'] = $combinedString;
 
-                $token = $this->generateToken($loginCheck['data']['Username'], $bankId);
+                $token = $this->generateToken($loginCheck['data']['Username'], $bankId, $loginCheck['data']['AccountID']);
                 if (!$token) {
                     return sendCustomResponse('Login failed', null, 401, 404);
                 }
