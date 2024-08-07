@@ -83,7 +83,7 @@ class BankDbController
             'Nationality', 'telephone as telephone1', 'telephone2', 'dob', 'sex as gender', 'email', 'bvn', 'customername as customerName', 'customername as title',
             'idNo', 'nin', 'AcctOfficer as accountOfficer', 'Passport as passportImageUrl', 'Signature as signatureImageUrl', 'Signature2 as ninImageUrl', 'Signature2 as userImageUrl'
         ];
-        $sql = "SELECT " . implode(',', $fields) . " FROM tblcustomer WHERE Accountid = :accountno";
+        $sql = "SELECT " . implode(',', $fields) . " FROM tblcustomers WHERE Accountid = :accountno";
         $stmt = $this->dbConnection->prepare($sql);
         $stmt->bindParam(':accountno', $accountno, PDO::PARAM_STR);
         $stmt->execute();
@@ -94,7 +94,7 @@ class BankDbController
     private function getAccountByUsername($userName, $fields)
     {
         $fieldList = implode(', ', $fields);
-        $sql = "SELECT $fieldList FROM tblmobileuser WHERE Username = :username ORDER BY AType ASC";
+        $sql = "SELECT $fieldList FROM tblMobileUsers WHERE Username = :username ORDER BY AType ASC";
         $stmt = $this->dbConnection->prepare($sql);
         $stmt->bindParam(':username', $userName, PDO::PARAM_STR);
         $stmt->execute();
@@ -110,7 +110,7 @@ class BankDbController
         ];
 
         $fieldList = implode(', ', $fields);
-        $sql = "SELECT $fieldList FROM tblcustomer WHERE Accountid = :accountid";
+        $sql = "SELECT $fieldList FROM tblcustomers WHERE Accountid = :accountid";
         $stmt = $this->dbConnection->prepare($sql);
         $stmt->bindParam(':accountid', $accountId, PDO::PARAM_STR);
         $stmt->execute();
@@ -142,7 +142,7 @@ class BankDbController
         $placeholders = implode(',', array_fill(0, count($accountids), '?'));
         $sql = "SELECT 
                     Loan, Lbalance, DeductDate, Deduct, Period, RefNo 
-                FROM LoanDetail 
+                FROM tblLoanStandingNEW 
                 WHERE AccountID IN ($placeholders)";
 
         $stmt = $this->dbConnection->prepare($sql);
@@ -173,17 +173,16 @@ class BankDbController
     {
         $accountids = is_array($accountids) ? $accountids : [$accountids];
         $placeholders = implode(',', array_fill(0, count($accountids), '?'));
-        $sql = "SELECT 
-                    MONTH(trnDate) as month, 
-                    YEAR(trnDate) as year, 
-                    SUM(debit) as withdraw, 
-                    SUM(credit) as deposit 
-                FROM tblcustomerledger 
-                WHERE AcctNo IN ($placeholders) 
-                GROUP BY YEAR(trnDate), MONTH(trnDate) 
-                ORDER BY year DESC, month DESC 
-                LIMIT 6";
 
+        $sql = "SELECT TOP 6
+                MONTH(trnDate) AS month, 
+                YEAR(trnDate) AS year, 
+                SUM(debit) AS withdraw, 
+                SUM(credit) AS deposit 
+            FROM tblcustomerledger 
+            WHERE AcctNo IN ($placeholders) 
+            GROUP BY YEAR(trnDate), MONTH(trnDate) 
+            ORDER BY YEAR(trnDate) DESC, MONTH(trnDate) DESC";
         $stmt = $this->dbConnection->prepare($sql);
         $stmt->execute($accountids);
 

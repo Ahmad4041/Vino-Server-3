@@ -4,6 +4,7 @@
 require_once '../src/config/database.php';
 require_once '../src/helpers/returnResponse.php';
 require_once '../src/helpers/errorCodes.php';
+require_once '../src/helpers/auth.php';
 
 require '../src/controllers/AppApiController.php';
 require '../src/controllers/AuthController.php';
@@ -167,7 +168,7 @@ $app->post('/{bankId}/auth/generate-token', function (Request $request, Response
 // ******************************************** User endpoimts START ************************************************
 
 
-$app->post('/{bankId}/app/user/current', function (Request $request, Response $response, array $args) use ($appController) {
+$app->get('/{bankId}/app/user/current', function (Request $request, Response $response, array $args) use ($appController) {
 
     session_start();
 
