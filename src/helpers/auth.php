@@ -1,13 +1,14 @@
 <?php
 
 use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
 
 function getAuthorizationHeader()
 {
     $headers = null;
     if (isset($_SERVER['Authorization'])) {
         $headers = trim($_SERVER["Authorization"]);
-    } elseif (isset($_SERVER['HTTP_AUTHORIZATION'])) { // Nginx or fast CGI
+    } elseif (isset($_SERVER['HTTP_AUTHORIZATION'])) {
         $headers = trim($_SERVER["HTTP_AUTHORIZATION"]);
     } elseif (function_exists('apache_request_headers')) {
         $requestHeaders = apache_request_headers();
@@ -32,9 +33,9 @@ function getBearerToken()
 
 function authenticateUser($jwtToken)
 {
-    $secretKey = '00112233445566778899'; // Ensure this matches the key used in generateToken
+    $secretKey = '00112233445566778899';
     try {
-        $decoded = JWT::decode($jwtToken, $secretKey, ['HS256']);
+        $decoded = JWT::decode($jwtToken, new Key($secretKey, 'HS256'));
         // Convert stdClass to array
         $decoded_array = json_decode(json_encode($decoded), true);
         return $decoded_array;
