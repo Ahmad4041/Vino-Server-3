@@ -201,7 +201,7 @@ class AppApiController
             $accounts = $bankDbConnection->getAllcustomerAccounts($user['username'], ['AccountID', 'AType', 'AccountType', 'BalC1', 'LastD', 'LastW', 'BalC2', 'BalL1'], $balance = false);  // Done Could be improve by Single Call in Sub function
 
 
-            if ($customerInfo['code'] == 200 || $accounts['code'] == 200) {
+            if (!is_null($customerInfo) && $accounts['code'] == 200) {
                 $response = [
                     'customer' => $customerInfo,
                     'accounts' => $accounts['accountdata'],

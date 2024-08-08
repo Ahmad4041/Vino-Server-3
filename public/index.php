@@ -176,7 +176,7 @@ $app->get('/{bankId}/app/user/current', function (Request $request, Response $re
     $user = authenticateUser($jwtToken);
 
     if (!$user) {
-        sendCustomResponse('Unauthorized', null, 401, 401);
+        sendCustomResponse('Token Expired. Please Login again', null, 401, 401);
     }
 
     $result = $appController->currentUser((int)$args['bankId'], $user);
