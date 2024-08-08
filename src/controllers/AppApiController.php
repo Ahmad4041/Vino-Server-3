@@ -260,7 +260,61 @@ class AppApiController
             } else {
                 return [
                     'dcode' => $createUserPin['code'],
-                    'code' => 203,
+                    'code' => 201,
+                    'message' => $createUserPin['message'],
+                    'data' => null
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'dcode' => 500,
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null
+            ];
+        }
+    }
+    public function userPinUpdate($bankid, $request, $user)
+    {
+
+        try {
+            $data = [
+                'oldPin' => $request['oldPin'] ?? null,
+                'newPin' => $request['newPin'] ?? null,
+            ];
+
+            $rules = [
+                'oldPin' => 'required|integer|min:4',
+                'newPin' => 'required|integer|min:4|different:oldPin',
+            ];
+
+            $validator = new Validator();
+            $validation = $validator->make($data, $rules);
+
+            $validation->validate();
+
+            if ($validation->fails()) {
+                return [
+                    'message' => ErrorCodes::$FAIL_PIN_FORMAT_INVALID[1],
+                    'data' => $validation->errors()->toArray(),
+                    'dcode' => ErrorCodes::$FAIL_PIN_FORMAT_INVALID[0],
+                    'code' => 422,
+                ];
+            }
+            $bankDbConnection = new BankDbController(Database::getConnection($bankid));
+            $createUserPin = $bankDbConnection->updateUserPin($request, $user['username']);
+
+            if ($createUserPin['code'] == 200) {
+                return [
+                    'dcode' => ErrorCodes::$SUCCESS_TRANSACTION_PIN_CHANGE[0],
+                    'code' => 200,
+                    'message' => ErrorCodes::$SUCCESS_TRANSACTION_PIN_CHANGE[1],
+                    'data' => null
+                ];
+            } else {
+                return [
+                    'dcode' => $createUserPin['code'],
+                    'code' => 201,
                     'message' => $createUserPin['message'],
                     'data' => null
                 ];

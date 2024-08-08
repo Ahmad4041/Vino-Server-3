@@ -140,7 +140,7 @@ class BankDbController
 
         $count = $stmt->fetchColumn();
 
-        return $count > 0; 
+        return $count > 0;
     }
 
     private function setPinForUser($userPin, $username)
@@ -152,11 +152,39 @@ class BankDbController
     }
 
 
+    private function updatePin($username, $oldPin, $newPin)
+    {
+
+        $sql = "UPDATE tblMobileUser SET PIN = ? WHERE Username = ? AND PIN = ?";
+        $stmt = $this->dbConnection->prepare($sql);
+        $stmt->bind_param("sss", $newPin, $username, $oldPin);
+
+        $result = $stmt->execute();
+
+        return $result;
+    }
+
+
 
     //******************************************** */
     // ******************************************* BANK DB PUBLIC FUNCTIONS ***********************************************
     //******************************************** */
 
+
+    public function updateUserPin($request, $username)
+    {
+        if ($this->updatePin($username, $request['oldPin'], $request['newPin'])) {
+            return [
+                'code' => 200,
+                'message' => 'Pin Updated Successfully',
+            ];
+        } else {
+            return [
+                'code' => ErrorCodes::$FAIL_PIN_CODE_INVALID[0],
+                'message' => ErrorCodes::$FAIL_PIN_CODE_INVALID[1],
+            ];
+        }
+    }
 
 
 
