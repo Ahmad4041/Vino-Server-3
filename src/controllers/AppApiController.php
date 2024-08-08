@@ -340,10 +340,10 @@ class AppApiController
             ];
 
             $rules = [
-                'username' => 'required|string',
-                'existingPassword' => 'required|string',
-                'newPassword' => 'required|string',
-                'confirmPassword' => 'required|string|same:newPassword',
+                'username' => 'required',
+                'existingPassword' => 'required',
+                'newPassword' => 'required',
+                'confirmPassword' => 'required|same:newPassword',
             ];
 
             $validator = new Validator();
