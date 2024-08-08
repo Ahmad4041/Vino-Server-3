@@ -133,11 +133,14 @@ class BankDbController
 
     private function checkPinAlreadySet($username)
     {
-        // Check if a PIN is already set for the user
-        $sql = "SELECT COUNT(*) FROM tblMobileUsers WHERE Username = ? AND PIN IS NOT NULL";
-        $stmt = $this->dbConnection->prepare($sql);
-        $stmt->execute([$username]);
-        return $stmt->fetchColumn() > 0;
+        $sql = "SELECT COUNT(*) FROM tblMobileUsers WHERE Username = '$username' AND PIN IS NOT NULL";
+        $stmt = $this->dbConnection->query($sql);
+        $stmt->bindParam(1, $username);
+        $stmt->execute();
+
+        $count = $stmt->fetchColumn();
+
+        return $count > 0; 
     }
 
     private function setPinForUser($userPin, $username)

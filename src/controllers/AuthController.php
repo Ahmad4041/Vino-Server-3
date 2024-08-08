@@ -26,7 +26,7 @@ class AuthController
         $payload = [
             'iss' => 'vino.viralcomputers.com:9000',
             'iat' => time(),
-            'exp' => time() + (5 * 60),
+            'exp' => time() + (50 * 60),
             'username' => $username,
             'bankId' => $bankId,
             'accountId' => $accountId,

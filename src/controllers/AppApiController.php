@@ -226,16 +226,16 @@ class AppApiController
     {
 
         try {
-            // $data = [
-            //     'pin' => $request['pin'] ?? null,
-            // ];
+            $data = [
+                'pin' => $request['pin'] ?? null,
+            ];
 
             $rules = [
                 'pin' => 'required|integer|min:4',
             ];
 
             $validator = new Validator();
-            $validation = $validator->make($request['pin'], $rules);
+            $validation = $validator->make($data, $rules);
 
             $validation->validate();
 
@@ -252,9 +252,9 @@ class AppApiController
 
             if ($createUserPin['code'] == 200) {
                 return [
-                    'dcode' => ErrorCodes::$SUCCESS_USER_CREATED[0],
+                    'dcode' => ErrorCodes::$SUCCESS_PIN_CREATED[0],
                     'code' => 200,
-                    'message' => ErrorCodes::$SUCCESS_USER_CREATED[1],
+                    'message' => ErrorCodes::$SUCCESS_PIN_CREATED[1],
                     'data' => null
                 ];
             } else {

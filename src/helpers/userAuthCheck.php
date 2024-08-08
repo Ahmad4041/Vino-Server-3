@@ -8,7 +8,7 @@ function userAuthVerify()
     $user = authenticateUser($jwtToken);
 
     if (!$user) {
-        sendCustomResponse('Unauthorized', null, 401, 401);
+        sendCustomResponse('Token Expire, Please login again', null, 401, 401);
     }
     return $user;
 }

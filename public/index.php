@@ -5,6 +5,8 @@ require_once '../src/config/database.php';
 require_once '../src/helpers/returnResponse.php';
 require_once '../src/helpers/errorCodes.php';
 require_once '../src/helpers/auth.php';
+require_once '../src/helpers/requestParse.php';
+require_once '../src/helpers/userAuthCheck.php';
 
 require '../src/controllers/AppApiController.php';
 require '../src/controllers/AuthController.php';
