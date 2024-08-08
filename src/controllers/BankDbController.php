@@ -76,20 +76,6 @@ class BankDbController
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    private function getCustomerByAccountNo2($accountno)
-    {
-        $fields = [
-            'Accountid', 'Surname', 'Othernames', 'customerAddress as customerAddress1', 'customerAddress2', 'customerAddress3',
-            'Nationality', 'telephone as telephone1', 'telephone2', 'dob', 'sex as gender', 'email', 'bvn', 'customername as customerName', 'customername as title',
-            'idNo', 'nin', 'AcctOfficer as accountOfficer', 'Passport as passportImageUrl', 'Signature as signatureImageUrl', 'Signature2 as ninImageUrl', 'Signature2 as userImageUrl'
-        ];
-        $sql = "SELECT " . implode(',', $fields) . " FROM tblcustomers WHERE Accountid = :accountno";
-        $stmt = $this->dbConnection->prepare($sql);
-        $stmt->bindParam(':accountno', $accountno, PDO::PARAM_STR);
-        $stmt->execute();
-        return $stmt->fetch(PDO::FETCH_ASSOC);
-    }
-
 
     private function getAccountByUsername($userName, $fields)
     {
@@ -127,6 +113,21 @@ class BankDbController
             'unclearBalance' => (float) $result['unclearBalance'],
             'loanBalance' => (float) $result['loanBalance']
         ];
+    }
+
+
+    public function getCustomerByAccountNo2($accountno)
+    {
+        $fields = [
+            'Accountid', 'Surname', 'Othernames', 'customerAddress as customerAddress1', 'customerAddress2', 'customerAddress3',
+            'Nationality', 'telephone as telephone1', 'telephone2', 'dob', 'sex as gender', 'email', 'bvn', 'customername as customerName', 'customername as title',
+            'idNo', 'nin', 'AcctOfficer as accountOfficer', 'Passport as passportImageUrl', 'Signature as signatureImageUrl', 'Signature2 as ninImageUrl', 'Signature2 as userImageUrl'
+        ];
+        $sql = "SELECT " . implode(',', $fields) . " FROM tblcustomers WHERE Accountid = :accountno";
+        $stmt = $this->dbConnection->prepare($sql);
+        $stmt->bindParam(':accountno', $accountno, PDO::PARAM_STR);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
 

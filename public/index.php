@@ -167,7 +167,7 @@ $app->post('/{bankId}/auth/generate-token', function (Request $request, Response
 // ********************************************************************************
 // ******************************************** User endpoimts START ************************************************
 
-
+// get current user's information
 $app->get('/{bankId}/app/user/current', function (Request $request, Response $response, array $args) use ($appController) {
 
     session_start();
@@ -180,6 +180,28 @@ $app->get('/{bankId}/app/user/current', function (Request $request, Response $re
     }
 
     $result = $appController->currentUser((int)$args['bankId'], $user);
+
+    if ($result['code'] == 200) {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    } else {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    }
+});
+
+
+// get current user's data
+$app->get('/{bankId}/app/user/current/accounts/{balance?}', function (Request $request, Response $response, array $args) use ($appController) {
+
+    session_start();
+
+    $jwtToken = getBearerToken();
+    $user = authenticateUser($jwtToken);
+
+    if (!$user) {
+        sendCustomResponse('Unauthorized', null, 401, 401);
+    }
+
+    $result = $appController->currentUserAccountBalance((int)$args['bankId'], $user, (int)$args['balance']);
 
     if ($result['code'] == 200) {
         return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);

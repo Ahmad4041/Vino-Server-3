@@ -191,4 +191,34 @@ class AppApiController
             ];
         }
     }
+
+    public function currentUserAccountBalance($bankid, $user, $balance = false)
+    {
+        try {
+
+            $bankDbConnection = new BankDbController(Database::getConnection($bankid));
+            $customerInfo = $bankDbConnection->getCustomerByAccountNo2($user['accountId']);
+            $accounts = $bankDbConnection->getAllcustomerAccounts($user['username'], ['AccountID', 'AType', 'AccountType', 'BalC1', 'LastD', 'LastW', 'BalC2', 'BalL1'], $balance);  // Done Could be improve by Single Call in Sub function
+
+
+            if ($customerInfo['code'] == 200 || $accounts['code'] == 200) {
+                $response = [
+                    'customer' => $customerInfo,
+                    'accounts' => $accounts['accountdata'],
+                ];
+
+
+                sendCustomResponse(ErrorCodes::$SUCCESS_USER_FOUND[1], $response, ErrorCodes::$SUCCESS_USER_FOUND[0], 200);
+            } else {
+                sendCustomResponse('Error in account enquiry or accounts retrieval', null, 500, 500);
+            }
+        } catch (Exception $e) {
+            return [
+                'dcode' => 500,
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null
+            ];
+        }
+    }
 }
