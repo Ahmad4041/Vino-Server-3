@@ -154,14 +154,19 @@ class BankDbController
 
     private function updatePin($username, $oldPin, $newPin)
     {
-
-        $sql = "UPDATE tblMobileUser SET PIN = ? WHERE Username = ? AND PIN = ?";
+        $sql = "UPDATE tblMobileUsers SET PIN = :newPin WHERE Username = :username AND PIN = :oldPin";
         $stmt = $this->dbConnection->prepare($sql);
-        $stmt->bind_param("sss", $newPin, $username, $oldPin);
+        $stmt->bindParam(':newPin', $newPin);
+        $stmt->bindParam(':username', $username);
+        $stmt->bindParam(':oldPin', $oldPin);
+        $stmt->execute();
+        $rowCount = $stmt->rowCount();
 
-        $result = $stmt->execute();
-
-        return $result;
+        if ($rowCount > 0) {
+            return true;  
+        } else {
+            return false;  
+        }
     }
 
 
