@@ -131,10 +131,53 @@ class BankDbController
     }
 
 
+    private function checkPinAlreadySet($username)
+    {
+        // Check if a PIN is already set for the user
+        $sql = "SELECT COUNT(*) FROM tblMobileUsers WHERE Username = ? AND PIN IS NOT NULL";
+        $stmt = $this->dbConnection->prepare($sql);
+        $stmt->execute([$username]);
+        return $stmt->fetchColumn() > 0;
+    }
+
+    private function setPinForUser($userPin, $username)
+    {
+        // Set the PIN for the user
+        $sql = "UPDATE tblMobileUsers SET PIN = ? WHERE Username = ?";
+        $stmt = $this->dbConnection->prepare($sql);
+        return $stmt->execute([$userPin, $username]);
+    }
+
+
+
     //******************************************** */
     // ******************************************* BANK DB PUBLIC FUNCTIONS ***********************************************
     //******************************************** */
 
+
+
+
+    public function createUserPin($userPin, $username)
+    {
+        if ($this->checkPinAlreadySet($username)) {
+            return [
+                'code' => ErrorCodes::$FAIL_PIN_ALREADY_SET[0],
+                'message' => ErrorCodes::$FAIL_PIN_ALREADY_SET[1],
+            ];
+        } else {
+            if ($this->setPinForUser($userPin, $username)) {
+                return [
+                    'code' => 200,
+                    'message' => 'Success, PIN created',
+                ];
+            } else {
+                return [
+                    'code' => 500,
+                    'message' => 'Error setting PIN',
+                ];
+            }
+        }
+    }
 
 
     public function loanDataDetails($accountids)

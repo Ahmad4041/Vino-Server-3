@@ -211,6 +211,21 @@ $app->get('/{bankId}/app/user/current/accounts/balance', function (Request $requ
 });
 
 
+$app->post('/{bankId}/app/user/pin-create', function (Request $request, Response $response, array $args) use ($appController) {
+
+    $user = userAuthVerify();
+    $requestData = requestParse($request);
+
+    $result = $appController->userPinCreate((int)$args['bankId'], $requestData, $user);
+
+    if ($result['code'] == 200) {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    } else {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    }
+});
+
+
 
 
 
