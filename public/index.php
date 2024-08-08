@@ -190,7 +190,7 @@ $app->get('/{bankId}/app/user/current', function (Request $request, Response $re
 
 
 // get current user's data
-$app->get('/{bankId}/app/user/current/accounts/{balance?}', function (Request $request, Response $response, array $args) use ($appController) {
+$app->get('/{bankId}/app/user/current/accounts/balance', function (Request $request, Response $response, array $args) use ($appController) {
 
     session_start();
 
@@ -201,7 +201,7 @@ $app->get('/{bankId}/app/user/current/accounts/{balance?}', function (Request $r
         sendCustomResponse('Unauthorized', null, 401, 401);
     }
 
-    $result = $appController->currentUserAccountBalance((int)$args['bankId'], $user, (int)$args['balance']);
+    $result = $appController->currentUserAccountBalance((int)$args['bankId'], $user);
 
     if ($result['code'] == 200) {
         return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
