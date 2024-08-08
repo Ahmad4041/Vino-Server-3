@@ -328,4 +328,62 @@ class AppApiController
             ];
         }
     }
+    public function userPasswordUpdate($bankid, $request, $user)
+    {
+
+        try {
+            $data = [
+                'username' => $request['username'] ?? null,
+                'existingPassword' => $request['existingPassword'] ?? null,
+                'newPassword' => $request['newPassword'] ?? null,
+                'confirmPassword' => $request['confirmPassword'] ?? null,
+            ];
+
+            $rules = [
+                'username' => 'required|string',
+                'existingPassword' => 'required|string',
+                'newPassword' => 'required|string',
+                'confirmPassword' => 'required|string|same:newPassword',
+            ];
+
+            $validator = new Validator();
+            $validation = $validator->make($data, $rules);
+
+            $validation->validate();
+
+            if ($validation->fails()) {
+                return [
+                    'message' => 'VALIDATION_ERROR',
+                    'data' => $validation->errors()->toArray(),
+                    'dcode' => 403,
+                    'code' => 422,
+                ];
+            }
+            $bankDbConnection = new BankDbController(Database::getConnection($bankid));
+            $updateUserPassword = $bankDbConnection->updateUserPassword($request);
+
+            if ($updateUserPassword['code'] == 200) {
+                return [
+                    'dcode' => ErrorCodes::$SUCCESS_PASSWORD_CHANGE[0],
+                    'code' => 200,
+                    'message' => ErrorCodes::$SUCCESS_PASSWORD_CHANGE[1],
+                    'data' => null
+                ];
+            } else {
+                return [
+                    'dcode' => $updateUserPassword['code'],
+                    'code' => 201,
+                    'message' => $updateUserPassword['message'],
+                    'data' => null
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'dcode' => 500,
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null
+            ];
+        }
+    }
 }

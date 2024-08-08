@@ -242,6 +242,20 @@ $app->put('/{bankId}/app/user/pin-change', function (Request $request, Response 
     }
 });
 
+$app->put('/{bankId}/app/user/password-change', function (Request $request, Response $response, array $args) use ($appController) {
+
+    $user = userAuthVerify();
+    $requestData = requestParse($request);
+
+    $result = $appController->userPasswordUpdate((int)$args['bankId'], $requestData, $user);
+
+    if ($result['code'] == 200) {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    } else {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    }
+});
+
 
 
 

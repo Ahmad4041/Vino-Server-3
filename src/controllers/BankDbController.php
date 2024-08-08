@@ -163,9 +163,53 @@ class BankDbController
         $rowCount = $stmt->rowCount();
 
         if ($rowCount > 0) {
-            return true;  
+            return true;
         } else {
-            return false;  
+            return false;
+        }
+    }
+
+
+    private function updatePassword($username, $existingPassword, $newPassword)
+    {
+
+
+        $sql = "SELECT * FROM tblMobileUser WHERE Username = ?";
+        $stmt = $this->dbConnection->prepare($sql);
+        $stmt->bind_param("s", $username);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows == 0) {
+            return [
+                'code' => ErrorCodes::$FAIL_INVALID_USER[0],
+                'message' => ErrorCodes::$FAIL_INVALID_USER[1]
+            ];
+        }
+
+        $row = $result->fetch_assoc();
+        if ($row['Password'] != $existingPassword) {
+            return [
+                'code' => ErrorCodes::$FAIL_PASSWORD_MATCHED[0],
+                'message' => ErrorCodes::$FAIL_PASSWORD_MATCHED[1]
+            ];
+        }
+
+        $sql = "UPDATE tblMobileUser SET Password = ? WHERE Username = ?";
+        $stmt = $this->dbConnection->prepare($sql);
+        $stmt->bind_param("ss", $newPassword, $username);
+        $result = $stmt->execute();
+
+        if ($result) {
+            return [
+                'code' => 200,
+                'message' => 'Success'
+            ];
+        } else {
+            return [
+                'code' => 404,
+                'message' => 'Error Updating Password'
+            ];
         }
     }
 
@@ -174,6 +218,29 @@ class BankDbController
     //******************************************** */
     // ******************************************* BANK DB PUBLIC FUNCTIONS ***********************************************
     //******************************************** */
+
+
+
+
+
+
+    public function updateUserPassword($request)
+    {
+        $result = $this->updatePassword($request['username'], $request['existingPassword'], $request['newPassword']);
+        if ($result['code'] == 200) {
+            return [
+                'code' => 200,
+                'message' => 'Password Updated',
+            ];
+        } else {
+            return [
+                'code' => $result['code'],
+                'message' => $result['message'],
+            ];
+        }
+    }
+
+
 
 
     public function updateUserPin($request, $username)
