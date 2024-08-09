@@ -292,8 +292,19 @@ $app->get('/{bankId}/app/common/account-type', function (Request $request, Respo
 
 
 $app->get('/{bankId}/app/common/config', function (Request $request, Response $response, array $args) use ($appController) {
+    $requestData = requestParse($request);
+    $result = $appController->getConfig((int)$args['bankId'], $requestData);
 
-    $result = $appController->getConfig((int)$args['bankId']);
+    if ($result['code'] == 200) {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    } else {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    }
+});
+
+$app->post('/{bankId}/app/common/password-reset', function (Request $request, Response $response, array $args) use ($appController) {
+    $requestData = requestParse($request);
+    $result = $appController->resetPassword((int)$args['bankId'], $requestData);
 
     if ($result['code'] == 200) {
         return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);

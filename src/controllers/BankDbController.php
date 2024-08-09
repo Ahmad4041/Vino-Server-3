@@ -198,7 +198,7 @@ class BankDbController
     {
 
 
-        $sql = "SELECT * FROM tblMobileUser WHERE Username = ?";
+        $sql = "SELECT * FROM tblMobileUsers WHERE Username = ?";
         $stmt = $this->dbConnection->prepare($sql);
         $stmt->bind_param("s", $username);
         $stmt->execute();
@@ -219,7 +219,7 @@ class BankDbController
             ];
         }
 
-        $sql = "UPDATE tblMobileUser SET Password = ? WHERE Username = ?";
+        $sql = "UPDATE tblMobileUsers SET Password = ? WHERE Username = ?";
         $stmt = $this->dbConnection->prepare($sql);
         $stmt->bind_param("ss", $newPassword, $username);
         $result = $stmt->execute();
@@ -239,7 +239,7 @@ class BankDbController
 
     private function verifyPin($username, $pin)
     {
-        $sql = "SELECT 1 FROM tblMobileUser WHERE Username = ? AND PIN = ? LIMIT 1";
+        $sql = "SELECT 1 FROM tblMobileUsers WHERE Username = ? AND PIN = ? LIMIT 1";
         $stmt = $this->dbConnection->prepare($sql);
         $stmt->execute([$username, $pin]);
         return $stmt->fetchColumn() !== false;
@@ -250,6 +250,70 @@ class BankDbController
     //******************************************** */
     // ******************************************* BANK DB PUBLIC FUNCTIONS ***********************************************
     //******************************************** */
+
+
+    public function resetUserPassword($contactNo)
+    {
+        // Query to find the user
+        $userSql = "SELECT * FROM tblMobileUsers WHERE ContactNo = ? AND Active = 'Y' AND AType = 'Default' LIMIT 1";
+        $userStmt = $this->dbConnection->prepare($userSql);
+        $userStmt->execute([$contactNo]);
+        $user = $userStmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$user) {
+            return [
+                'code' => ErrorCodes::$FAIL_CONTACT_NUMBER_REGISTERED[0],
+                'message' => ErrorCodes::$FAIL_CONTACT_NUMBER_REGISTERED[1],
+            ];
+        }
+
+        $userId = $user['AccountID'];
+
+        // Query to find the customer
+        $customerSql = "SELECT * FROM tblcustomers WHERE Accountid = ? LIMIT 1";
+        $customerStmt = $this->dbConnection->prepare($customerSql);
+        $customerStmt->execute([$userId]);
+        $findCustomer = $customerStmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$findCustomer) {
+            return [
+                'code' => ErrorCodes::$FAIL_USER_NOT_FOUND[0],
+                'message' => ErrorCodes::$FAIL_USER_NOT_FOUND[1],
+            ];
+        }
+
+        $currentDateTime = date('Y-m-d H:i:s');
+
+        $insertData = [
+            'AccountID' => $userId,
+            'Username' => $user['Username'],
+            'AccountName' => $findCustomer['Customername'],
+            'InternetID' => $user['InternetID'],
+            'TelNo' => $user['ContactNo'],
+            'RType' => 'Password',
+            'Ddate' => $currentDateTime,
+            'Dtime' => $currentDateTime,
+        ];
+
+        // Insert query
+        $insertSql = "INSERT INTO tblMobileReset (AccountID, Username, AccountName, InternetID, TelNo, RType, Ddate, Dtime) 
+                  VALUES (:AccountID, :Username, :AccountName, :InternetID, :TelNo, :RType, :Ddate, :Dtime)";
+        $insertStmt = $this->dbConnection->prepare($insertSql);
+        $insertSuccess = $insertStmt->execute($insertData);
+
+        if ($insertSuccess) {
+            return [
+                'code' => 200,
+                'message' => 'Data inserted',
+            ];
+        }
+
+        return [
+            'code' => 403,
+            'message' => 'Data insertion Error',
+        ];
+    }
+
 
 
     public function accountType()

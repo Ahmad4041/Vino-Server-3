@@ -502,4 +502,58 @@ class AppApiController
         $dcode = ErrorCodes::$SUCCESS_FETCH[0];
         return sendCustomResponse($message, $data, $dcode, 200);
     }
+
+
+
+    public function resetPassword($bankid, $request)
+    {
+        try {
+            $data = [
+                'contactNumber' => $request['contactNumber'] ?? null,
+            ];
+
+            $rules = [
+                'contactNumber' => 'required|regex:/^\d{11}$/'
+            ];
+
+            $validator = new Validator();
+            $validation = $validator->make($data, $rules);
+
+            $validation->validate();
+
+            if ($validation->fails()) {
+                return [
+                    'message' => ErrorCodes::$FAIL_PIN_FORMAT_INVALID[1],
+                    'data' => $validation->errors()->toArray(),
+                    'dcode' => ErrorCodes::$FAIL_PIN_FORMAT_INVALID[0],
+                    'code' => 422,
+                ];
+            }
+            $bankDbConnection = new BankDbController(Database::getConnection($bankid));
+            $passwordReset = $bankDbConnection->resetUserPassword($request['contactNumber']);
+
+            if ($passwordReset['code'] == 200) {
+                return [
+                    'dcode' => ErrorCodes::$SUCCESS_PASSWORD_RESET[0],
+                    'code' => 200,
+                    'message' => ErrorCodes::$SUCCESS_PASSWORD_RESET[1],
+                    'data' => null
+                ];
+            } else {
+                return [
+                    'dcode' => $passwordReset['code'],
+                    'code' => 201,
+                    'message' => $passwordReset['message'],
+                    'data' => null
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'dcode' => 500,
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null
+            ];
+        }
+    }
 }
