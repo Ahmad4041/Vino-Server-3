@@ -252,6 +252,34 @@ class BankDbController
     //******************************************** */
 
 
+    public function accountType()
+    {
+        $sql = "SELECT AcctCode, Acct FROM tblaccount WHERE Mobile = 'Yes'";
+        $stmt = $this->dbConnection->prepare($sql);
+        $stmt->execute();
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $data = array_map(function ($row) {
+            return [
+                'accountCode' => $row['AcctCode'],
+                'accountType' => $row['Acct'],
+            ];
+        }, $result);
+
+        if ($data) {
+            return [
+                'code' => 200,
+                'message' => 'Customer Info',
+                'data' => $data,
+            ];
+        } else {
+            return [
+                'code' => 401,
+                'message' => 'Error',
+                'data' => $data,
+            ];
+        }
+    }
 
     public function userVerifyPin($request, $username)
     {

@@ -244,10 +244,10 @@ $app->put('/{bankId}/app/user/pin-change', function (Request $request, Response 
 
 $app->put('/{bankId}/app/user/password-change', function (Request $request, Response $response, array $args) use ($appController) {
 
-    $user = userAuthVerify();
+    // $user = userAuthVerify();
     $requestData = requestParse($request);
 
-    $result = $appController->userPasswordUpdate((int)$args['bankId'], $requestData, $user);
+    $result = $appController->userPasswordUpdate((int)$args['bankId'], $requestData);
 
     if ($result['code'] == 200) {
         return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
@@ -272,27 +272,23 @@ $app->post('/{bankId}/app/user/pin-verify', function (Request $request, Response
 });
 
 
+// ********************************************************************************************
+// **************************************************************************************
+// ********************************************************************************
+// ******************************************** Common endpoimts START ************************************************
 
 
 
+$app->get('/{bankId}/app/common/account-type', function (Request $request, Response $response, array $args) use ($appController) {
 
+    $result = $appController->getAccountType((int)$args['bankId']);
 
-
-// // Route to fetch data from external API
-// $app->get('/fetch-data', function (Request $request, Response $response, array $args) {
-//     $client = new Client();
-//     $res = $client->request('GET', 'https://api.example.com/data');
-//     $data = json_decode($res->getBody(), true);
-
-//     $response->getBody()->write(json_encode($data));
-//     return $response->withHeader('Content-Type', 'application/json');
-// });
-
-// $app->get('/hello', function (Request $request, Response $response) {
-
-//     return sendCustomResponse('Hello World', null, 1002, 200);
-// });
-
+    if ($result['code'] == 200) {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    } else {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    }
+});
 
 
 

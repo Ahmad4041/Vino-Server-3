@@ -328,7 +328,7 @@ class AppApiController
             ];
         }
     }
-    public function userPasswordUpdate($bankid, $request, $user)
+    public function userPasswordUpdate($bankid, $request)
     {
 
         try {
@@ -414,9 +414,9 @@ class AppApiController
                 ];
             }
             $bankDbConnection = new BankDbController(Database::getConnection($bankid));
-            $createUserPin = $bankDbConnection->userVerifyPin($request['pin'], $user['username']);
+            $verifyUserPin = $bankDbConnection->userVerifyPin($request['pin'], $user['username']);
 
-            if ($createUserPin['code'] == 200) {
+            if ($verifyUserPin['code'] == 200) {
                 return [
                     'dcode' => ErrorCodes::$SUCCESS_PIN_CREATED[0],
                     'code' => 200,
@@ -425,11 +425,44 @@ class AppApiController
                 ];
             } else {
                 return [
-                    'dcode' => $createUserPin['code'],
+                    'dcode' => $verifyUserPin['code'],
                     'code' => 201,
-                    'message' => $createUserPin['message'],
+                    'message' => $verifyUserPin['message'],
                     'data' => null
                 ];
+            }
+        } catch (Exception $e) {
+            return [
+                'dcode' => 500,
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null
+            ];
+        }
+    }
+
+
+    public function getAccountType($bankid)
+    {
+        try {
+            $bankDbConnection = new BankDbController(Database::getConnection($bankid));
+            $accountType = $bankDbConnection->accountType();
+
+            if ($accountType['code'] == 200) {
+                $data = [
+                    'accountTypes' => $accountType['data']
+                ];
+                $message = ErrorCodes::$SUCCESS_BANK_ACCOUNT_FOUND[1];
+                $dcode = ErrorCodes::$SUCCESS_BANK_ACCOUNT_FOUND[0];
+                $code = 200;
+                return sendCustomResponse($message, $data, $dcode, $code);
+            } else {
+                $errorRes = $accountType;
+                $message = $errorRes['message'];
+                $data =  $errorRes['message'];
+                $dcode = $errorRes['code'];
+                $code = 404;
+                return sendCustomResponse($message, $data, $dcode, $code);
             }
         } catch (Exception $e) {
             return [
