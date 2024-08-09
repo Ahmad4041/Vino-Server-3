@@ -60,10 +60,10 @@ class ConfigController
 
     public function getConfigKeyValueData($bankid, $key)
     {
-        $sql = "SELECT * FROM banksettings WHERE `key` = ? AND bankname = ? LIMIT 1";
+        $sql = "SELECT `value`, `updated_at` FROM banksettings WHERE `key` = ? AND bankname = ? LIMIT 1";
         $stmt = $this->dbConnection->prepare($sql);
         $stmt->execute([$key, $bankid]);
-        $value = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $value !== false ? $value : '';
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result !== false ? $result : ['value' => '', 'updated_at' => null];
     }
 }

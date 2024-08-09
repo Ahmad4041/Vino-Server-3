@@ -475,10 +475,12 @@ class AppApiController
         }
     }
 
-    public function getConfig(string $bankid, array $request)
+    public function getConfig($bankid, $request)
     {
-        $configConnection = new ConfigController(Database::getConnection($bankid));
+        $configConnection = new ConfigController(Database::getConnection('mysql'));
+        // var_dump($configConnection);
         $isAll = isset($request['all']);
+        // $bankid = 'mysql';
         $config = $configConnection->getConfigKeyValueData($bankid, 'config_update');
         $data = [
             'title' => $configConnection->getConfigKeyValue($bankid, 'title'),
@@ -560,56 +562,50 @@ class AppApiController
     public function uploadImage($bankid, $files)
     {
         try {
+            if (!isset($_FILES['file'])) {
+                throw new Exception('No file uploaded');
+            }
+    
+            $file = $_FILES['file'];
+    
             // Basic file validation
-            if (!isset($files['file']) || $files['file']['error'] !== UPLOAD_ERR_OK) {
-                return sendCustomResponse(
-                    ErrorCodes::$FAIL_UPLOAD_FILE_NOT_FOUND[1],
-                    null,
-                    ErrorCodes::$FAIL_UPLOAD_FILE_NOT_FOUND[0],
-                    404
-                );
+            if ($file['error'] !== UPLOAD_ERR_OK) {
+                throw new Exception('File upload failed');
             }
-
-            $file = $files['file'];
-            $allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
-            $maxFileSize = 2 * 1024 * 1024; // 2MB
-
-            // Validate file type and size
-            if (!in_array($file['type'], $allowedTypes) || $file['size'] > $maxFileSize) {
-                return sendCustomResponse(
-                    'Invalid file type or size',
-                    null,
-                    ErrorCodes::$FAIL_UPLOAD_FILE_NOT_FOUND[0],
-                    400
-                );
+    
+            $allowedMimes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
+            if (!in_array($file['type'], $allowedMimes)) {
+                throw new Exception('Invalid file type');
             }
-
+    
+            if ($file['size'] > 2048000) { // 2MB limit
+                throw new Exception('File size exceeds limit');
+            }
+    
+            // Generate unique filename
             $filename = time();
             $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
             $imageName = $filename . '.' . $extension;
-
-            $uploadDir = 'images'; // Adjust this path
+    
+            // Define upload path using absolute path
+            $uploadDir = __DIR__ . '/images/';
             $uploadPath = $uploadDir . $imageName;
-
+    
+            // Ensure the upload directory exists
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0777, true);  // Create the directory if it doesn't exist
+            }
+    
+            // Move uploaded file
             if (move_uploaded_file($file['tmp_name'], $uploadPath)) {
                 $response = [
                     'fileId' => $imageName,
                     'type' => $file['type'],
                 ];
-
-                return sendCustomResponse(
-                    ErrorCodes::$SUCCESS_FILE_UPLOADED[1],
-                    $response,
-                    ErrorCodes::$SUCCESS_FILE_UPLOADED[0],
-                    200
-                );
+    
+                return sendCustomResponse('File uploaded successfully', $response, 'SUCCESS_FILE_UPLOADED', 200);
             } else {
-                return sendCustomResponse(
-                    'File upload failed',
-                    null,
-                    ErrorCodes::$FAIL_UPLOAD_FILE_NOT_FOUND[0],
-                    500
-                );
+                return sendCustomResponse('File upload failed', null, 'FAIL_UPLOAD_FILE_NOT_FOUND', 404);
             }
         } catch (Exception $e) {
             return [

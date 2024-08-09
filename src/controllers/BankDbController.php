@@ -237,7 +237,7 @@ class BankDbController
 
     private function verifyPin($username, $pin)
     {
-        $sql = "SELECT 1 FROM tblMobileUsers WHERE Username = ? AND PIN = ? LIMIT 1";
+        $sql = "SELECT TOP 1 1 FROM tblMobileUsers WHERE Username = ? AND PIN = ?";
         $stmt = $this->dbConnection->prepare($sql);
         $stmt->execute([$username, $pin]);
         return $stmt->fetchColumn() !== false;
@@ -253,8 +253,11 @@ class BankDbController
     public function resetUserPassword($contactNo)
     {
         // Query to find the user
-        $userSql = "SELECT * FROM tblMobileUsers WHERE ContactNo = ? AND Active = 'Y' AND AType = 'Default' LIMIT 1";
+        $userSql = "SELECT TOP 1 AccountID, Username, InternetID, ContactNo 
+            FROM tblMobileUsers 
+            WHERE ContactNo = ? AND Active = 'Y' AND AType = 'Default'";
         $userStmt = $this->dbConnection->prepare($userSql);
+
         $userStmt->execute([$contactNo]);
         $user = $userStmt->fetch(PDO::FETCH_ASSOC);
 
@@ -268,7 +271,7 @@ class BankDbController
         $userId = $user['AccountID'];
 
         // Query to find the customer
-        $customerSql = "SELECT * FROM tblcustomers WHERE Accountid = ? LIMIT 1";
+        $customerSql = "SELECT TOP 1 Customername FROM tblcustomers WHERE Accountid = ?";
         $customerStmt = $this->dbConnection->prepare($customerSql);
         $customerStmt->execute([$userId]);
         $findCustomer = $customerStmt->fetch(PDO::FETCH_ASSOC);
@@ -343,9 +346,9 @@ class BankDbController
         }
     }
 
-    public function userVerifyPin($request, $username)
+    public function userVerifyPin($pin, $username)
     {
-        if ($this->verifyPin($username, $request['pin'])) {
+        if ($this->verifyPin($username, $pin)) {
             return [
                 'code' => 200,
                 'message' => 'Pin Verify Successfully',
