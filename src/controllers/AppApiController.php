@@ -556,4 +556,68 @@ class AppApiController
             ];
         }
     }
+
+    public function uploadImage($bankid, $files)
+    {
+        try {
+            // Basic file validation
+            if (!isset($files['file']) || $files['file']['error'] !== UPLOAD_ERR_OK) {
+                return sendCustomResponse(
+                    ErrorCodes::$FAIL_UPLOAD_FILE_NOT_FOUND[1],
+                    null,
+                    ErrorCodes::$FAIL_UPLOAD_FILE_NOT_FOUND[0],
+                    404
+                );
+            }
+
+            $file = $files['file'];
+            $allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
+            $maxFileSize = 2 * 1024 * 1024; // 2MB
+
+            // Validate file type and size
+            if (!in_array($file['type'], $allowedTypes) || $file['size'] > $maxFileSize) {
+                return sendCustomResponse(
+                    'Invalid file type or size',
+                    null,
+                    ErrorCodes::$FAIL_UPLOAD_FILE_NOT_FOUND[0],
+                    400
+                );
+            }
+
+            $filename = time();
+            $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+            $imageName = $filename . '.' . $extension;
+
+            $uploadDir = 'images'; // Adjust this path
+            $uploadPath = $uploadDir . $imageName;
+
+            if (move_uploaded_file($file['tmp_name'], $uploadPath)) {
+                $response = [
+                    'fileId' => $imageName,
+                    'type' => $file['type'],
+                ];
+
+                return sendCustomResponse(
+                    ErrorCodes::$SUCCESS_FILE_UPLOADED[1],
+                    $response,
+                    ErrorCodes::$SUCCESS_FILE_UPLOADED[0],
+                    200
+                );
+            } else {
+                return sendCustomResponse(
+                    'File upload failed',
+                    null,
+                    ErrorCodes::$FAIL_UPLOAD_FILE_NOT_FOUND[0],
+                    500
+                );
+            }
+        } catch (Exception $e) {
+            return [
+                'dcode' => 500,
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null
+            ];
+        }
+    }
 }

@@ -313,6 +313,17 @@ $app->post('/{bankId}/app/common/password-reset', function (Request $request, Re
     }
 });
 
+$app->post('/{bankId}/app/common/file-upload', function (Request $request, Response $response, array $args) use ($appController) {
+    $requestData = requestParse($request);
+    $result = $appController->uploadImage((int)$args['bankId'], $requestData);
+
+    if ($result['code'] == 200) {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    } else {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    }
+});
+
 
 
 
