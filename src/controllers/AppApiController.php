@@ -386,4 +386,58 @@ class AppApiController
             ];
         }
     }
+
+
+    public function userPinVerify($bankid, $request, $user)
+    {
+
+        try {
+            $data = [
+                'pin' => $request['pin'] ?? null,
+            ];
+
+            $rules = [
+                'pin' => 'required|integer|min:4',
+            ];
+
+            $validator = new Validator();
+            $validation = $validator->make($data, $rules);
+
+            $validation->validate();
+
+            if ($validation->fails()) {
+                return [
+                    'message' => ErrorCodes::$FAIL_PIN_FORMAT_INVALID[1],
+                    'data' => $validation->errors()->toArray(),
+                    'dcode' => ErrorCodes::$FAIL_PIN_FORMAT_INVALID[0],
+                    'code' => 422,
+                ];
+            }
+            $bankDbConnection = new BankDbController(Database::getConnection($bankid));
+            $createUserPin = $bankDbConnection->userVerifyPin($request['pin'], $user['username']);
+
+            if ($createUserPin['code'] == 200) {
+                return [
+                    'dcode' => ErrorCodes::$SUCCESS_PIN_CREATED[0],
+                    'code' => 200,
+                    'message' => ErrorCodes::$SUCCESS_PIN_CREATED[1],
+                    'data' => null
+                ];
+            } else {
+                return [
+                    'dcode' => $createUserPin['code'],
+                    'code' => 201,
+                    'message' => $createUserPin['message'],
+                    'data' => null
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'dcode' => 500,
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null
+            ];
+        }
+    }
 }

@@ -90,9 +90,14 @@ class BankDbController
     private function getUserAccountInfo($accountId, $Atype)
     {
         $fields = [
-            'AccountID as accountNo', 'AccountType as accountType', 'Customername as accountName',
-            'BalC1 as accountBalance', 'LastD as lastDeposit', 'LastW as lastWithdrawal',
-            'BalC2 as unclearBalance', 'BalL1 as loanBalance'
+            'AccountID as accountNo',
+            'AccountType as accountType',
+            'Customername as accountName',
+            'BalC1 as accountBalance',
+            'LastD as lastDeposit',
+            'LastW as lastWithdrawal',
+            'BalC2 as unclearBalance',
+            'BalL1 as loanBalance'
         ];
 
         $fieldList = implode(', ', $fields);
@@ -119,9 +124,28 @@ class BankDbController
     public function getCustomerByAccountNo2($accountno)
     {
         $fields = [
-            'Accountid', 'Surname', 'Othernames', 'customerAddress as customerAddress1', 'customerAddress2', 'customerAddress3',
-            'Nationality', 'telephone as telephone1', 'telephone2', 'dob', 'sex as gender', 'email', 'bvn', 'customername as customerName', 'customername as title',
-            'idNo', 'nin', 'AcctOfficer as accountOfficer', 'Passport as passportImageUrl', 'Signature as signatureImageUrl', 'Signature2 as ninImageUrl', 'Signature2 as userImageUrl'
+            'Accountid',
+            'Surname',
+            'Othernames',
+            'customerAddress as customerAddress1',
+            'customerAddress2',
+            'customerAddress3',
+            'Nationality',
+            'telephone as telephone1',
+            'telephone2',
+            'dob',
+            'sex as gender',
+            'email',
+            'bvn',
+            'customername as customerName',
+            'customername as title',
+            'idNo',
+            'nin',
+            'AcctOfficer as accountOfficer',
+            'Passport as passportImageUrl',
+            'Signature as signatureImageUrl',
+            'Signature2 as ninImageUrl',
+            'Signature2 as userImageUrl'
         ];
         $sql = "SELECT " . implode(',', $fields) . " FROM tblcustomers WHERE Accountid = :accountno";
         $stmt = $this->dbConnection->prepare($sql);
@@ -133,7 +157,7 @@ class BankDbController
 
     private function checkPinAlreadySet($username)
     {
-        $sql = "SELECT COUNT(*) FROM tblMobileUsers WHERE Username = '$username' AND PIN IS NOT NULL";
+        $sql = "SELECT COUNT(*) FROM tblMobileUsers WHERE Username = ':username' AND PIN IS NOT NULL";
         $stmt = $this->dbConnection->query($sql);
         $stmt->bindParam(1, $username);
         $stmt->execute();
@@ -213,6 +237,14 @@ class BankDbController
         }
     }
 
+    private function verifyPin($username, $pin)
+    {
+        $sql = "SELECT 1 FROM tblMobileUser WHERE Username = ? AND PIN = ? LIMIT 1";
+        $stmt = $this->dbConnection->prepare($sql);
+        $stmt->execute([$username, $pin]);
+        return $stmt->fetchColumn() !== false;
+    }
+
 
 
     //******************************************** */
@@ -221,6 +253,20 @@ class BankDbController
 
 
 
+    public function userVerifyPin($request, $username)
+    {
+        if ($this->verifyPin($username, $request['pin'])) {
+            return [
+                'code' => 200,
+                'message' => 'Pin Verify Successfully',
+            ];
+        } else {
+            return [
+                'code' => ErrorCodes::$FAIL_PIN_VALIDATION[0],
+                'message' => ErrorCodes::$FAIL_PIN_VALIDATION[1],
+            ];
+        }
+    }
 
 
 
