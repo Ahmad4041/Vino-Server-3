@@ -157,7 +157,7 @@ class BankDbController
 
     private function checkPinAlreadySet($username)
     {
-        $sql = "SELECT COUNT(*) FROM tblMobileUsers WHERE Username = ':username' AND PIN IS NOT NULL";
+        $sql = "SELECT COUNT(*) FROM tblMobileUsers WHERE Username = '$username' AND PIN IS NOT NULL";
         $stmt = $this->dbConnection->query($sql);
         $stmt->bindParam(1, $username);
         $stmt->execute();
@@ -198,21 +198,19 @@ class BankDbController
     {
 
 
-        $sql = "SELECT * FROM tblMobileUsers WHERE Username = ?";
+        $sql = "SELECT * FROM tblMobileUser WHERE Username = ?";
         $stmt = $this->dbConnection->prepare($sql);
-        $stmt->bind_param("s", $username);
-        $stmt->execute();
-        $result = $stmt->get_result();
+        $stmt->execute([$username]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($result->num_rows == 0) {
+        if (!$result) {
             return [
                 'code' => ErrorCodes::$FAIL_INVALID_USER[0],
                 'message' => ErrorCodes::$FAIL_INVALID_USER[1]
             ];
         }
 
-        $row = $result->fetch_assoc();
-        if ($row['Password'] != $existingPassword) {
+        if ($result['Password'] !== $existingPassword) {
             return [
                 'code' => ErrorCodes::$FAIL_PASSWORD_MATCHED[0],
                 'message' => ErrorCodes::$FAIL_PASSWORD_MATCHED[1]
@@ -221,10 +219,10 @@ class BankDbController
 
         $sql = "UPDATE tblMobileUsers SET Password = ? WHERE Username = ?";
         $stmt = $this->dbConnection->prepare($sql);
-        $stmt->bind_param("ss", $newPassword, $username);
-        $result = $stmt->execute();
+        $stmt->execute([$newPassword, $username]);
+        $rowCount = $stmt->rowCount();
 
-        if ($result) {
+        if ($rowCount > 0) {
             return [
                 'code' => 200,
                 'message' => 'Success'
