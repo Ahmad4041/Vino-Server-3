@@ -1,6 +1,7 @@
 <?php
 
 require 'BankDbController.php';
+require 'ConfigController.php';
 // require '../models/UtilityDemo.php';
 require __DIR__ . '/../models/UtilityDemo.php';
 
@@ -472,5 +473,33 @@ class AppApiController
                 'data' => null
             ];
         }
+    }
+
+    public function getConfig(string $bankid, array $request)
+    {
+        $configConnection = new ConfigController(Database::getConnection($bankid));
+        $isAll = isset($request['all']);
+        $config = $configConnection->getConfigKeyValueData($bankid, 'config_update');
+        $data = [
+            'title' => $configConnection->getConfigKeyValue($bankid, 'title'),
+            'version' => $configConnection->getConfigKeyValue($bankid, 'version'),
+            'name' => $configConnection->getConfigKeyValue($bankid, 'app_name'),
+            'app_logo' => $configConnection->getConfigKeyValue($bankid, 'app_logo'),
+            'app_url' => $configConnection->getConfigKeyValue($bankid, 'app_url'),
+            'force_update' => $configConnection->getConfigKeyValue($bankid, 'force_update'),
+            'config_update' => $config['value'],
+            'config_timestamp' => $config['updated_at']
+        ];
+
+        // if ($isAll) {
+        //     $data['networks'] = $configConnection->getTelcoNetworks($bankid, $request)['body'];
+        //     $data['utilites'] = $configConnection->getUtilities($bankid, 'all')->body;
+        //     $data['bank_list'] = $configConnection->getBankListWithoutAuth($bankid)->body;
+        //     // Add other data fetching logic for 'all' type
+        // }
+
+        $message = ErrorCodes::$SUCCESS_FETCH[1];
+        $dcode = ErrorCodes::$SUCCESS_FETCH[0];
+        return sendCustomResponse($message, $data, $dcode, 200);
     }
 }
