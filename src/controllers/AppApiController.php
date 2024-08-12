@@ -620,4 +620,38 @@ class AppApiController
             ];
         }
     }
+
+
+
+    public function getTransaction($bankid, $request)
+    {
+        try {
+
+            $bankDbConnection = new BankDbController(Database::getConnection($bankid));
+            $passwordReset = $bankDbConnection->requestGetTransaction($request['accountNo'], $request['page']);
+
+            if ($passwordReset['code'] == 200) {
+                return [
+                    'dcode' => ErrorCodes::$SUCCESS_PASSWORD_RESET[0],
+                    'code' => 200,
+                    'message' => ErrorCodes::$SUCCESS_PASSWORD_RESET[1],
+                    'data' => null
+                ];
+            } else {
+                return [
+                    'dcode' => $passwordReset['code'],
+                    'code' => 201,
+                    'message' => $passwordReset['message'],
+                    'data' => null
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'dcode' => 500,
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null
+            ];
+        }
+    }
 }

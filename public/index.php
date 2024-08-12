@@ -325,6 +325,22 @@ $app->post('/{bankId}/app/common/file-upload', function (Request $request, Respo
 });
 
 
+// ********************************************************************************************
+// **************************************************************************************
+// ********************************************************************************
+// ******************************************** TRANSACTION endpoimts START ************************************************
+
+$app->get('/{bankId}/app/transaction', function (Request $request, Response $response, array $args) use ($appController) {
+    $user = userAuthVerify();
+    $requestData = requestParse($request);
+    $result = $appController->getTransaction((int)$args['bankId'], $requestData);
+
+    if ($result['code'] == 200) {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    } else {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    }
+});
 
 
 

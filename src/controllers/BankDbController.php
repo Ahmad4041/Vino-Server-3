@@ -250,6 +250,92 @@ class BankDbController
     //******************************************** */
 
 
+    public function requestGetTransaction($accountId, $page)
+    {
+        $limit = 20;
+        $offset = $page * $limit;
+
+
+        $sql = "SELECT Sno, gjsource, AcctNo, particulars, Debit, Credit, trnDate, TrnTime 
+            FROM tblCustomerLedger 
+            WHERE AcctNo = :accountId 
+            ORDER BY Sno DESC 
+            LIMIT :limit OFFSET :offset";
+
+        $stmt = $this->dbConnection->prepare($sql);
+        $stmt->bindParam(':accountId', $accountId, PDO::PARAM_STR);
+        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Count total rows
+        $sqlCount = "SELECT COUNT(*) FROM tblCustomerLedger WHERE AcctNo = :accountId";
+        $stmtCount = $this->dbConnection->prepare($sqlCount);
+        $stmtCount->bindParam(':accountId', $accountId, PDO::PARAM_STR);
+        $stmtCount->execute();
+        $totalRow = $stmtCount->fetchColumn();
+
+        if (empty($transactions)) {
+            return [
+                'code' => ErrorCodes::$FAIL_ACCOUNT_TRANSACTION_FOUND[0],
+                'data' => ErrorCodes::$FAIL_ACCOUNT_TRANSACTION_FOUND[1],
+            ];
+        }
+
+        $transactionHistory = array_map(function ($row) {
+            return [
+                'id' => (int) $row['Sno'],
+                'reference' => $row['gjsource'],
+                'accountNo' => $row['AcctNo'],
+                'narration' => $row['particulars'],
+                'withdraw' => number_format((float) $row['Debit'], 2, '.', ''),
+                'withdraw2' => floatval($row['Credit']),
+                'deposit' => number_format((float) $row['Credit'], 2, '.', ''),
+                'date' => date('Y-m-d', strtotime($row['trnDate'])),
+                'time' => date('H:i:s', strtotime($row['TrnTime'])),
+            ];
+        }, $transactions);
+
+        $totalPages = ceil($totalRow / $limit);
+
+        $res = [
+            'content' => $transactionHistory,
+            'pageable' => [
+                'sort' => [
+                    'empty' => true,
+                    'unsorted' => true,
+                    'sorted' => false
+                ],
+                'offset' => $offset,
+                'pageNumber' => (int)$page,
+                'pageSize' => $limit,
+                'paged' => true,
+                'unpaged' => false
+            ],
+            'totalPages' => $totalPages,
+            'totalElements' => (int)$totalRow,
+            'last' => ($page >= $totalPages - 1),
+            'size' => $limit,
+            'number' => (int)$page,
+            'sort' => [
+                'empty' => true,
+                'unsorted' => true,
+                'sorted' => false
+            ],
+            'numberOfElements' => count($transactionHistory),
+            'first' => ($page == 0),
+            'empty' => empty($transactionHistory)
+        ];
+
+        return [
+            'code' => 2007,
+            'data' => $res,
+        ];
+    }
+
+
     public function resetUserPassword($contactNo)
     {
         // Query to find the user
