@@ -60,7 +60,7 @@ class ErrorCodes
     public static $FAIL_USERNAME_VALIDATE = [1016, "Username must contain at least more than 5 letters and case sensitive"];
     public static $FAIL_ACCOUNTID_AND_INTERNETID_REQUIRED = [1017, "AccountID and InternetId should be required to processed"];
     public static $FAIL_CUSTOMER_EXIST = [1018, "Account already exist, Please contact your bank"];
-    public static $FAIL_REQUIRED_FIELDS_VALIDATION = [1019, "All the information should be required to processed except the occupation & bvn "];
+    public static $FAIL_REQUIRED_FIELDS_VALIDATION = [1019, "All the information should be required to process the request"];
     public static $FAIL_UPLOAD_FILE_NOT_FOUND = [1020, "The file should be required to processed"];
     public static $FAIL_API_ERROR = [1021, "3rd Party API fetching error"];
     public static $FAIL_ACCOUNT_NUMBER_MISMATCH = [1022, "Account number mismatched"];

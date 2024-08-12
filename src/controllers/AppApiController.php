@@ -623,21 +623,45 @@ class AppApiController
     {
         try {
 
-            $bankDbConnection = new BankDbController(Database::getConnection($bankid));
-            $passwordReset = $bankDbConnection->requestGetTransaction($request['accountNo'], $request['page']);
+            $data = [
+                'accountNo' => $request['accountNo'] ?? null,
+                'page' => $request['page'] ?? null,
+            ];
 
-            if ($passwordReset['code'] == 200) {
+            $rules = [
+                'accountNo' => 'required',
+                'page' => 'required',
+            ];
+
+            $validator = new Validator();
+            $validation = $validator->make($data, $rules);
+
+            $validation->validate();
+
+            if ($validation->fails()) {
                 return [
-                    'dcode' => ErrorCodes::$SUCCESS_PASSWORD_RESET[0],
+                    'message' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[1],
+                    'data' => $validation->errors()->toArray(),
+                    'dcode' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[0],
+                    'code' => 422,
+                ];
+            }
+
+            $bankDbConnection = new BankDbController(Database::getConnection($bankid));
+            $getTransactionList = $bankDbConnection->requestGetTransaction($request['accountNo'], $request['page']);
+
+            if ($getTransactionList['code'] == 200) {
+                return [
+                    'dcode' => ErrorCodes::$SUCCESS_ACCOUNT_TRANSACTION_FOUND[0],
                     'code' => 200,
-                    'message' => ErrorCodes::$SUCCESS_PASSWORD_RESET[1],
-                    'data' => null
+                    'message' => ErrorCodes::$SUCCESS_ACCOUNT_TRANSACTION_FOUND[1],
+                    'data' => $getTransactionList['message']
                 ];
             } else {
                 return [
-                    'dcode' => $passwordReset['code'],
-                    'code' => 201,
-                    'message' => $passwordReset['message'],
+                    'dcode' => $getTransactionList['code'],
+                    'code' => 403,
+                    'message' => $getTransactionList['message'],
                     'data' => null
                 ];
             }

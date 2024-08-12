@@ -255,17 +255,21 @@ class BankDbController
         $limit = 20;
         $offset = $page * $limit;
 
-
+        // Fetch transactions
         $sql = "SELECT Sno, gjsource, AcctNo, particulars, Debit, Credit, trnDate, TrnTime 
-            FROM tblCustomerLedger 
-            WHERE AcctNo = :accountId 
-            ORDER BY Sno DESC 
-            LIMIT :limit OFFSET :offset";
+            FROM (
+                SELECT *, ROW_NUMBER() OVER (ORDER BY Sno DESC) AS RowNum 
+                FROM tblCustomerLedger 
+                WHERE AcctNo = :accountId
+            ) AS NumberedRows 
+            WHERE RowNum > :offset AND RowNum <= :limit
+            ORDER BY Sno DESC";
 
         $stmt = $this->dbConnection->prepare($sql);
         $stmt->bindParam(':accountId', $accountId, PDO::PARAM_STR);
-        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
         $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
+        $upperLimit = $offset + $limit;
+        $stmt->bindParam(':limit', $upperLimit, PDO::PARAM_INT);
         $stmt->execute();
 
         $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -280,7 +284,7 @@ class BankDbController
         if (empty($transactions)) {
             return [
                 'code' => ErrorCodes::$FAIL_ACCOUNT_TRANSACTION_FOUND[0],
-                'data' => ErrorCodes::$FAIL_ACCOUNT_TRANSACTION_FOUND[1],
+                'message' => ErrorCodes::$FAIL_ACCOUNT_TRANSACTION_FOUND[1],
             ];
         }
 
@@ -330,11 +334,10 @@ class BankDbController
         ];
 
         return [
-            'code' => 2007,
-            'data' => $res,
+            'code' => 200,
+            'message' => $res,
         ];
     }
-
 
     public function resetUserPassword($contactNo)
     {
