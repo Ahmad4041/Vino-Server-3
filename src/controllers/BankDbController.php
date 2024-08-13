@@ -198,7 +198,7 @@ class BankDbController
     {
 
 
-        $sql = "SELECT * FROM tblMobileUser WHERE Username = ?";
+        $sql = "SELECT * FROM tblMobileUsers WHERE Username = ?";
         $stmt = $this->dbConnection->prepare($sql);
         $stmt->execute([$username]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
