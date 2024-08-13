@@ -242,10 +242,10 @@ class BankDbController
     }
 
 
-    private function getCharges($bankid)
+    private function getCharges()
     {
-        $stmt = $this->dbConnection->prepare("SELECT Code as type, Service as service, CostPrice as cost, SellPrice as amount FROM tblMobileFees WHERE bankid = ?");
-        $stmt->execute([$bankid]);
+        $stmt = $this->dbConnection->prepare("SELECT Code as type, Service as service, CostPrice as cost, SellPrice as amount FROM tblMobileFees");
+        $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -256,7 +256,7 @@ class BankDbController
 
     function getAllbanks($bankid)
     {
-        $charges = $this->getCharges($bankid);
+        $charges = $this->getCharges();
         $localDbConnection = new LocalDbController(Database::getConnection('mysql'));
         $banks = $localDbConnection->localBanks($bankid, $charges);
 
