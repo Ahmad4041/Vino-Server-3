@@ -342,6 +342,18 @@ $app->get('/{bankId}/app/transaction', function (Request $request, Response $res
     }
 });
 
+$app->get('/{bankId}/app/transaction/bank-list', function (Request $request, Response $response, array $args) use ($appController) {
+    $user = userAuthVerify();
+
+    $result = $appController->getBankList((int)$args['bankId']);
+
+    if ($result['code'] == 200) {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    } else {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    }
+});
+
 
 
 

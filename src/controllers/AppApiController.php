@@ -2,6 +2,7 @@
 
 require 'BankDbController.php';
 require 'ConfigController.php';
+require 'CharmsApiController.php';
 // require '../models/UtilityDemo.php';
 require __DIR__ . '/../models/UtilityDemo.php';
 
@@ -565,44 +566,44 @@ class AppApiController
             if (!isset($_FILES['file'])) {
                 throw new Exception('No file uploaded');
             }
-    
+
             $file = $_FILES['file'];
-    
+
             // Basic file validation
             if ($file['error'] !== UPLOAD_ERR_OK) {
                 throw new Exception('File upload failed');
             }
-    
+
             $allowedMimes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
             if (!in_array($file['type'], $allowedMimes)) {
                 throw new Exception('Invalid file type');
             }
-    
+
             if ($file['size'] > 2048000) { // 2MB limit
                 throw new Exception('File size exceeds limit');
             }
-    
+
             // Generate unique filename
             $filename = time();
             $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
             $imageName = $filename . '.' . $extension;
-    
+
             // Define upload path using absolute path
             $uploadDir = __DIR__ . '/images/';
             $uploadPath = $uploadDir . $imageName;
-    
+
             // Ensure the upload directory exists
             if (!is_dir($uploadDir)) {
                 mkdir($uploadDir, 0777, true);  // Create the directory if it doesn't exist
             }
-    
+
             // Move uploaded file
             if (move_uploaded_file($file['tmp_name'], $uploadPath)) {
                 $response = [
                     'fileId' => $imageName,
                     'type' => $file['type'],
                 ];
-    
+
                 return sendCustomResponse('File uploaded successfully', $response, 'SUCCESS_FILE_UPLOADED', 200);
             } else {
                 return sendCustomResponse('File upload failed', null, 'FAIL_UPLOAD_FILE_NOT_FOUND', 404);
@@ -663,6 +664,39 @@ class AppApiController
                     'code' => 403,
                     'message' => $getTransactionList['message'],
                     'data' => null
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'dcode' => 500,
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null
+            ];
+        }
+    }
+
+
+    public function getBankList($bankid)
+    {
+        try {
+
+            $bankDbConnection = new BankDbController(Database::getConnection($bankid));
+            $getBankList = $bankDbConnection->getAllbanks($bankid);
+
+            if ($getBankList['code'] == 200) {
+                return [
+                    'dcode' => ErrorCodes::$SUCCESS_AVAILABLE_BANK_LIST[0],
+                    'code' => 200,
+                    'message' => ErrorCodes::$SUCCESS_AVAILABLE_BANK_LIST[1],
+                    'data' => $getBankList['data']
+                ];
+            } else {
+                return [
+                    'dcode' => $getBankList['code'],
+                    'code' => 403,
+                    'message' => $getBankList['message'],
+                    'data' => []
                 ];
             }
         } catch (Exception $e) {

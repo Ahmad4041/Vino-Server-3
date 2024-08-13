@@ -196,8 +196,6 @@ class BankDbController
 
     private function updatePassword($username, $existingPassword, $newPassword)
     {
-
-
         $sql = "SELECT * FROM tblMobileUsers WHERE Username = ?";
         $stmt = $this->dbConnection->prepare($sql);
         $stmt->execute([$username]);
@@ -248,6 +246,26 @@ class BankDbController
     //******************************************** */
     // ******************************************* BANK DB PUBLIC FUNCTIONS ***********************************************
     //******************************************** */
+
+
+    function getAllbanks($bankid)
+    {
+        $stmt = $this->dbConnection->prepare("SELECT Code as type, Service as service, CostPrice as cost, SellPrice as amount FROM tblMobileFees WHERE bankid = :bankid");
+        $stmt->bindParam(':bankid', $bankid, PDO::PARAM_INT);
+        $stmt->execute();
+        $charges = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $localDbConnection = new LocalDbController(Database::getConnection('mysql'));
+        $banks = $localDbConnection->localBanks($bankid, $charges);
+
+        return [
+            'code' => 200,
+            'message' => 'Get all the Available banks',
+            'data' => $banks,
+        ];
+    }
+
+
 
 
     public function requestGetTransaction($accountId, $page)

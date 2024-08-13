@@ -9,7 +9,8 @@
     "nyholm/psr7-server": "*",
     "guzzlehttp/psr7": "^2",
     "rakit/validation": "^1.4",
-    "firebase/php-jwt": "^6.10"
+    "firebase/php-jwt": "^6.10",
+    "guzzlehttp/guzzle": "^7.9"
   },
   "autoload": {
     "psr-4": {

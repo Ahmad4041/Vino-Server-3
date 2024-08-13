@@ -61,4 +61,33 @@ class LocalDbController
             return $e->getMessage();
         }
     }
+
+    function localBanks($bankid, $charges)
+    {
+        // Call the API to get all banks
+        $charmsConnection = new CharmsAPI();
+        $banks = $charmsConnection->getAllBanks()['data'];
+
+        $stmt = $this->dbConnection->prepare("SELECT bankid as code, bankname as name FROM banks WHERE bankid = :bankid");
+        $stmt->bindParam(':bankid', $bankid, PDO::PARAM_INT);
+        $stmt->execute();
+        $currentBank = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        // Prepend the current bank to the list
+        array_unshift($banks, [
+            'code' => $currentBank['code'],
+            'name' => $currentBank['name'] . ' (Internal)'
+        ]);
+
+        // Map bank data with charges
+        $bankData = array_map(function ($bank) use ($charges) {
+            return [
+                'code' => $bank['code'],
+                'name' => $bank['name'],
+                'charges' => $charges,
+            ];
+        }, $banks);
+
+        return $bankData;
+    }
 }
