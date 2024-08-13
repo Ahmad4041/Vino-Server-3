@@ -11,6 +11,9 @@ temp/
 
 # Ignore vendor folder (if using Composer)
 vendor/
+vendor/autoload.php/
+vendor/composer/
+vendor/guzzlehttp/
 
 # Ignore environment file
 .env
