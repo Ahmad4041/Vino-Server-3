@@ -497,8 +497,8 @@ class AppApiController
 
         if ($isAll) {
             $data['networks'] = $configConnection->getTelcoNetworks()['body'];
-            // $data['utilites'] = $configConnection->getUtilities($bankid, 'all')->body;
-            // $data['bank_list'] = $configConnection->getBankListWithoutAuth($bankid)->body;
+            $data['utilites'] = $configConnection->getUtilities($bankid, 'all')->body;
+            $data['bank_list'] = $configConnection->getBankListWithoutAuth($bankid);
         }
 
         $message = ErrorCodes::$SUCCESS_FETCH[1];
