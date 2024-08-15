@@ -84,18 +84,14 @@ class LocalDbController
             ];
         }, $banks);
     }
-
     function getResponse($serviceID)
     {
-        $stmt = $this->dbConnection->prepare("SELECT * FROM response WHERE name = ?");
-        $stmt->bind_param("s", $serviceID);
+        $stmt = $this->dbConnection->prepare("SELECT * FROM response WHERE name = :name");
+        $stmt->bindParam(':name', $serviceID, PDO::PARAM_STR);
         $stmt->execute();
-
-        $result = $stmt->get_result();
-        $response = $result->fetch_assoc();
-
-        $stmt->close();
-
+    
+        $response = $stmt->fetch(PDO::FETCH_ASSOC);
+    
         return $response;
     }
 }

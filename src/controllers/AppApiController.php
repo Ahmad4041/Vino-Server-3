@@ -2,7 +2,7 @@
 
 require 'BankDbController.php';
 require 'ConfigController.php';
-require 'CharmsApiController.php';
+require 'ThirdPartyControllers/CharmsApiController.php';
 // require '../models/UtilityDemo.php';
 require __DIR__ . '/../models/UtilityDemo.php';
 
@@ -476,11 +476,12 @@ class AppApiController
         }
     }
 
-    public function getConfig($bankid, $request)
+    public function getConfig($bankid, $queryParams)
     {
         $configConnection = new ConfigController(Database::getConnection('mysql'));
         // var_dump($configConnection);
-        $isAll = isset($request['all']);
+        // $isAll = isset($request['all']);
+        $isAll = (isset($queryParams['all']) && $queryParams['all'] !== 'false');
         // $bankid = 'mysql';
         $config = $configConnection->getConfigKeyValueData($bankid, 'config_update');
         $data = [

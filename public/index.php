@@ -292,8 +292,9 @@ $app->get('/{bankId}/app/common/account-type', function (Request $request, Respo
 
 
 $app->get('/{bankId}/app/common/config', function (Request $request, Response $response, array $args) use ($appController) {
-    $requestData = requestParse($request);
-    $result = $appController->getConfig((int)$args['bankId'], $requestData);
+    // $requestData = requestParse($request);
+    $queryParams = $request->getQueryParams();
+    $result = $appController->getConfig((int)$args['bankId'], $queryParams);
 
     if ($result['code'] == 200) {
         return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
