@@ -85,32 +85,17 @@ class LocalDbController
         }, $banks);
     }
 
-    // function localBanks($bankid, $charges)
-    // {
-    //     // Call the API to get all banks
-    //     $charmsConnection = new CharmsAPI();
-    //     $banks = $charmsConnection->getAllBanks()['data'];
+    function getResponse($serviceID)
+    {
+        $stmt = $this->dbConnection->prepare("SELECT * FROM response WHERE name = ?");
+        $stmt->bind_param("s", $serviceID);
+        $stmt->execute();
 
-    //     $stmt = $this->dbConnection->prepare("SELECT bankid as code, bankname as name FROM banks WHERE bankid = :bankid");
-    //     $stmt->bindParam(':bankid', $bankid, PDO::PARAM_INT);
-    //     $stmt->execute();
-    //     $currentBank = $stmt->fetch(PDO::FETCH_ASSOC);
+        $result = $stmt->get_result();
+        $response = $result->fetch_assoc();
 
-    //     // Prepend the current bank to the list
-    //     array_unshift($banks, [
-    //         'code' => $currentBank['code'],
-    //         'name' => $currentBank['name'] . ' (Internal)'
-    //     ]);
+        $stmt->close();
 
-    //     // Map bank data with charges
-    //     $bankData = array_map(function ($bank) use ($charges) {
-    //         return [
-    //             'code' => $bank['code'],
-    //             'name' => $bank['name'],
-    //             'charges' => $charges,
-    //         ];
-    //     }, $banks);
-
-    //     return $bankData;
-    // }
+        return $response;
+    }
 }

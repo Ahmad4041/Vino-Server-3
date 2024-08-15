@@ -66,4 +66,24 @@ class ConfigController
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         return $result !== false ? $result : ['value' => '', 'updated_at' => null];
     }
+
+    function getTelcoNetworks()
+    {
+        $live = false;
+        if ($live) {
+            $charms = new VTPassController();
+            $data = $charms->getAirtimeServices('airtime');
+        } else {
+            $localDb = new LocalDbController(Database::getConnection('mysql'));
+            $data = $localDb->getResponse('airtime');
+            $data = unserialize($data['response']);
+        }
+        $response = [
+            'message'   => ErrorCodes::$SUCCESS_FETCH[1],
+            'timestamp' => date('Y-m-d H:i:s'),
+            'status'    => ErrorCodes::$SUCCESS_FETCH[0],
+            'body'      => $data,
+        ];
+        return $response;
+    }
 }

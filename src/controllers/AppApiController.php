@@ -494,12 +494,11 @@ class AppApiController
             'config_timestamp' => $config['updated_at']
         ];
 
-        // if ($isAll) {
-        //     $data['networks'] = $configConnection->getTelcoNetworks($bankid, $request)['body'];
-        //     $data['utilites'] = $configConnection->getUtilities($bankid, 'all')->body;
-        //     $data['bank_list'] = $configConnection->getBankListWithoutAuth($bankid)->body;
-        //     // Add other data fetching logic for 'all' type
-        // }
+        if ($isAll) {
+            $data['networks'] = $configConnection->getTelcoNetworks()['body'];
+            // $data['utilites'] = $configConnection->getUtilities($bankid, 'all')->body;
+            // $data['bank_list'] = $configConnection->getBankListWithoutAuth($bankid)->body;
+        }
 
         $message = ErrorCodes::$SUCCESS_FETCH[1];
         $dcode = ErrorCodes::$SUCCESS_FETCH[0];
