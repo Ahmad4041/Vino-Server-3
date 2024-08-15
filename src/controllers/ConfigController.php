@@ -80,9 +80,8 @@ class ConfigController
         }
         $response = [
             'message'   => ErrorCodes::$SUCCESS_FETCH[1],
-            'timestamp' => date('Y-m-d H:i:s'),
-            'status'    => ErrorCodes::$SUCCESS_FETCH[0],
-            'body'      => $data,
+            'code'    => ErrorCodes::$SUCCESS_FETCH[0],
+            'data'      => $data,
         ];
         return $response;
     }
@@ -159,10 +158,12 @@ class ConfigController
                         ];
                 }
             }
-            $message = ErrorCodes::$SUCCESS_FETCH_UTILITIES[1];
-            $dcode = ErrorCodes::$SUCCESS_FETCH_UTILITIES[0];
-            $code = 200;
-            return sendCustomResponse($message, $utilitydata, $dcode, $code);
+
+            return [
+                'message' => ErrorCodes::$SUCCESS_FETCH_UTILITIES[1],
+                'code' => ErrorCodes::$SUCCESS_FETCH_UTILITIES[0],
+                'data' => $utilitydata
+            ];        
         } catch (Exception $e) {
             return [
                 'dcode' => 500,
@@ -199,6 +200,54 @@ class ConfigController
         return $res;
     }
 
+
+    // function getServiceCategory($service, $subcategory = false)
+    // {
+    //     $vtpass = new VTPassController();
+    //     $categories = $vtpass->getServiceByCategory($service);
+
+    //     // Debug output
+    //     echo "Categories: ";
+    //     var_dump($categories);
+    //     echo "Subcategory: ";
+    //     var_dump($subcategory);
+
+    //     $count = 0;
+    //     $res = array_values(array_filter(array_map(function ($row) use ($vtpass, &$count, $subcategory) {
+    //         $count++;
+
+    //         // Check if $row is an array and has the required keys
+    //         if (!is_array($row) || !isset($row['serviceID']) || !isset($row['name'])) {
+    //             // Debug output
+    //             echo "Invalid row: ";
+    //             var_dump($row);
+    //             return false; // This will be filtered out
+    //         }
+
+    //         if (!$subcategory) {
+    //             return [
+    //                 "service_type" => $row['serviceID'],
+    //                 "name" => $row['name'],
+    //                 "shortname" => $row['serviceID'],
+    //                 "product_id" => $count,
+    //             ];
+    //         }
+    //         return [
+    //             "packages" =>  $vtpass->getServiceByVariation($row['serviceID']),
+    //             "service_type" => $row['serviceID'],
+    //             "name" => $row['name'],
+    //             "shortname" => $row['serviceID'],
+    //             "product_id" => $count,
+    //         ];
+    //     }, is_array($categories) ? $categories : [])));
+
+    //     // Debug output
+    //     echo "Result: ";
+    //     var_dump($res);
+
+    //     return $res;
+    // }
+
     public function getBankListWithoutAuth($bankid)
     {
         try {
@@ -206,23 +255,28 @@ class ConfigController
             $banks = $localDbConnection->getAllbanks($bankid);
 
             if ($banks['code'] == 200) {
-                $data  = $banks['data'];
-                $message = ErrorCodes::$SUCCESS_AVAILABLE_BANK_LIST[1];
-                $dcode = ErrorCodes::$SUCCESS_AVAILABLE_BANK_LIST[0];
-                $code = 200;
-                return sendCustomResponse($message, $data, $dcode, $code);
+                
+                return [
+                    'dcode' => ErrorCodes::$SUCCESS_AVAILABLE_BANK_LIST[0],
+                    'code' => 200,
+                    'message' => ErrorCodes::$SUCCESS_AVAILABLE_BANK_LIST[1],
+                    'data' => $banks['data']
+                ];
             } else {
-                $message = $banks['message'];
-                $dcode = $banks['code'];
-                $code = 404;
-                return sendCustomResponse($message, [], $dcode, $code);
+                return [
+                    'dcode' => $banks['code'],
+                    'code' => 404,
+                    'message' => $banks['message'],
+                    'data' => null
+                ];
             }
         } catch (Exception $e) {
+            
             return [
                 'dcode' => 500,
                 'code' => 500,
                 'message' => $e->getMessage(),
-                'data' => null
+                'data' => []
             ];
         }
     }

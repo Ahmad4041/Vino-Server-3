@@ -1,6 +1,5 @@
 <?php
 
-require_once 'vendor/autoload.php';
 
 use GuzzleHttp\Client;
 
@@ -94,7 +93,13 @@ class VTPassController
 
     public function getServiceByCategory($serviceID)
     {
-        return $this->makeRequest('GET', "/services?identifier={$serviceID}");
+        $response = $this->makeRequest('GET', "/services?identifier={$serviceID}");
+        // var_dump($response);
+        if ($response['response_description'] != 000) {
+            var_dump($serviceID);
+            var_dump($response['content']);
+        }
+        return $response['content'];
     }
 
     public function getServiceByVariation($serviceID)

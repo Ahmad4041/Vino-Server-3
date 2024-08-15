@@ -3,6 +3,9 @@
 require 'BankDbController.php';
 require 'ConfigController.php';
 require 'ThirdPartyControllers/CharmsApiController.php';
+require 'ThirdPartyControllers/CoreBankController.php';
+require 'ThirdPartyControllers/PayStackController.php';
+require 'ThirdPartyControllers/VtPassController.php';
 // require '../models/UtilityDemo.php';
 require __DIR__ . '/../models/UtilityDemo.php';
 
@@ -496,9 +499,9 @@ class AppApiController
         ];
 
         if ($isAll) {
-            $data['networks'] = $configConnection->getTelcoNetworks()['body'];
-            $data['utilites'] = $configConnection->getUtilities($bankid, 'all')->body;
-            $data['bank_list'] = $configConnection->getBankListWithoutAuth($bankid);
+            $data['networks'] = $configConnection->getTelcoNetworks()['data'];
+            $data['utilites'] = $configConnection->getUtilities($bankid, 'all')['data'];
+            $data['bank_list'] = $configConnection->getBankListWithoutAuth($bankid)['data'];
         }
 
         $message = ErrorCodes::$SUCCESS_FETCH[1];
