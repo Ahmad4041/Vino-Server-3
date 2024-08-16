@@ -253,6 +253,33 @@ class BankDbController
     // ******************************************* BANK DB PUBLIC FUNCTIONS ***********************************************
     //******************************************** */
 
+    function accountInfo($request)
+    {
+        $accountId = $request['accountNo'];
+
+        $sql = "SELECT * FROM tblcustomers WHERE Accountid = :Accountid";
+        $stmt = $this->dbConnection->prepare($sql);
+        $stmt->bind_param(':Accountid', $accountId, PDO::PARAM_STR);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $accountData = $result->fetch_assoc(PDO::FETCH_ASSOC);
+
+        if ($accountData) {
+            return [
+                'code' => 200,
+                'message' => 'User found',
+                'data' => $accountData,
+            ];
+        } else {
+            return [
+                'code' => 404,
+                'message' => 'User Data not found',
+                'data' => [],
+            ];
+        }
+    }
+
 
     function getAllbanks($bankid)
     {

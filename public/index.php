@@ -331,7 +331,9 @@ $app->post('/{bankId}/app/common/file-upload', function (Request $request, Respo
 // ********************************************************************************
 // ******************************************** TRANSACTION endpoimts START ************************************************
 
-$app->get('/{bankId}/app/transaction', function (Request $request, Response $response, array $args) use ($appController) {
+$groupPrefixTrans = 'api/v1/{bankid}/app/transaction';
+
+$app->get($groupPrefixTrans, function (Request $request, Response $response, array $args) use ($appController) {
     $user = userAuthVerify();
     $requestData = requestParse($request);
     $result = $appController->getTransaction((int)$args['bankId'], $requestData);
@@ -343,7 +345,7 @@ $app->get('/{bankId}/app/transaction', function (Request $request, Response $res
     }
 });
 
-$app->get('/{bankId}/app/transaction/bank-list', function (Request $request, Response $response, array $args) use ($appController) {
+$app->get($groupPrefixTrans . '/bank-list', function (Request $request, Response $response, array $args) use ($appController) {
     $user = userAuthVerify();
 
     $result = $appController->getBankList((int)$args['bankId']);
@@ -355,7 +357,30 @@ $app->get('/{bankId}/app/transaction/bank-list', function (Request $request, Res
     }
 });
 
+$app->get($groupPrefixTrans . '/telco-networks', function (Request $request, Response $response, array $args) use ($appController) {
+    $user = userAuthVerify();
 
+    $result = $appController->getTelecoNetworks((int)$args['bankId']);
+
+    if ($result['code'] == 200) {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    } else {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    }
+});
+
+$app->get($groupPrefixTrans . '/find-account-info', function (Request $request, Response $response, array $args) use ($appController) {
+    $user = userAuthVerify();
+    $requestData = requestParse($request);
+
+    $result = $appController->getAccountInfo((int)$args['bankId'],);
+
+    if ($result['code'] == 200) {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    } else {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    }
+});
 
 
 $app->run();

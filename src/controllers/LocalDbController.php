@@ -84,14 +84,41 @@ class LocalDbController
             ];
         }, $banks);
     }
+
     function getResponse($serviceID)
     {
         $stmt = $this->dbConnection->prepare("SELECT * FROM response WHERE name = :name");
         $stmt->bindParam(':name', $serviceID, PDO::PARAM_STR);
         $stmt->execute();
-    
+
         $response = $stmt->fetch(PDO::FETCH_ASSOC);
-    
+
         return $response;
+    }
+
+    function bankCodeCheck($request)
+    {
+        $bankCode = $request['bankCode'];
+
+        $sql = "SELECT * FROM banks WHERE bankcode = :bankCode";
+        $stmt = $this->dbConnection->prepare($sql);
+        $stmt->bind_param(':bankCode', $bankCode, PDO::PARAM_STR);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $existCode = $result->fetch_assoc(PDO::FETCH_ASSOC);
+
+        if (!$existCode) {
+            return [
+                'code' => 404,
+                'message' => 'Bank code not found in the database.',
+                'data' => []
+            ];
+        }
+
+        return [
+            'code' => 200,
+            'message' => 'Bank code found in the database.',
+            'data' => $existCode
+        ];
     }
 }

@@ -482,10 +482,8 @@ class AppApiController
     public function getConfig($bankid, $queryParams)
     {
         $configConnection = new ConfigController(Database::getConnection('mysql'));
-        // var_dump($configConnection);
-        // $isAll = isset($request['all']);
+
         $isAll = (isset($queryParams['all']) && $queryParams['all'] !== 'false');
-        // $bankid = 'mysql';
         $config = $configConnection->getConfigKeyValueData($bankid, 'config_update');
         $data = [
             'title' => $configConnection->getConfigKeyValue($bankid, 'title'),
@@ -507,6 +505,18 @@ class AppApiController
         $message = ErrorCodes::$SUCCESS_FETCH[1];
         $dcode = ErrorCodes::$SUCCESS_FETCH[0];
         return sendCustomResponse($message, $data, $dcode, 200);
+    }
+
+    public function getTelecoNetworks($bankid)
+    {
+        $configConnection = new ConfigController(Database::getConnection('mysql'));
+        $response = $configConnection->getTelcoNetworks();
+        return [
+            'message' => $response['message'],
+            'data' => $response['data'],
+            'dcode' => $response['code'],
+            'code' => 200
+        ];
     }
 
 
@@ -552,6 +562,107 @@ class AppApiController
                     'message' => $passwordReset['message'],
                     'data' => null
                 ];
+            }
+        } catch (Exception $e) {
+            return [
+                'dcode' => 500,
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null
+            ];
+        }
+    }
+
+    public function getAccountInfo($bankid, $request)
+    {
+        try {
+            $data = [
+                'bankCode' => $request['bankCode'] ?? null,
+                'accountNo' => $request['accountNo'] ?? null,
+            ];
+
+            $rules = [
+                'accountNo' => 'required',
+                'bankCode' => 'required'
+            ];
+
+            $validator = new Validator();
+            $validation = $validator->make($data, $rules);
+
+            $validation->validate();
+
+            if ($validation->fails()) {
+                return [
+                    'message' => 'VALIDATION_ERROR',
+                    'data' => $validation->errors()->toArray(),
+                    'dcode' => 403,
+                    'code' => 422,
+                ];
+            }
+
+            $localDbConnection = new LocalDbController(Database::getConnection('mysql'));
+            $bankDbConnection = new BankDbController(Database::getConnection($bankid));
+
+            $bankCodeExist = $localDbConnection->bankCodeCheck($request);
+
+            if ($bankid == $request->bankCode) {
+                if ($bankCodeExist['code'] == 200) {
+                    $accountinfo = $bankDbConnection->getCustomerByAccountNo2($request['accountNo']);
+                    $response = [
+                        'destinationinstitutioncode' => $request->bankCode,
+                        'accountnumber' => $accountinfo->Accountid,
+                        'accountname' => $accountinfo->customerName,
+                        'bvn' => $accountinfo->bvn,
+                    ];
+                    return [
+                        'message' => ErrorCodes::$SUCCESS_FETCH_ACCOUNT_INFO[1],
+                        'data' =>  $response,
+                        'dcode' => ErrorCodes::$SUCCESS_FETCH_ACCOUNT_INFO[0],
+                        'code' => 200
+                    ];
+                } else {
+                    $accountinfo = $bankDbConnection->accountInfo($request);
+                    if ($accountinfo['code'] == 200) {
+                        $response = [
+                            'destinationinstitutioncode' => $request->bankCode,
+                            'accountnumber' => $accountinfo['data']->Accountid,
+                            'accountname' => $accountinfo['data']->Customername,
+                            'bvn' => $accountinfo['data']->BVN,
+                        ];
+
+                        return [
+                            'message' => ErrorCodes::$SUCCESS_FETCH_ACCOUNT_INFO[1],
+                            'data' =>  $response,
+                            'dcode' => ErrorCodes::$SUCCESS_FETCH_ACCOUNT_INFO[0],
+                            'code' => 200
+                        ];
+                    } else {
+                        return [
+                            'message' => $accountinfo['message'],
+                            'data' =>  $accountinfo['message'],
+                            'dcode' => $accountinfo['code'],
+                            'code' => 404
+                        ];
+                    }
+                }
+            } else {
+                $charms = new CharmsAPI();
+                $accountinfo2 = $charms->findAccount($request->accountNo, $request->bankCode);
+                if ($accountinfo2['data']['requestSuccessful']) {
+                    return [
+                        'message' => $accountinfo2['message'],
+                        'data' =>  $accountinfo2['data']['responseData'],
+                        'dcode' => ErrorCodes::$SUCCESS_FETCH_ACCOUNT_INFO[0],
+                        'code' => 200
+                    ];
+                } else {
+                    return [
+                        'message' => ErrorCodes::$FAIL_ACCOUNT_HOLDER_FOUND[1],
+                        'data' =>  $accountinfo2['data']['message'],
+                        'dcode' => ErrorCodes::$FAIL_ACCOUNT_HOLDER_FOUND[0],
+                        'code' => 400
+                    ];
+                }
             }
         } catch (Exception $e) {
             return [
