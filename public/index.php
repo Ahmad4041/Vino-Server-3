@@ -331,9 +331,9 @@ $app->post('/api/v2/{bankId}/app/common/file-upload', function (Request $request
 // ********************************************************************************
 // ******************************************** TRANSACTION endpoimts START ************************************************
 
-$groupPrefixTrans = 'api/v2/{bankid}/app/transaction';
+// $groupPrefixTrans = 'api/v2/{bankid}/app/transaction';
 
-$app->get('api/v1/api/v2/{bankId}/app/transaction', function (Request $request, Response $response, array $args) use ($appController) {
+$app->get('/api/v2/{bankId}/app/transaction', function (Request $request, Response $response, array $args) use ($appController) {
     $user = userAuthVerify();
     $requestData = requestParse($request);
     $result = $appController->getTransaction((int)$args['bankId'], $requestData);
@@ -345,7 +345,7 @@ $app->get('api/v1/api/v2/{bankId}/app/transaction', function (Request $request, 
     }
 });
 
-$app->get($groupPrefixTrans . '/bank-list', function (Request $request, Response $response, array $args) use ($appController) {
+$app->get('/api/v2/{bankId}/app/transaction/bank-list', function (Request $request, Response $response, array $args) use ($appController) {
     $user = userAuthVerify();
 
     $result = $appController->getBankList((int)$args['bankId']);
@@ -357,7 +357,7 @@ $app->get($groupPrefixTrans . '/bank-list', function (Request $request, Response
     }
 });
 
-$app->get($groupPrefixTrans . '/telco-networks', function (Request $request, Response $response, array $args) use ($appController) {
+$app->get('/api/v2/{bankId}/app/transaction/telco-networks', function (Request $request, Response $response, array $args) use ($appController) {
     $user = userAuthVerify();
 
     $result = $appController->getTelecoNetworks((int)$args['bankId']);
@@ -369,7 +369,7 @@ $app->get($groupPrefixTrans . '/telco-networks', function (Request $request, Res
     }
 });
 
-$app->get($groupPrefixTrans . '/find-account-info', function (Request $request, Response $response, array $args) use ($appController) {
+$app->get('/api/v2/{bankId}/app/transaction/find-account-info', function (Request $request, Response $response, array $args) use ($appController) {
     $user = userAuthVerify();
     $requestData = requestParse($request);
 
@@ -381,6 +381,27 @@ $app->get($groupPrefixTrans . '/find-account-info', function (Request $request, 
         return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
     }
 });
+
+
+
+
+
+// Test function 
+$app->get('/api/v2/{bankId}/app/get-service-id', function (Request $request, Response $response, array $args) use ($appController) {
+    $user = userAuthVerify();
+    $requestData = requestParse($request);
+
+    $localDb = new LocalDbController(Database::getConnection('mysql'));
+    $result = $localDb->getServicebyId((int)$args['bankId'], $requestData);
+
+    if ($result['code'] == 200) {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    } else {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    }
+});
+
+
 
 
 $app->run();
