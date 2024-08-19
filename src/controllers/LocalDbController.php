@@ -96,6 +96,29 @@ class LocalDbController
         return $response;
     }
 
+    function getResponseVtPass($serviceID, $data, $tvSubscription, $billSubscription)
+    {
+        $stmt = $this->dbConnection->prepare("
+        SELECT * FROM response 
+        WHERE name = :serviceID 
+        AND data = :data 
+        AND tv-subscription = :tvSubscription 
+        AND electricity-bill = :billSubscription
+    ");
+
+        $stmt->bindParam(':serviceID', $serviceID, PDO::PARAM_STR);
+        $stmt->bindParam(':data', $data, PDO::PARAM_STR);
+        $stmt->bindParam(':tvSubscription', $tvSubscription, PDO::PARAM_STR);
+        $stmt->bindParam(':billSubscription', $billSubscription, PDO::PARAM_STR);
+
+        $stmt->execute();
+
+        $response = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $response;
+    }
+
+
     function bankCodeCheck($request)
     {
         $bankCode = $request['bankCode'];

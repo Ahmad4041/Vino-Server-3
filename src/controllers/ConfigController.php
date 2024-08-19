@@ -86,6 +86,19 @@ class ConfigController
         return $response;
     }
 
+    function getVtPassData()
+    {
+        $localDb = new LocalDbController(Database::getConnection('mysql'));
+        $data = $localDb->getResponseVtPass('airtime', 'data', 'tv-subscription', 'electricity-bill');
+        $data = unserialize($data['response']);
+        $response = [
+            'message'   => ErrorCodes::$SUCCESS_FETCH[1],
+            'code'    => ErrorCodes::$SUCCESS_FETCH[0],
+            'data'      => $data,
+        ];
+        return $response;
+    }
+
     function getUtilities($bankid, $services = null)
     {
         try {
@@ -163,7 +176,7 @@ class ConfigController
                 'message' => ErrorCodes::$SUCCESS_FETCH_UTILITIES[1],
                 'code' => ErrorCodes::$SUCCESS_FETCH_UTILITIES[0],
                 'data' => $utilitydata
-            ];        
+            ];
         } catch (Exception $e) {
             return [
                 'dcode' => 500,
@@ -255,7 +268,7 @@ class ConfigController
             $banks = $localDbConnection->getAllbanks($bankid);
 
             if ($banks['code'] == 200) {
-                
+
                 return [
                     'dcode' => ErrorCodes::$SUCCESS_AVAILABLE_BANK_LIST[0],
                     'code' => 200,
@@ -271,7 +284,7 @@ class ConfigController
                 ];
             }
         } catch (Exception $e) {
-            
+
             return [
                 'dcode' => 500,
                 'code' => 500,

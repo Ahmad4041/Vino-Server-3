@@ -497,8 +497,9 @@ class AppApiController
         ];
 
         if ($isAll) {
-            $data['networks'] = $configConnection->getTelcoNetworks()['data'];
-            $data['utilites'] = $configConnection->getUtilities($bankid, 'all')['data'];
+            $data['networks'] = $configConnection->getVtPassData()['data'];
+            // $data['networks'] = $configConnection->getTelcoNetworks()['data'];
+            // $data['utilites'] = $configConnection->getUtilities($bankid, 'all')['data'];
             $data['bank_list'] = $configConnection->getBankListWithoutAuth($bankid)['data'];
         }
 
