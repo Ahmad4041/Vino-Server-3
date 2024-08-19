@@ -120,31 +120,7 @@ class LocalDbController
         // var_dump($responses);
         return $responses;
     }
-    function getServicebyId($serviceID)
-    {
-        $stmt = $this->dbConnection->prepare("
-        SELECT name, response 
-        FROM response 
-        WHERE name IN (:serviceID)
-    ");
-
-        $stmt->bindParam(':serviceID', $serviceID, PDO::PARAM_STR);
-
-
-
-        $stmt->execute();
-
-        $responses = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
-
-        foreach ($responses as $key => $value) {
-            $responses[$key] = unserialize($value);
-        }
-
-        // var_dump($responses);
-        return $responses;
-    }
-
-
+    
     function bankCodeCheck($request)
     {
         $bankCode = $request['bankCode'];

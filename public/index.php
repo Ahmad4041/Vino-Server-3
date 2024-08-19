@@ -386,21 +386,6 @@ $app->get('/api/v2/{bankId}/app/transaction/find-account-info', function (Reques
 
 
 
-// Test function 
-$app->get('/api/v2/{bankId}/app/get-service-id', function (Request $request, Response $response, array $args) use ($appController) {
-    $user = userAuthVerify();
-    $requestData = requestParse($request);
-
-    $localDb = new LocalDbController(Database::getConnection('mysql'));
-    $result = $localDb->getServicebyId((int)$args['bankId'], $requestData);
-
-    if ($result['code'] == 200) {
-        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
-    } else {
-        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
-    }
-});
-
 
 
 
