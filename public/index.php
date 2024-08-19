@@ -34,7 +34,7 @@ $authController = new AuthController();
 
 <?php
 
-$app->get('/{bankid}/hello', function (Request $request, Response $response, array $args) {
+$app->get('/api/v2/{bankId}/hello', function (Request $request, Response $response, array $args) {
     $bankid = $args['bankid'];
     $queryParams = $request->getQueryParams();
     $data = array_merge(['bankid' => $bankid], $queryParams);
@@ -62,7 +62,7 @@ $app->get('/{bankid}/hello', function (Request $request, Response $response, arr
     return sendCustomResponse('Hello world', $responseData, 1002, 200);
 });
 
-$app->get('/{bankId}/validate-connection', function (Request $request, Response $response, array $args) {
+$app->get('/api/v2/{bankId}/validate-connection', function (Request $request, Response $response, array $args) {
     $bankId = $args['bankId'];
     $queryParams = $request->getQueryParams();
 
@@ -112,7 +112,7 @@ $app->get('/{bankId}/validate-connection', function (Request $request, Response 
 
 
 // register new customer
-$app->post('/{bankId}/auth/register-user-customer-new', function (Request $request, Response $response, array $args) use ($appController) {
+$app->post('/api/v2/{bankId}/auth/register-user-customer-new', function (Request $request, Response $response, array $args) use ($appController) {
     $bankId = (int)$args['bankId'];
     $rawBody = $request->getBody()->__toString();
     $data = json_decode($rawBody, true);
@@ -130,7 +130,7 @@ $app->post('/{bankId}/auth/register-user-customer-new', function (Request $reque
 
 
 // register existing customer
-$app->post('/{bankId}/auth/register-user-customer-exist', function (Request $request, Response $response, array $args) use ($appController) {
+$app->post('/api/v2/{bankId}/auth/register-user-customer-exist', function (Request $request, Response $response, array $args) use ($appController) {
     $bankId = (int)$args['bankId'];
     $rawBody = $request->getBody()->__toString();
     $data = json_decode($rawBody, true);
@@ -147,7 +147,7 @@ $app->post('/{bankId}/auth/register-user-customer-exist', function (Request $req
 
 // generate user app token
 
-$app->post('/{bankId}/auth/generate-token', function (Request $request, Response $response, array $args) use ($appController) {
+$app->post('/api/v2/{bankId}/auth/generate-token', function (Request $request, Response $response, array $args) use ($appController) {
     $bankId = (int)$args['bankId'];
     $rawBody = $request->getBody()->__toString();
     $data = json_decode($rawBody, true);
@@ -170,7 +170,7 @@ $app->post('/{bankId}/auth/generate-token', function (Request $request, Response
 // ******************************************** User endpoimts START ************************************************
 
 // get current user's information
-$app->get('/{bankId}/app/user/current', function (Request $request, Response $response, array $args) use ($appController) {
+$app->get('/api/v2/{bankId}/app/user/current', function (Request $request, Response $response, array $args) use ($appController) {
 
     session_start();
 
@@ -192,7 +192,7 @@ $app->get('/{bankId}/app/user/current', function (Request $request, Response $re
 
 
 // get current user's data
-$app->get('/{bankId}/app/user/current/accounts/balance', function (Request $request, Response $response, array $args) use ($appController) {
+$app->get('/api/v2/{bankId}/app/user/current/accounts/balance', function (Request $request, Response $response, array $args) use ($appController) {
 
     session_start();
 
@@ -213,7 +213,7 @@ $app->get('/{bankId}/app/user/current/accounts/balance', function (Request $requ
 });
 
 
-$app->post('/{bankId}/app/user/pin-create', function (Request $request, Response $response, array $args) use ($appController) {
+$app->post('/api/v2/{bankId}/app/user/pin-create', function (Request $request, Response $response, array $args) use ($appController) {
 
     $user = userAuthVerify();
     $requestData = requestParse($request);
@@ -228,7 +228,7 @@ $app->post('/{bankId}/app/user/pin-create', function (Request $request, Response
 });
 
 
-$app->put('/{bankId}/app/user/pin-change', function (Request $request, Response $response, array $args) use ($appController) {
+$app->put('/api/v2/{bankId}/app/user/pin-change', function (Request $request, Response $response, array $args) use ($appController) {
 
     $user = userAuthVerify();
     $requestData = requestParse($request);
@@ -242,7 +242,7 @@ $app->put('/{bankId}/app/user/pin-change', function (Request $request, Response 
     }
 });
 
-$app->put('/{bankId}/app/user/password-change', function (Request $request, Response $response, array $args) use ($appController) {
+$app->put('/api/v2/{bankId}/app/user/password-change', function (Request $request, Response $response, array $args) use ($appController) {
 
     // $user = userAuthVerify();
     $requestData = requestParse($request);
@@ -258,7 +258,7 @@ $app->put('/{bankId}/app/user/password-change', function (Request $request, Resp
 
 
 
-$app->post('/{bankId}/app/user/pin-verify', function (Request $request, Response $response, array $args) use ($appController) {
+$app->post('/api/v2/{bankId}/app/user/pin-verify', function (Request $request, Response $response, array $args) use ($appController) {
     $user = userAuthVerify();
     $requestData = requestParse($request);
 
@@ -279,7 +279,7 @@ $app->post('/{bankId}/app/user/pin-verify', function (Request $request, Response
 
 
 
-$app->get('/{bankId}/app/common/account-type', function (Request $request, Response $response, array $args) use ($appController) {
+$app->get('/api/v2/{bankId}/app/common/account-type', function (Request $request, Response $response, array $args) use ($appController) {
 
     $result = $appController->getAccountType((int)$args['bankId']);
 
@@ -291,7 +291,7 @@ $app->get('/{bankId}/app/common/account-type', function (Request $request, Respo
 });
 
 
-$app->get('/{bankId}/app/common/config', function (Request $request, Response $response, array $args) use ($appController) {
+$app->get('/api/v2/{bankId}/app/common/config', function (Request $request, Response $response, array $args) use ($appController) {
     // $requestData = requestParse($request);
     $queryParams = $request->getQueryParams();
     $result = $appController->getConfig((int)$args['bankId'], $queryParams);
@@ -303,7 +303,7 @@ $app->get('/{bankId}/app/common/config', function (Request $request, Response $r
     }
 });
 
-$app->post('/{bankId}/app/common/password-reset', function (Request $request, Response $response, array $args) use ($appController) {
+$app->post('/api/v2/{bankId}/app/common/password-reset', function (Request $request, Response $response, array $args) use ($appController) {
     $requestData = requestParse($request);
     $result = $appController->resetPassword((int)$args['bankId'], $requestData);
 
@@ -314,7 +314,7 @@ $app->post('/{bankId}/app/common/password-reset', function (Request $request, Re
     }
 });
 
-$app->post('/{bankId}/app/common/file-upload', function (Request $request, Response $response, array $args) use ($appController) {
+$app->post('/api/v2/{bankId}/app/common/file-upload', function (Request $request, Response $response, array $args) use ($appController) {
     $requestData = requestParse($request);
     $result = $appController->uploadImage((int)$args['bankId'], $requestData);
 
@@ -331,9 +331,9 @@ $app->post('/{bankId}/app/common/file-upload', function (Request $request, Respo
 // ********************************************************************************
 // ******************************************** TRANSACTION endpoimts START ************************************************
 
-$groupPrefixTrans = 'api/v1/{bankid}/app/transaction';
+$groupPrefixTrans = 'api/v2/{bankid}/app/transaction';
 
-$app->get($groupPrefixTrans, function (Request $request, Response $response, array $args) use ($appController) {
+$app->get('api/v1/api/v2/{bankId}/app/transaction', function (Request $request, Response $response, array $args) use ($appController) {
     $user = userAuthVerify();
     $requestData = requestParse($request);
     $result = $appController->getTransaction((int)$args['bankId'], $requestData);
@@ -373,7 +373,7 @@ $app->get($groupPrefixTrans . '/find-account-info', function (Request $request, 
     $user = userAuthVerify();
     $requestData = requestParse($request);
 
-    $result = $appController->getAccountInfo((int)$args['bankId'],);
+    $result = $appController->getAccountInfo((int)$args['bankId'], $requestData);
 
     if ($result['code'] == 200) {
         return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
