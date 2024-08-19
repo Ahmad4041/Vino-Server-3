@@ -92,16 +92,28 @@ class ConfigController
         $data = $localDb->getResponseVtPass('airtime', 'data', 'tv-subscription', 'electricity-bill');
         // $data = unserialize($data['response']);
 
-        $internetData[] = [
+        $internetData = [
             "catgeoryName" => "Internet  Data Bundles",
             "categoryCode" => "Internet",
             "providers" => $this->getServiceCategoryVTPass($data['data'], true)
+        ];
+        $cableData = [
+            "catgeoryName" => "Television Cable Subscription",
+            "categoryCode" => "Cable",
+            "providers" => $this->getServiceCategoryVTPass($data['tv-subscription'], true)
+        ];
+        $billData = [
+            "catgeoryName" => "Electricity Bills",
+            "categoryCode" => "Electricity",
+            "providers" => $this->getServiceCategoryVTPass($data['electricity-bill'], true)
         ];
 
         $dataNew = [
             'networks' => $data['airtime'],
             'utilites' => [
                 $internetData,
+                $cableData,
+                $billData,
             ],
         ];
         $response = [
