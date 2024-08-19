@@ -99,11 +99,9 @@ class LocalDbController
     function getResponseVtPass($serviceID, $data, $tvSubscription, $billSubscription)
     {
         $stmt = $this->dbConnection->prepare("
-        SELECT * FROM response 
-        WHERE name = :serviceID 
-        AND data = :data 
-        AND tv-subscription = :tvSubscription 
-        AND electricity-bill = :billSubscription
+        SELECT name, response 
+        FROM response 
+        WHERE name IN (:serviceID, :data, :tvSubscription, :billSubscription)
     ");
 
         $stmt->bindParam(':serviceID', $serviceID, PDO::PARAM_STR);
@@ -113,9 +111,14 @@ class LocalDbController
 
         $stmt->execute();
 
-        $response = $stmt->fetch(PDO::FETCH_ASSOC);
+        $responses = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
 
-        return $response;
+        foreach ($responses as $key => $value) {
+            $responses[$key] = unserialize($value);
+        }
+
+        // var_dump($responses);
+        return $responses;
     }
 
 

@@ -90,11 +90,24 @@ class ConfigController
     {
         $localDb = new LocalDbController(Database::getConnection('mysql'));
         $data = $localDb->getResponseVtPass('airtime', 'data', 'tv-subscription', 'electricity-bill');
-        $data = unserialize($data['response']);
+        // $data = unserialize($data['response']);
+
+        $internetData[] = [
+            "catgeoryName" => "Internet  Data Bundles",
+            "categoryCode" => "Internet",
+            "providers" => $this->getServiceCategoryVTPass($data['data'], true)
+        ];
+
+        $dataNew = [
+            'networks' => $data['airtime'],
+            'utilites' => [
+                $internetData,
+            ],
+        ];
         $response = [
             'message'   => ErrorCodes::$SUCCESS_FETCH[1],
             'code'    => ErrorCodes::$SUCCESS_FETCH[0],
-            'data'      => $data,
+            'data'      => $dataNew,
         ];
         return $response;
     }
@@ -210,6 +223,32 @@ class ConfigController
                 "product_id" => $count,
             ];
         }, $categories)));
+        return $res;
+    }
+
+    function getServiceCategoryVTPass($services, $subcategory = false)
+    {
+        $vtpass = new VTPassController();
+        // $categories = $vtpass->getServiceByCategory($service);
+        $count = 0;
+        $res = array_values(array_filter(array_map(function ($row) use ($vtpass, &$count, $subcategory) {
+            $count++;
+            if (!$subcategory) {
+                return [
+                    "service_type" => $row['serviceID'],
+                    "name" => $row['name'],
+                    "shortname" => $row['serviceID'],
+                    "product_id" => $count,
+                ];
+            }
+            return [
+                "packages" =>  $vtpass->getServiceByVariation($row['serviceID']),
+                "service_type" => $row['serviceID'],
+                "name" => $row['name'],
+                "shortname" => $row['serviceID'],
+                "product_id" => $count,
+            ];
+        }, $services)));
         return $res;
     }
 
