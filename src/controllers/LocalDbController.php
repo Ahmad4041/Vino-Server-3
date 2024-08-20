@@ -202,4 +202,35 @@ class LocalDbController
             'data' => true,
         ];
     }
+
+    public function fetchResponseData()
+    {
+        $names = ['dataNetwork', 'dataUtility', 'dataElectricity'];
+
+        $placeholders = rtrim(str_repeat('?, ', count($names)), ', ');
+        $query = "SELECT name, response FROM response WHERE name IN ($placeholders)";
+        $stmt = $this->dbConnection->prepare($query);
+
+        $stmt->execute($names);
+
+        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $responseData = [
+            'networks' => [],
+            'utilities' => [],
+            'bank_list' => [],
+        ];
+
+        foreach ($results as $row) {
+            if ($row['name'] === 'dataNetwork') {
+                $responseData['networks'] = json_decode($row['response'], true);
+            } elseif ($row['name'] === 'dataUtility') {
+                $responseData['utilities'] = json_decode($row['response'], true);
+            } elseif ($row['name'] === 'dataElectricity') {
+                $responseData['bank_list'] = json_decode($row['response'], true);
+            }
+        }
+
+        return $responseData;
+    }
 }

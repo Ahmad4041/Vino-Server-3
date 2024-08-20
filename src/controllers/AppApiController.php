@@ -482,6 +482,7 @@ class AppApiController
     public function getConfig($bankid, $queryParams)
     {
         $configConnection = new ConfigController(Database::getConnection('mysql'));
+        $localDbConnection = new LocalDbController(Database::getConnection('mysql'));
 
         $isAll = (isset($queryParams['all']) && $queryParams['all'] !== 'false');
         $config = $configConnection->getConfigKeyValueData($bankid, 'config_update');
@@ -497,12 +498,16 @@ class AppApiController
         ];
 
         if ($isAll) {
-            $dataVtPass = $configConnection->getVtPassData()['data'];
-            $data['networks'] = $dataVtPass['networks'];
-            $data['utilites'] = $dataVtPass['utilites'];
+            // $dataVtPass = $configConnection->getVtPassData()['data'];
+            // $data['networks'] = $dataVtPass['networks'];
+            // $data['utilites'] = $dataVtPass['utilites'];
             // $data['networks'] = $configConnection->getTelcoNetworks()['data'];
             // $data['utilites'] = $configConnection->getUtilities($bankid, 'all')['data'];
-            $data['bank_list'] = $configConnection->getBankListWithoutAuth($bankid)['data'];
+            // $data['bank_list'] = $configConnection->getBankListWithoutAuth($bankid)['data'];
+            $configData = $localDbConnection->fetchResponseData();
+            $data['networks'] = $configData['networks'];
+            $data['utilites'] = $configData['utilites'];
+            $data['bank_list'] = $configData['bank_list'];
         }
 
         $message = ErrorCodes::$SUCCESS_FETCH[1];
