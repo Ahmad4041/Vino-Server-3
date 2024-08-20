@@ -608,14 +608,14 @@ class AppApiController
 
             $bankCodeExist = $localDbConnection->bankCodeCheck($request);
 
-            if ($bankid == $request->bankCode) {
+            if ($bankid == $request['bankCode']) {
                 if ($bankCodeExist['code'] == 200) {
                     $accountinfo = $bankDbConnection->getCustomerByAccountNo2($request['accountNo']);
                     $response = [
-                        'destinationinstitutioncode' => $request->bankCode,
-                        'accountnumber' => $accountinfo->Accountid,
-                        'accountname' => $accountinfo->customerName,
-                        'bvn' => $accountinfo->bvn,
+                        'destinationinstitutioncode' => $request['bankCode'],
+                        'accountnumber' => $accountinfo['Accountid'],
+                        'accountname' => $accountinfo['customerName'],
+                        'bvn' => $accountinfo['bvn'],
                     ];
                     return [
                         'message' => ErrorCodes::$SUCCESS_FETCH_ACCOUNT_INFO[1],
@@ -627,10 +627,10 @@ class AppApiController
                     $accountinfo = $bankDbConnection->accountInfo($request);
                     if ($accountinfo['code'] == 200) {
                         $response = [
-                            'destinationinstitutioncode' => $request->bankCode,
-                            'accountnumber' => $accountinfo['data']->Accountid,
-                            'accountname' => $accountinfo['data']->Customername,
-                            'bvn' => $accountinfo['data']->BVN,
+                            'destinationinstitutioncode' => $request['bankCode'],
+                            'accountnumber' => $accountinfo['data']['Accountid'],
+                            'accountname' => $accountinfo['data']['Customername'],
+                            'bvn' => $accountinfo['data']['BVN'],
                         ];
 
                         return [
@@ -650,7 +650,7 @@ class AppApiController
                 }
             } else {
                 $charms = new CharmsAPI();
-                $accountinfo2 = $charms->findAccount($request->accountNo, $request->bankCode);
+                $accountinfo2 = $charms->findAccount($request['accountNo'], $request['bankCode']);
                 if ($accountinfo2['data']['requestSuccessful']) {
                     return [
                         'message' => $accountinfo2['message'],

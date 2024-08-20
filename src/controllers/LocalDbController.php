@@ -141,12 +141,9 @@ class LocalDbController
     {
         $bankCode = $request['bankCode'];
 
-        $sql = "SELECT * FROM banks WHERE bankcode = :bankCode";
-        $stmt = $this->dbConnection->prepare($sql);
-        $stmt->bind_param(':bankCode', $bankCode, PDO::PARAM_STR);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $existCode = $result->fetch_assoc(PDO::FETCH_ASSOC);
+        $stmt = $this->dbConnection->prepare("SELECT * FROM banks WHERE bankcode = ?");
+        $stmt->execute([$bankCode]);
+        $existCode = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$existCode) {
             return [

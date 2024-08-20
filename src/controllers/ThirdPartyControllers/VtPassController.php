@@ -160,9 +160,9 @@ class VTPassController
     public function verifyMeterNumber($request)
     {
         $data = [
-            'serviceID' => $request->serviceID,
-            'billersCode' => $request->billersCode,
-            'type' => $request->variation_code
+            'serviceID' => $request['serviceID'],
+            'billersCode' => $request['billersCode'],
+            'type' => $request['variation_code']
         ];
 
         return $this->makeRequest('POST', '/merchant-verify', $data);
