@@ -498,8 +498,8 @@ class AppApiController
 
         if ($isAll) {
             $dataVtPass = $configConnection->getVtPassData()['data'];
-            $data ['networks'] = $dataVtPass['networks'];
-            $data ['utilites'] = $dataVtPass['utilites'];
+            $data['networks'] = $dataVtPass['networks'];
+            $data['utilites'] = $dataVtPass['utilites'];
             // $data['networks'] = $configConnection->getTelcoNetworks()['data'];
             // $data['utilites'] = $configConnection->getUtilities($bankid, 'all')['data'];
             $data['bank_list'] = $configConnection->getBankListWithoutAuth($bankid)['data'];
@@ -815,6 +815,67 @@ class AppApiController
                     'message' => $getBankList['message'],
                     'data' => []
                 ];
+            }
+        } catch (Exception $e) {
+            return [
+                'dcode' => 500,
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null
+            ];
+        }
+    }
+
+    public function verifyMeterNo($bankid, $request)
+    {
+        try {
+
+            $dataRequest = [
+                'serviceID' => $request['serviceID'] ?? null,
+                'billersCode' => $request['billersCode'] ?? null,
+                'variation_code' => $request['variation_code'] ?? null,
+            ];
+
+            $rules = [
+                'serviceID' => 'required',
+                'billersCode' => 'required',
+                'variation_code' => 'required',
+            ];
+
+            $validator = new Validator();
+            $validation = $validator->make($dataRequest, $rules);
+
+            $validation->validate();
+
+            if ($validation->fails()) {
+                return [
+                    'message' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[1],
+                    'data' => $validation->errors()->toArray(),
+                    'dcode' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[0],
+                    'code' => 422,
+                ];
+            }
+
+            $vtPassConnection = new VTPassController();
+            $getResult = $vtPassConnection->verifyMeterNumber($request);
+
+            if ($getResult['code'] === '000') {
+                if ($getResult['content']['WrongBillersCode'] === false) {
+                    $message = ErrorCodes::$SUCCESS_FETCH_ACCOUNT_INFO[1];
+                    $dcode = ErrorCodes::$SUCCESS_FETCH_ACCOUNT_INFO[0];
+                    $code = 200;
+                    return sendCustomResponse($message, $getResult['content'], $dcode, $code);
+                } else {
+                    $message = ErrorCodes::$FAIL_TRANSACTION[1];
+                    $dcode = ErrorCodes::$FAIL_TRANSACTION[0];
+                    $code = 401;
+                    return sendCustomResponse($message, $getResult['content'], $dcode, $code);
+                }
+            } else {
+                $message = ErrorCodes::$FAIL_API_ERROR[1];
+                $dcode = ErrorCodes::$FAIL_API_ERROR[0];
+                $code = 401;
+                return sendCustomResponse($message, $getResult, $dcode, $code);
             }
         } catch (Exception $e) {
             return [

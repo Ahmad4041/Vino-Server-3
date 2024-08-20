@@ -382,6 +382,19 @@ $app->get('/api/v2/{bankId}/app/transaction/find-account-info', function (Reques
     }
 });
 
+$app->get('/api/v2/{bankId}/app/transaction/customer-verification', function (Request $request, Response $response, array $args) use ($appController) {
+    $user = userAuthVerify();
+    $requestData = requestParse($request);
+
+    $result = $appController->verifyMeterNo((int)$args['bankId'], $requestData);
+
+    if ($result['code'] == 200) {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    } else {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    }
+});
+
 
 
 
