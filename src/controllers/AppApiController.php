@@ -886,4 +886,35 @@ class AppApiController
             ];
         }
     }
+
+    public function getUtilities()
+    {
+        try {
+            $utilitydata = array();
+            array_push($utilitydata, [
+                "catgeoryName" => "Internet  Data Bundles",
+                "categoryCode" => "Internet",
+            ]);
+            array_push($utilitydata, [
+                "catgeoryName" => "Television Cable Subscription",
+                "categoryCode" => "Cable",
+            ]);
+            array_push($utilitydata, [
+                "catgeoryName" => "Electricity Bills",
+                "categoryCode" => "Electricity",
+            ]);
+
+            $message = ErrorCodes::$SUCCESS_FETCH_UTILITIES[1];
+            $dcode = ErrorCodes::$SUCCESS_FETCH_UTILITIES[0];
+            $code = 200;
+            return sendCustomResponse($message, $utilitydata, $dcode, $code);
+        } catch (Exception $e) {
+            return [
+                'dcode' => 500,
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null
+            ];
+        }
+    }
 }

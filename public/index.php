@@ -395,6 +395,18 @@ $app->get('/api/v2/{bankId}/app/transaction/customer-verification', function (Re
     }
 });
 
+$app->get('/api/v2/{bankId}/app/transaction/utilities/{services?}', function (Request $request, Response $response, array $args) use ($appController) {
+    $user = userAuthVerify();
+
+    $result = $appController->getUtilities();
+
+    if ($result['code'] == 200) {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    } else {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    }
+});
+
 
 
 
