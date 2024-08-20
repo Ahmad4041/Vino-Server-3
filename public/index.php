@@ -407,6 +407,17 @@ $app->get('/api/v2/{bankId}/app/transaction/utilities', function (Request $reque
     }
 });
 
+$app->get('/api/v2/{bankId}/app/transaction/customer-debit-cards', function (Request $request, Response $response, array $args) use ($appController) {
+    $user = userAuthVerify();
+
+    $result = $appController->getCustomerDebitCards((int)$args['bankId'], $user);
+    if ($result['code'] == 200) {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    } else {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    }
+});
+
 
 
 

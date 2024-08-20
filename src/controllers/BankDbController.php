@@ -253,6 +253,47 @@ class BankDbController
     // ******************************************* BANK DB PUBLIC FUNCTIONS ***********************************************
     //******************************************** */
 
+
+    function debitcards($user)
+    {
+        $username = $user['username'];
+        $AccountId = $user['accountId'];
+
+        $query = "SELECT TOP 1 1 FROM tblMobileDebitCard WHERE AccountName = :username AND AccountID = :accountId";
+        $stmt = $this->dbConnection->prepare($query);
+        $stmt->bindParam(':username', $username);
+        $stmt->bindParam(':accountId', $AccountId);
+        $stmt->execute();
+
+        $debitcard = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($debitcard) {
+            $mappedData = [
+                'accountid' => $debitcard['AccountID'],
+                'accountname' => $debitcard['AccountName'],
+                'cardno' => (int) $debitcard['CardNo'],
+                'cardtype' => $debitcard['CardType'],
+                'issueddate' => $debitcard['IssuedDate'],
+                'expdate' => $debitcard['ExpDate'],
+                'active' => $debitcard['Active'],
+            ];
+
+            return [
+                'code' => ErrorCodes::$SUCCESS_REQUEST_CUSTOMER_DEBIT_CARDS_AVAILABLE[0],
+                'message' => ErrorCodes::$SUCCESS_REQUEST_CUSTOMER_DEBIT_CARDS_AVAILABLE[1],
+                'data' =>  $mappedData,
+            ];
+        } else {
+            return [
+                'code' => ErrorCodes::$FAIL_REQUEST_CUSTOMER_DEBIT_CARDS_AVAILABILITY[0],
+                'message' => ErrorCodes::$FAIL_REQUEST_CUSTOMER_DEBIT_CARDS_AVAILABILITY[1],
+                'data' => [],
+            ];
+        }
+    }
+
+
+
     function accountInfo($request)
     {
         $accountId = $request['accountNo'];

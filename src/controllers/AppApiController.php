@@ -887,6 +887,33 @@ class AppApiController
         }
     }
 
+    public function getCustomerDebitCards($bankid, $user)
+    {
+        try {
+            $bankDbConnection = new BankDbController(Database::getConnection($bankid));
+            $Debitcardinfo = $bankDbConnection->debitcards($user);
+            if ($Debitcardinfo['code'] == 2024) {
+                $data = $Debitcardinfo['data'];
+                $message = ErrorCodes::$SUCCESS_REQUEST_CUSTOMER_DEBIT_CARDS_AVAILABLE[1];
+                $dcode = ErrorCodes::$SUCCESS_REQUEST_CUSTOMER_DEBIT_CARDS_AVAILABLE[0];
+                $code = 200;
+                return sendCustomResponse($message, $data, $dcode, $code);
+            } else {
+                $message = ErrorCodes::$FAIL_REQUEST_CUSTOMER_DEBIT_CARDS_AVAILABILITY[1];
+                $dcode = ErrorCodes::$FAIL_REQUEST_CUSTOMER_DEBIT_CARDS_AVAILABILITY[0];
+                $code = 200;
+                return sendCustomResponse($message, [], $dcode, $code);
+            }
+        } catch (Exception $e) {
+            return [
+                'dcode' => 500,
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null
+            ];
+        }
+    }
+
     public function getUtilities()
     {
         try {
