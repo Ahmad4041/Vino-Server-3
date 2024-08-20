@@ -979,11 +979,12 @@ class AppApiController
     public function fetchLiveConfigData($bankid)
     {
         $configConnection = new ConfigController(Database::getConnection('mysql'));
-        $localDbConnection = new LocalDbController(Database::getConnection($bankid));
+        $localDbConnection = new LocalDbController(Database::getConnection('mysql'));
 
         $data['networks'] = $configConnection->getTelcoNetworks()['data'];
         $data['utilites'] = $configConnection->getUtilities($bankid, 'all')['data'];
         $data['bank_list'] = $configConnection->getBankListWithoutAuth($bankid)['data'];
+        // var_dump($data);
 
         $liveConfigDataUpdate = $localDbConnection->updateConfigLiveData($data['networks'], $data['utilites'], $data['bank_list']);
 

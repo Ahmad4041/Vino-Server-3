@@ -304,7 +304,7 @@ $app->get('/api/v2/{bankId}/app/common/config', function (Request $request, Resp
 });
 
 
-$app->post('/api/v2/{bankId}/app/common/update/config', function (Request $request, Response $response, array $args) use ($appController) {
+$app->get('/api/v2/{bankId}/app/common/update/config', function (Request $request, Response $response, array $args) use ($appController) {
 
     $result = $appController->fetchLiveConfigData((int)$args['bankId']);
     if ($result['code'] == 200) {
