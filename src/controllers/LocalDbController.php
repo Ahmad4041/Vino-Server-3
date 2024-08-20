@@ -160,13 +160,13 @@ class LocalDbController
         ];
     }
 
-    public function updateConfigLiveData($networks, $utils, $electricity)
+    public function updateConfigLiveData($networks, $utils, $bankList)
     {
 
         $dataToUpdate = [
             'dataNetwork' => json_encode($networks),
             'dataUtility' => json_encode($utils),
-            'dataElectricity' => json_encode($electricity)
+            'dataBankList' => json_encode($bankList)
         ];
 
         $checkQuery = "SELECT name FROM response WHERE name = :name";
@@ -205,7 +205,7 @@ class LocalDbController
 
     public function fetchResponseData()
     {
-        $names = ['dataNetwork', 'dataUtility', 'dataElectricity'];
+        $names = ['dataNetwork', 'dataUtility', 'dataBankList'];
 
         $placeholders = rtrim(str_repeat('?, ', count($names)), ', ');
         $query = "SELECT name, response FROM response WHERE name IN ($placeholders)";
@@ -218,18 +218,23 @@ class LocalDbController
         $responseData = [
             'networks' => [],
             'utilities' => [],
-            'bank_list' => [],
+            'banklist' => [],
         ];
+        // var_dump($results['response']);
 
         foreach ($results as $row) {
             if ($row['name'] === 'dataNetwork') {
                 $responseData['networks'] = json_decode($row['response'], true);
             } elseif ($row['name'] === 'dataUtility') {
                 $responseData['utilities'] = json_decode($row['response'], true);
-            } elseif ($row['name'] === 'dataElectricity') {
-                $responseData['bank_list'] = json_decode($row['response'], true);
+            
+            }
+             elseif ($row['name'] === 'dataBankList') {
+                $responseData['banklist'] = json_decode($row['response'], true);
             }
         }
+        // $responseData['bank_list'] = 
+        // var_dump($responseData);
 
         return $responseData;
     }

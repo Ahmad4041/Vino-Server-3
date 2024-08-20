@@ -506,8 +506,8 @@ class AppApiController
             // $data['bank_list'] = $configConnection->getBankListWithoutAuth($bankid)['data'];
             $configData = $localDbConnection->fetchResponseData();
             $data['networks'] = $configData['networks'];
-            $data['utilites'] = $configData['utilites'];
-            $data['bank_list'] = $configData['bank_list'];
+            $data['utilites'] = $configData['utilities'];
+            $data['bank_list'] = $configData['banklist'];
         }
 
         $message = ErrorCodes::$SUCCESS_FETCH[1];
@@ -989,7 +989,8 @@ class AppApiController
         $data['networks'] = $configConnection->getTelcoNetworks()['data'];
         $data['utilites'] = $configConnection->getUtilities($bankid, 'all')['data'];
         $data['bank_list'] = $configConnection->getBankListWithoutAuth($bankid)['data'];
-        // var_dump($data);
+
+        // return sendCustomResponse('', $data, 200,200);
 
         $liveConfigDataUpdate = $localDbConnection->updateConfigLiveData($data['networks'], $data['utilites'], $data['bank_list']);
 
