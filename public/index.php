@@ -395,7 +395,7 @@ $app->get('/api/v2/{bankId}/app/transaction/customer-verification', function (Re
     }
 });
 
-$app->get('/api/v2/{bankId}/app/transaction/utilities/{services?}', function (Request $request, Response $response, array $args) use ($appController) {
+$app->get('/api/v2/{bankId}/app/transaction/utilities', function (Request $request, Response $response, array $args) use ($appController) {
     $user = userAuthVerify();
 
     $result = $appController->getUtilities();
