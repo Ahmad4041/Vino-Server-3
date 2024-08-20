@@ -303,6 +303,19 @@ $app->get('/api/v2/{bankId}/app/common/config', function (Request $request, Resp
     }
 });
 
+
+$app->post('/api/v2/{bankId}/app/common/update/config', function (Request $request, Response $response, array $args) use ($appController) {
+
+    $result = $appController->fetchLiveConfigData((int)$args['bankId']);
+    if ($result['code'] == 200) {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    } else {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    }
+});
+
+
+
 $app->post('/api/v2/{bankId}/app/common/password-reset', function (Request $request, Response $response, array $args) use ($appController) {
     $requestData = requestParse($request);
     $result = $appController->resetPassword((int)$args['bankId'], $requestData);
@@ -417,6 +430,28 @@ $app->get('/api/v2/{bankId}/app/transaction/customer-debit-cards', function (Req
         return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
     }
 });
+
+
+$app->post('/api/v2/{bankId}/app/transaction/topup-mobile', function (Request $request, Response $response, array $args) use ($appController) {
+    $user = userAuthVerify();
+    $requestData = requestParse($request);
+
+    $result = $appController->topUpMobile((int)$args['bankId'], $user, $requestData);
+    if ($result['code'] == 200) {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    } else {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    }
+});
+
+
+
+
+
+
+
+
+
 
 
 

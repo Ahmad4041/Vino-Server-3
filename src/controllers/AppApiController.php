@@ -944,4 +944,55 @@ class AppApiController
             ];
         }
     }
+
+    public function topUpMobile($bankid, $user, $requestData)
+    {
+        $dataRequest = [
+            'amount' => $request['amount'] ?? null,
+            'networkCode' => $request['networkCode'] ?? null,
+            'phoneNo' => $request['phoneNo'] ?? null,
+            'srcAccount' => $request['srcAccount'] ?? null,
+        ];
+
+        $rules = [
+            'amount' => 'required',
+            'networkCode' => 'required',
+            'phoneNo' => 'required',
+            'srcAccount' => 'required',
+        ];
+
+        $validator = new Validator();
+        $validation = $validator->make($dataRequest, $rules);
+
+        $validation->validate();
+
+        if ($validation->fails()) {
+            return [
+                'message' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[1],
+                'data' => $validation->errors()->toArray(),
+                'dcode' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[0],
+                'code' => 422,
+            ];
+        };
+    }
+
+    public function fetchLiveConfigData($bankid)
+    {
+        $configConnection = new ConfigController(Database::getConnection('mysql'));
+        $localDbConnection = new LocalDbController(Database::getConnection($bankid));
+
+        $data['networks'] = $configConnection->getTelcoNetworks()['data'];
+        $data['utilites'] = $configConnection->getUtilities($bankid, 'all')['data'];
+        $data['bank_list'] = $configConnection->getBankListWithoutAuth($bankid)['data'];
+
+        $liveConfigDataUpdate = $localDbConnection->updateConfigLiveData($data['networks'], $data['utilites'], $data['bank_list']);
+
+        if ($liveConfigDataUpdate['code'] == 200) {
+            $data = 'Success';
+            $message = 'Live Data Update Success';
+            $dcode = 200;
+            $code = 200;
+            return sendCustomResponse($message, $data, $dcode, $code);
+        }
+    }
 }

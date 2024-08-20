@@ -159,4 +159,47 @@ class LocalDbController
             'data' => $existCode
         ];
     }
+
+    public function updateConfigLiveData($networks, $utils, $electricity)
+    {
+
+        $dataToUpdate = [
+            'dataNetwork' => json_encode($networks),
+            'dataUtility' => json_encode($utils),
+            'dataElectricity' => json_encode($electricity)
+        ];
+
+        $checkQuery = "SELECT name FROM response WHERE name = :name";
+        $checkStmt = $this->dbConnection->prepare($checkQuery);
+
+        $updateQuery = "UPDATE response SET response = :response WHERE name = :name";
+        $updateStmt = $this->dbConnection->prepare($updateQuery);
+
+        $insertQuery = "INSERT INTO response (name, response) VALUES (:name, :response)";
+        $insertStmt = $this->dbConnection->prepare($insertQuery);
+
+
+        foreach ($dataToUpdate as $name => $response) {
+            $checkStmt->execute([':name' => $name]);
+            $exists = $checkStmt->fetchColumn();
+
+            if ($exists) {
+                $updateStmt->execute([
+                    ':name' => $name,
+                    ':response' => $response
+                ]);
+            } else {
+                $insertStmt->execute([
+                    ':name' => $name,
+                    ':response' => $response
+                ]);
+            }
+        }
+
+        return [
+            'code' => 200,
+            'message' => 'Config Data Update Success',
+            'data' => true,
+        ];
+    }
 }
