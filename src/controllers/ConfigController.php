@@ -86,42 +86,96 @@ class ConfigController
         return $response;
     }
 
+    // function getVtPassData()
+    // {
+    //     $localDb = new LocalDbController(Database::getConnection('mysql'));
+    //     $data = $localDb->getResponseVtPass('airtime', 'data', 'tv-subscription', 'electricity-bill');
+    //     // $data = unserialize($data['response']);
+
+    //     $internetData = [
+    //         "catgeoryName" => "Internet  Data Bundles",
+    //         "categoryCode" => "Internet",
+    //         "providers" => $this->getServiceCategoryVTPass($data['data'], true)
+    //     ];
+    //     $cableData = [
+    //         "catgeoryName" => "Television Cable Subscription",
+    //         "categoryCode" => "Cable",
+    //         "providers" => $this->getServiceCategoryVTPass($data['tv-subscription'], true)
+    //     ];
+    //     $billData = [
+    //         "catgeoryName" => "Electricity Bills",
+    //         "categoryCode" => "Electricity",
+    //         "providers" => $this->getServiceCategoryVTPass($data['electricity-bill'], true)
+    //     ];
+
+    //     $dataNew = [
+    //         'networks' => $data['airtime'],
+    //         'utilites' => [
+    //             $internetData,
+    //             $cableData,
+    //             $billData,
+    //         ],
+    //     ];
+    //     $response = [
+    //         'message'   => ErrorCodes::$SUCCESS_FETCH[1],
+    //         'code'    => ErrorCodes::$SUCCESS_FETCH[0],
+    //         'data'      => $dataNew,
+    //     ];
+    //     return $response;
+    // }
+
+
     function getVtPassData()
     {
         $localDb = new LocalDbController(Database::getConnection('mysql'));
-        $data = $localDb->getResponseVtPass('airtime', 'data', 'tv-subscription', 'electricity-bill');
-        // $data = unserialize($data['response']);
-
-        $internetData = [
-            "catgeoryName" => "Internet  Data Bundles",
-            "categoryCode" => "Internet",
-            "providers" => $this->getServiceCategoryVTPass($data['data'], true)
-        ];
-        $cableData = [
-            "catgeoryName" => "Television Cable Subscription",
-            "categoryCode" => "Cable",
-            "providers" => $this->getServiceCategoryVTPass($data['tv-subscription'], true)
-        ];
-        $billData = [
-            "catgeoryName" => "Electricity Bills",
-            "categoryCode" => "Electricity",
-            "providers" => $this->getServiceCategoryVTPass($data['electricity-bill'], true)
-        ];
+        $data = $localDb->getResponseVtPass2(['airtime', 'data', 'tv-subscription', 'electricity-bill']);
 
         $dataNew = [
             'networks' => $data['airtime'],
             'utilites' => [
-                $internetData,
-                $cableData,
-                $billData,
+                $this->createUtilityData("Internet Data Bundles", "Internet", $data['data']),
+                $this->createUtilityData("Television Cable Subscription", "Cable", $data['tv-subscription']),
+                $this->createUtilityData("Electricity Bills", "Electricity", $data['electricity-bill']),
             ],
         ];
-        $response = [
-            'message'   => ErrorCodes::$SUCCESS_FETCH[1],
-            'code'    => ErrorCodes::$SUCCESS_FETCH[0],
-            'data'      => $dataNew,
+
+        return [
+            'message' => ErrorCodes::$SUCCESS_FETCH[1],
+            'code' => ErrorCodes::$SUCCESS_FETCH[0],
+            'data' => $dataNew,
         ];
-        return $response;
+    }
+
+    private function createUtilityData($categoryName, $categoryCode, $services)
+    {
+        return [
+            "categoryName" => $categoryName,
+            "categoryCode" => $categoryCode,
+            "providers" => $this->getServiceCategoryVTPass2($services, true)
+        ];
+    }
+
+
+    function getServiceCategoryVTPass2($services, $subcategory = false)
+    {
+        $vtpass = new VTPassController();
+        $count = 0;
+
+        return array_values(array_map(function ($row) use ($vtpass, &$count, $subcategory) {
+            $count++;
+            $serviceData = [
+                "service_type" => $row['serviceID'],
+                "name" => $row['name'],
+                "shortname" => $row['serviceID'],
+                "product_id" => $count,
+            ];
+
+            if ($subcategory) {
+                $serviceData['packages'] = $vtpass->getServiceByVariation($row['serviceID']);
+            }
+
+            return $serviceData;
+        }, $services));
     }
 
     function getUtilities($bankid, $services = null)

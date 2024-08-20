@@ -120,7 +120,23 @@ class LocalDbController
         // var_dump($responses);
         return $responses;
     }
-    
+
+    function getResponseVtPass2(array $serviceNames)
+    {
+        $placeholders = implode(',', array_fill(0, count($serviceNames), '?'));
+        $stmt = $this->dbConnection->prepare("
+        SELECT name, response 
+        FROM response 
+        WHERE name IN ($placeholders)
+    ");
+
+        $stmt->execute($serviceNames);
+
+        $responses = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+
+        return array_map('unserialize', $responses);
+    }
+
     function bankCodeCheck($request)
     {
         $bankCode = $request['bankCode'];
