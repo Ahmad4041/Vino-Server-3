@@ -292,8 +292,8 @@ $app->get('/api/v2/{bankId}/app/common/account-type', function (Request $request
 
 
 $app->get('/api/v2/{bankId}/app/common/config', function (Request $request, Response $response, array $args) use ($appController) {
-    // $requestData = requestParse($request);
     $queryParams = $request->getQueryParams();
+    
     $result = $appController->getConfig((int)$args['bankId'], $queryParams);
 
     if ($result['code'] == 200) {

@@ -166,6 +166,7 @@ class LocalDbController
         $dataToUpdate = [
             'dataNetwork' => json_encode($networks),
             'dataUtility' => json_encode($utils),
+            // 'dataBankList' => $bankList
             'dataBankList' => json_encode($bankList)
         ];
 
@@ -231,29 +232,66 @@ class LocalDbController
         return $responseData;
     }
 
-
     public function fetchBankListData()
     {
-        $names = ['dataBankList'];
-        $placeholders = rtrim(str_repeat('?, ', count($names)), ', ');
-        $query = "SELECT name, response FROM response WHERE name IN ($placeholders)";
+        $name = 'dataBankList';
+        $query = "SELECT response FROM response WHERE name = :name";
         $stmt = $this->dbConnection->prepare($query);
-        $stmt->execute($names);
-        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $stmt->execute([':name' => $name]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        $bank_list = null;
-        try {
-            $bank_list = json_decode($results[0]['response'], true);
-        } catch (Exception $e) {
-            // Log the error or handle it in some other way
-            return [];
-        }
-
-        if ($bank_list !== null) {
-            return $bank_list;
+        if ($result && isset($result['response'])) {
+            $bank_list = $this->tryParseJson($result['response']);
+            if ($bank_list !== null) {
+                return $bank_list;
+            } else {
+                // Log the error or handle it in some other way
+                echo 'JSON Decoding Error: Unable to decode "dataBankList" response.';
+                return [];
+            }
         } else {
-            // Log the error or handle it in some other way
+            // No "dataBankList" row found
             return [];
         }
     }
+
+    private function tryParseJson($json_string)
+    {
+
+        $json_string = preg_replace('/^\xEF\xBB\xBF/', '', $json_string);
+
+        $data = json_decode($json_string, true);
+
+        if (json_last_error() === JSON_ERROR_NONE) {
+            return $data;
+        } else {
+            echo "JSON Decoding Error: " . json_last_error_msg();
+
+            return $this->fixMalformedJsonData($json_string);
+        }
+    }
+
+    private function fixMalformedJsonData($json_string)
+    {
+        // Attempt to fix common issues with JSON data
+        $fixed_json_string = preg_replace([
+            '/"service":\s*undefined/', // Replace "undefined" values with empty strings
+            '/,\s*]/', // Remove trailing commas before closing brackets
+            '/,\s*}/'  // Remove trailing commas before closing braces
+        ], [
+            '"service":""',
+            ']',
+            '}'
+        ], $json_string);
+
+        $data = json_decode($fixed_json_string, true);
+
+        if (json_last_error() === JSON_ERROR_NONE) {
+            return $data;
+        } else {
+            echo "JSON Decoding Error after fix: " . json_last_error_msg();
+            return null;
+        }
+    }
+
 }

@@ -504,6 +504,7 @@ class AppApiController
             // $data['networks'] = $configConnection->getTelcoNetworks()['data'];
             // $data['utilites'] = $configConnection->getUtilities($bankid, 'all')['data'];
             // $data['bank_list'] = $configConnection->getBankListWithoutAuth($bankid)['data'];
+
             $configData = $localDbConnection->fetchResponseData();
             $data['networks'] = $configData['networks'];
             $data['utilities'] = $configData['utilities'];
@@ -997,7 +998,7 @@ class AppApiController
         $liveConfigDataUpdate = $localDbConnection->updateConfigLiveData($data['networks'], $data['utilites'], $data['bank_list']);
 
         if ($liveConfigDataUpdate['code'] == 200) {
-            $data = 'Success';
+            $data = 'Success, Data insertion';
             $message = 'Live Data Update Success';
             $dcode = 200;
             $code = 200;
