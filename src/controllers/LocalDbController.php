@@ -205,7 +205,7 @@ class LocalDbController
 
     public function fetchResponseData()
     {
-        $names = ['dataNetwork', 'dataUtility', 'dataBankList'];
+        $names = ['dataNetwork', 'dataUtility'];
 
         $placeholders = rtrim(str_repeat('?, ', count($names)), ', ');
         $query = "SELECT name, response FROM response WHERE name IN ($placeholders)";
@@ -218,24 +218,42 @@ class LocalDbController
         $responseData = [
             'networks' => [],
             'utilities' => [],
-            'banklist' => [],
         ];
-        // var_dump($results['response']);
 
         foreach ($results as $row) {
             if ($row['name'] === 'dataNetwork') {
                 $responseData['networks'] = json_decode($row['response'], true);
             } elseif ($row['name'] === 'dataUtility') {
                 $responseData['utilities'] = json_decode($row['response'], true);
-            
-            }
-             elseif ($row['name'] === 'dataBankList') {
-                $responseData['banklist'] = json_decode($row['response'], true);
             }
         }
-        // $responseData['bank_list'] = 
-        // var_dump($responseData);
 
         return $responseData;
+    }
+
+
+    public function fetchBankListData()
+    {
+        $names = ['dataBankList'];
+        $placeholders = rtrim(str_repeat('?, ', count($names)), ', ');
+        $query = "SELECT name, response FROM response WHERE name IN ($placeholders)";
+        $stmt = $this->dbConnection->prepare($query);
+        $stmt->execute($names);
+        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $bank_list = null;
+        try {
+            $bank_list = json_decode($results[0]['response'], true);
+        } catch (Exception $e) {
+            // Log the error or handle it in some other way
+            return [];
+        }
+
+        if ($bank_list !== null) {
+            return $bank_list;
+        } else {
+            // Log the error or handle it in some other way
+            return [];
+        }
     }
 }

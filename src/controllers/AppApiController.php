@@ -506,8 +506,10 @@ class AppApiController
             // $data['bank_list'] = $configConnection->getBankListWithoutAuth($bankid)['data'];
             $configData = $localDbConnection->fetchResponseData();
             $data['networks'] = $configData['networks'];
-            $data['utilites'] = $configData['utilities'];
-            $data['bank_list'] = $configData['banklist'];
+            $data['utilities'] = $configData['utilities'];
+
+            $bankListData = $localDbConnection->fetchBankListData();
+            $data['bank_list'] = $bankListData;
         }
 
         $message = ErrorCodes::$SUCCESS_FETCH[1];
