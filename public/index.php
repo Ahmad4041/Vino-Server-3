@@ -293,7 +293,7 @@ $app->get('/api/v2/{bankId}/app/common/account-type', function (Request $request
 
 $app->get('/api/v2/{bankId}/app/common/config', function (Request $request, Response $response, array $args) use ($appController) {
     $queryParams = $request->getQueryParams();
-    
+
     $result = $appController->getConfig((int)$args['bankId'], $queryParams);
 
     if ($result['code'] == 200) {
@@ -436,7 +436,7 @@ $app->post('/api/v2/{bankId}/app/transaction/topup-mobile', function (Request $r
     $user = userAuthVerify();
     $requestData = requestParse($request);
 
-    $result = $appController->topUpMobile((int)$args['bankId'], $user, $requestData);
+    $result = $appController->requestTopUpMobile((int)$args['bankId'], $user, $requestData);
     if ($result['code'] == 200) {
         return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
     } else {

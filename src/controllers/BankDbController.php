@@ -254,6 +254,105 @@ class BankDbController
     //******************************************** */
 
 
+    public function customerValidate($srcAcct, $username)
+    {
+        $stmt = $this->dbConnection->prepare("
+        SELECT TOP 1 mu.AccountID, cu.BalC1 
+        FROM tblMobileUsers mu
+        LEFT JOIN tblcustomer cu ON mu.AccountID = cu.Accountid
+        WHERE mu.AccountID = :srcAcct AND mu.Username = :username
+    ");
+        $stmt->bindParam(':srcAcct', $srcAcct);
+        $stmt->bindParam(':username', $username);
+        $stmt->execute();
+        $customerData = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($customerData) {
+            return [
+                'code' => 200,
+                'message' => 'Customer has been Found',
+                'balance' => (float)$customerData['BalC1'],
+            ];
+        }
+
+        return [
+            'code' => 404,
+            'message' => 'Customer Not Found',
+        ];
+    }
+
+
+    public function getMobileFees($Code)
+    {
+        $stmt = $this->dbConnection->prepare("SELECT TOP 1 1 FROM tblMobileFees WHERE Code = :code");
+        $stmt->bindParam(':code', $Code);
+        $stmt->execute();
+        $getMobileFees = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($getMobileFees) {
+            return [
+                'code' => 200,
+                'CostPrice' => $getMobileFees['CostPrice'],
+                'SellPrice' => $getMobileFees['SellPrice'],
+            ];
+        } else {
+            return [
+                'code' => 404,
+                'message' => 'Mobile fee not found',
+            ];
+        }
+    }
+
+    public function balanceCheck($totalAmt, $username)
+    {
+        try {
+            // Begin a transaction
+            $this->dbConnection->beginTransaction();
+
+            // Prepare and execute the query to fetch and update balance
+            $stmt = $this->dbConnection->prepare("
+                UPDATE tblPrebalance
+                SET ValBal = ValBal - :totalAmt
+                OUTPUT DELETED.ValBal AS OldBalance, INSERTED.ValBal AS NewBalance
+                WHERE Cuser = :username AND ValBal >= :totalAmt
+            ");
+            $stmt->bindParam(':totalAmt', $totalAmt);
+            $stmt->bindParam(':username', $username);
+            $stmt->execute();
+
+            // Fetch the result of the update operation
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($result) {
+                // Commit the transaction
+                $this->dbConnection->commit();
+                return [
+                    'code' => 200,
+                    'message' => 'Success',
+                    'old' => $result['OldBalance'],
+                    'new' => $result['NewBalance']
+                ];
+            } else {
+                // Rollback the transaction if no rows were updated
+                $this->dbConnection->rollBack();
+                return [
+                    'code' => 404,
+                    'message' => 'Prebalance: Insufficient Balance or Update Error',
+                ];
+            }
+        } catch (Exception $e) {
+            // Rollback in case of error
+            $this->dbConnection->rollBack();
+            return [
+                'code' => 500,
+                'message' => 'Prebalance: Error occurred - ' . $e->getMessage(),
+            ];
+        }
+    }
+
+
+
+
     function debitcards($user)
     {
         $username = $user['username'];

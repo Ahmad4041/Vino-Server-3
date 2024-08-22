@@ -294,4 +294,40 @@ class LocalDbController
         }
     }
 
+
+    public function debitDataInsert($requestId, $srcAcct, $srcBankCode, $amount, $fee, $description, $status, $note)
+    {
+        // Set the note based on the status
+        $note = ($status === 'SUCCESSFUL') ? 'Client Top Up done, Successfully.' : $note;
+
+        try {
+            // Prepare the SQL query for inserting data
+            $sql = "INSERT INTO LogDebitData (requestId, srcAccount, srcBankCode, amount, fee, description, status, note)
+                VALUES (:requestId, :srcAccount, :srcBankCode, :amount, :fee, :description, :status, :note)";
+
+            // Prepare and execute the statement
+            $stmt = $this->dbConnection->prepare($sql);
+            $stmt->bindParam(':requestId', $requestId);
+            $stmt->bindParam(':srcAccount', $srcAcct);
+            $stmt->bindParam(':srcBankCode', $srcBankCode);
+            $stmt->bindParam(':amount', $amount);
+            $stmt->bindParam(':fee', $fee);
+            $stmt->bindParam(':description', $description);
+            $stmt->bindParam(':status', $status);
+            $stmt->bindParam(':note', $note);
+
+            // Execute the query
+            $insertData = $stmt->execute();
+
+            return [
+                'code' => $insertData ? 200 : 403,
+                'message' => $insertData ? 'Data Inserted Successfully' : 'Data Insertion Error'
+            ];
+        } catch (Exception $e) {
+            return [
+                'code' => 403,
+                'message' => 'Data Insertion Error | ' . $e->getMessage()
+            ];
+        }
+    }
 }

@@ -2,10 +2,17 @@
 
 require 'BankDbController.php';
 require 'ConfigController.php';
+
+// Thrid Party Controllers
 require 'ThirdPartyControllers/CharmsApiController.php';
 require 'ThirdPartyControllers/CoreBankController.php';
 require 'ThirdPartyControllers/PayStackController.php';
 require 'ThirdPartyControllers/VtPassController.php';
+
+// Transaction Controller
+require 'TransactionController/TopUpController.php';
+
+
 // require '../models/UtilityDemo.php';
 require __DIR__ . '/../models/UtilityDemo.php';
 
@@ -953,7 +960,7 @@ class AppApiController
         }
     }
 
-    public function topUpMobile($bankid, $user, $requestData)
+    public function requestTopUpMobile($bankid, $user, $request)
     {
         $dataRequest = [
             'amount' => $request['amount'] ?? null,
@@ -982,6 +989,9 @@ class AppApiController
                 'code' => 422,
             ];
         };
+
+        $topUpController = new TopUpMobileController($bankid);
+        return $topUpController->topUpMobile($bankid, $user, $request);
     }
 
     public function fetchLiveConfigData($bankid)
