@@ -2,17 +2,26 @@
 
 function requestParse($request)
 {
-    $rawBody = $request->getBody()->__toString();
+    $data = [];
+
+    $queryParams = $request->getQueryParams();
+    if (!empty($queryParams)) {
+        $data['query'] = $queryParams;
+    }
+
     $contentType = $request->getHeaderLine('Content-Type');
+    $rawBody = $request->getBody()->__toString();
 
     if (strpos($contentType, 'application/json') !== false) {
-        return json_decode($rawBody, true);
+        $data['body'] = json_decode($rawBody, true);
     } elseif (strpos($contentType, 'application/x-www-form-urlencoded') !== false) {
-        parse_str($rawBody, $data);
-        return $data;
+        parse_str($rawBody, $parsedBody);
+        $data['body'] = $parsedBody;
     } elseif (strpos($contentType, 'multipart/form-data') !== false) {
-        return $request->getParsedBody();
+        $data['body'] = $request->getParsedBody();
     } else {
-        return $rawBody;
+        $data['body'] = $rawBody;
     }
+
+    return $data;
 }
