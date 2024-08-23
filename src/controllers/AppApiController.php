@@ -12,6 +12,7 @@ require 'ThirdPartyControllers/VtPassController.php';
 
 // Transaction Controller
 require 'TransactionController/TopUpController.php';
+require 'TransactionController/FundTransferController.php';
 
 
 // require '../models/UtilityDemo.php';
@@ -993,6 +994,45 @@ class AppApiController
 
         $topUpController = new TopUpMobileController($bankid);
         return $topUpController->topUpMobile($bankid, $user, $request);
+    }
+
+
+    public function requestFundTransfer($bankid, $user, $request)
+    {
+        $dataRequest = [
+            'amount' => $request['amount'] ?? null,
+            'beneficiaryAccountNo' => $request['beneficiaryAccountNo'] ?? null,
+            'beneficiaryBankCode' => $request['beneficiaryBankCode'] ?? null,
+            'beneficiaryName' => $request['beneficiaryName'] ?? null,
+            'sourceAccount' => $request['sourceAccount'] ?? null,
+            'note' => $request['note'] ?? null,
+        ];
+
+        $rules = [
+            'amount' => 'required|numeric|min:10',
+            'beneficiaryAccountNo' => 'required',
+            'beneficiaryBankCode' => 'required',
+            'beneficiaryName' => 'required',
+            'note' => 'nullable',
+            'sourceAccount' => 'required',
+        ];
+
+        $validator = new Validator();
+        $validation = $validator->make($dataRequest, $rules);
+
+        $validation->validate();
+
+        if ($validation->fails()) {
+            return [
+                'message' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[1],
+                'data' => $validation->errors()->toArray(),
+                'dcode' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[0],
+                'code' => 422,
+            ];
+        };
+
+        $fundTransferController = new FundTransferController($bankid);
+        return $fundTransferController->fundTransferLogic($bankid, $user, $request);
     }
 
     public function fetchLiveConfigData($bankid)

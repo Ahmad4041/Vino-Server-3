@@ -445,6 +445,19 @@ $app->post('/api/v2/{bankId}/app/transaction/topup-mobile', function (Request $r
 });
 
 
+$app->post('/api/v2/{bankId}/app/transaction/fund-transfer', function (Request $request, Response $response, array $args) use ($appController) {
+    $user = userAuthVerify();
+    $requestData = requestParse($request);
+
+    $result = $appController->requestFundTransfer((int)$args['bankId'], $user, $requestData);
+    if ($result['code'] == 200) {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    } else {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    }
+});
+
+
 
 
 

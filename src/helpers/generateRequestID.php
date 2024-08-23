@@ -1,9 +1,11 @@
 <?php
 
-function generateRequestID()
+function generateRequestId()
 {
-    $currentTime = new DateTime("now", new DateTimeZone('Africa/Lagos'));
-    $formattedTime = $currentTime->format('YmdHi');
-    $randomString = substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 12 - strlen($formattedTime));
-    return $formattedTime . $randomString;
+    $requestId = '';
+    for ($i = 0; $i < 20; $i++) {
+        $requestId .= mt_rand(0, 9);
+    }
+
+    return $requestId;
 }
