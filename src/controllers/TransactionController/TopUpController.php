@@ -21,7 +21,6 @@ class TopUpMobileController
             $transactionLogData = $this->initializeTransactionLog($bankid, $request, $user);
 
             $mainLogic = $this->coreLogic($request, $user, $bankid, "Topup Request for {$request['phoneNo']}.");
-
             if ($mainLogic['code'] != 200) {
                 return $this->handleFailedTransaction($mainLogic, $transactionLogData);
             }
@@ -58,7 +57,7 @@ class TopUpMobileController
 
     private function handleFailedTransaction($mainLogic, $transactionLogData)
     {
-        $response = $this->customResponse($mainLogic['message'], null, 400, 400);
+        $response = $this->customResponse($mainLogic['message'], null, 400, 203);
         // $this->logTransaction($transactionLogData, $response, 'Error');
         return $response;
     }
@@ -159,7 +158,7 @@ class TopUpMobileController
         $costPrice = $amount + $getCharges['CostPrice'];
         $balance = $this->bankDbConnection->balanceCheck($costPrice, 'VINO');
         if ($balance['code'] !== 200) {
-            return $this->customResponse($balance['message'], $debitRequest['requestId'], 400, 400);
+            return $this->customResponse($balance['message'], $debitRequest['requestId'], 403, 201);
         }
 
         return [

@@ -259,7 +259,7 @@ class BankDbController
         $stmt = $this->dbConnection->prepare("
         SELECT TOP 1 mu.AccountID, cu.BalC1 
         FROM tblMobileUsers mu
-        LEFT JOIN tblcustomer cu ON mu.AccountID = cu.Accountid
+        LEFT JOIN tblcustomers cu ON mu.AccountID = cu.Accountid
         WHERE mu.AccountID = :srcAcct AND mu.Username = :username
     ");
         $stmt->bindParam(':srcAcct', $srcAcct);
@@ -284,16 +284,22 @@ class BankDbController
 
     public function getMobileFees($Code)
     {
-        $stmt = $this->dbConnection->prepare("SELECT TOP 1 1 FROM tblMobileFees WHERE Code = :code");
-        $stmt->bindParam(':code', $Code);
+        // Use SQL Server's TOP clause for performance optimization
+        $stmt = $this->dbConnection->prepare("
+        SELECT TOP 1 CostPrice, SellPrice 
+        FROM tblMobileFees 
+        WHERE Code = :code");
+
+        $stmt->bindParam(':code', $Code, PDO::PARAM_STR); // Explicitly define parameter type
         $stmt->execute();
         $getMobileFees = $stmt->fetch(PDO::FETCH_ASSOC);
 
+        // Check if data exists and return accordingly
         if ($getMobileFees) {
             return [
                 'code' => 200,
-                'CostPrice' => $getMobileFees['CostPrice'],
-                'SellPrice' => $getMobileFees['SellPrice'],
+                'CostPrice' => (float)$getMobileFees['CostPrice'],
+                'SellPrice' => (float)$getMobileFees['SellPrice'],
             ];
         } else {
             return [
@@ -303,52 +309,51 @@ class BankDbController
         }
     }
 
-    public function balanceCheck($totalAmt, $username)
-    {
-        try {
-            // Begin a transaction
-            $this->dbConnection->beginTransaction();
+    public function balanceCheck($totalAmt)
+{
+    // Prepare and execute query to fetch the balance
+    $stmt = $this->dbConnection->prepare("SELECT TOP 1 Cuser, ValBal FROM tblPrebalance");
+    $stmt->execute();
+    $balanceCheck = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            // Prepare and execute the query to fetch and update balance
-            $stmt = $this->dbConnection->prepare("
-                UPDATE tblPrebalance
-                SET ValBal = ValBal - :totalAmt
-                OUTPUT DELETED.ValBal AS OldBalance, INSERTED.ValBal AS NewBalance
-                WHERE Cuser = :username AND ValBal >= :totalAmt
-            ");
-            $stmt->bindParam(':totalAmt', $totalAmt);
-            $stmt->bindParam(':username', $username);
-            $stmt->execute();
-
-            // Fetch the result of the update operation
-            $result = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            if ($result) {
-                // Commit the transaction
-                $this->dbConnection->commit();
-                return [
-                    'code' => 200,
-                    'message' => 'Success',
-                    'old' => $result['OldBalance'],
-                    'new' => $result['NewBalance']
-                ];
-            } else {
-                // Rollback the transaction if no rows were updated
-                $this->dbConnection->rollBack();
-                return [
-                    'code' => 404,
-                    'message' => 'Prebalance: Insufficient Balance or Update Error',
-                ];
-            }
-        } catch (Exception $e) {
-            // Rollback in case of error
-            $this->dbConnection->rollBack();
-            return [
-                'code' => 500,
-                'message' => 'Prebalance: Error occurred - ' . $e->getMessage(),
-            ];
-        }
+    if (!$balanceCheck) {
+        return [
+            'code' => 404,
+            'message' => 'Prebalance: Record not found',
+            'old' => null,
+            'new' => null
+        ];
     }
+
+    $newBalance = $balanceCheck['ValBal'] - $totalAmt;
+
+    if ($newBalance > 0) {
+        // Prepare and execute query to update the balance
+        $updateStmt = $this->dbConnection->prepare("UPDATE tblPrebalance SET ValBal = :newBalance WHERE Cuser = :cuser");
+        $updateStmt->bindParam(':newBalance', $newBalance, PDO::PARAM_INT);
+        $updateStmt->bindParam(':cuser', $balanceCheck['Cuser'], PDO::PARAM_STR);
+        $balanceUpdate = $updateStmt->execute();
+
+        return $balanceUpdate ? [
+            'code' => 200,
+            'message' => 'Success',
+            'old' => $balanceCheck['ValBal'],
+            'new' => $newBalance
+        ] : [
+            'code' => 403,
+            'message' => 'Prebalance: Balance update Error',
+            'old' => $balanceCheck['ValBal'],
+            'new' => $newBalance
+        ];
+    } else {
+        return [
+            'code' => 404,
+            'message' => 'Prebalance: Insufficient Balance update Error',
+            'old' => $balanceCheck['ValBal'],
+            'new' => $newBalance
+        ];
+    }
+}
 
 
 
