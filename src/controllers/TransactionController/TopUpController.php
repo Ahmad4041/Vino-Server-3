@@ -10,7 +10,7 @@ class TopUpMobileController
     public function __construct($bankid)
     {
         $this->localDbConnection = new LocalDbController(Database::getConnection('mysql'));
-        // $this->logDbConnection = new mobileLogs(UtilityDemo::getDatabaseConnection('log'));
+        $this->logDbConnection = new MobileLogController(Database::getConnection('log'));
         $this->bankDbConnection = new BankDbController(Database::getConnection($bankid));
         $this->coreBankConnection = new CoreBankController();
     }
@@ -59,7 +59,7 @@ class TopUpMobileController
     private function handleFailedTransaction($mainLogic, $transactionLogData)
     {
         $response = $this->customResponse($mainLogic['message'], null, 400, 400);
-        // $this->logTransaction($transactionLogData, $response, 'Error');
+        $this->logTransaction($transactionLogData, $response, 'Error');
         return $response;
     }
 
@@ -75,7 +75,7 @@ class TopUpMobileController
         $this->logDebitData($reversal['requestId'], $request, $bankid, $mainLogic['fee'], $description, $status, $note);
 
         $response = $this->customResponse("Switch Not Responding", $note, $status == 'Success' ? 200 : 203, 400);
-        // $this->logTransaction($transactionLogData, $response, 'Error', $note);
+        $this->logTransaction($transactionLogData, $response, 'Error', $note);
 
         return $response;
     }
@@ -88,7 +88,7 @@ class TopUpMobileController
         $this->logDebitData($res['requestId'], $request, $bankid, $mainLogic['fee'], $description, 'Success', $note);
 
         $response = $this->customResponse(ErrorCodes::$SUCCESS_TRANSACTION[1], $note, ErrorCodes::$SUCCESS_TRANSACTION[0], 200);
-        // $this->logTransaction($transactionLogData, $response, 'Success', $note, $mainLogic['totalAmount']);
+        $this->logTransaction($transactionLogData, $response, 'Success', $note, $mainLogic['totalAmount']);
 
         return $response;
     }
@@ -115,7 +115,7 @@ class TopUpMobileController
         $transactionLogData['note'] = $note;
 
         // $this->localDbConnection->transactionLog($transactionLogData);
-        // $this->logDbConnection->transactionLogDb($transactionLogData);
+        $this->logDbConnection->transactionLogDb($transactionLogData);
     }
 
     private function coreLogic($request, $user, $bankid, $note)
