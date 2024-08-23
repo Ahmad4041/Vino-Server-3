@@ -49,6 +49,7 @@ class TopUpMobileController
             'bankId' => $bankid,
             'srcAccount' => $request['srcAccount'],
             'username' => $user['username'],
+            'account_holder' => $user['username'],
             'action' => 'TopUp',
             'request' => $request,
             'timestamp' => date('Y-m-d H:i:s'),

@@ -97,14 +97,14 @@ class AuthController
                 ];
                 $requestId = $this->generateRequestID();
 
-                // $mobileLogData = [
-                //     'ClientID' => $bankId,
-                //     'PhoneID' => $request['deviceId'],
-                //     'Username' => $userData['Username'],
-                // ];
-                // $mobileLogDbConnection = new MobileLogs(Database::getConnection('log'));
-                // $mobileLogDbConnection->logMobileLogin($mobileLogData);
-                // $BankDbConnection->logDbLogin($mobileLogData, $loginCheck['data']['AccountID']);
+                $mobileLogData = [
+                    'ClientID' => $bankId,
+                    'PhoneID' => $request['deviceId'] ?? null,
+                    'Username' => $userData['Username'],
+                ];
+                $mobileLogDbConnection = new MobileLogController(Database::getConnection('log'));
+                $mobileLogDbConnection->logMobileLogin($mobileLogData);
+                $BankDbConnection->logDbLogin($mobileLogData, $loginCheck['data']['AccountID']);
 
                 $data = [
                     'username' => $userData['Username'],

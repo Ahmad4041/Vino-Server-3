@@ -32,7 +32,7 @@ class Database
                 'driver' => 'sqlsrv',
                 'host' => 'localhost',
                 'port' => '1433',
-                'database' => 'MicroFinance',
+                'database' => 'MobileApp',
                 'username' => 'shaguy',
                 'password' => 'shaguy',
                 'charset' => 'utf8',

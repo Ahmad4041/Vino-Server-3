@@ -13,13 +13,15 @@ class MobileLogController
     {
         $phoneId = isset($logData['PhoneID']) ? $logData['PhoneID'] : '';
 
-        $query = "INSERT INTO mobile_logs (ClientID, PhoneID, Username) VALUES (?, ?, ?)";
-        $stmt = mysqli_prepare($this->dbConnection, $query);
-        mysqli_stmt_bind_param($stmt, "sss", $logData['ClientID'], $phoneId, $logData['Username']);
+        $query = "INSERT INTO tblMobileLog (ClientID, PhoneID, Username) VALUES (:ClientID, :PhoneID, :Username)";
+        $stmt = $this->dbConnection->prepare($query);
 
-        $insertData = mysqli_stmt_execute($stmt);
 
-        mysqli_stmt_close($stmt);
+        $stmt->bindParam(':ClientID', $logData['ClientID'], PDO::PARAM_STR);
+        $stmt->bindParam(':PhoneID', $phoneId, PDO::PARAM_STR);
+        $stmt->bindParam(':Username', $logData['Username'], PDO::PARAM_STR);
+
+        $insertData = $stmt->execute();
 
         if ($insertData) {
             return [
@@ -29,33 +31,32 @@ class MobileLogController
         }
         return [
             'code' => 403,
-            'message' => 'Transaction Log Data Insertion Error'
+            'message' => 'Transaction Log Data Insertion Error: ' . implode(", ", $stmt->errorInfo())
         ];
     }
 
     public function transactionLogDb($logData)
     {
-        $query = "INSERT INTO trans_full (bank_code, account_no, username, transaction_type, request, response, amount, status, timestamp, account_holder, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        $stmt = mysqli_prepare($this->dbConnection, $query);
-        mysqli_stmt_bind_param(
-            $stmt,
-            "ssssssdssss",
-            $logData['bankId'],
-            $logData['srcAccount'],
-            $logData['username'],
-            $logData['action'],
-            $logData['request'],
-            $logData['response'],
-            $logData['amount'],
-            $logData['status'],
-            $logData['timestamp'],
-            $logData['account_holder'],
-            $logData['note']
-        );
+        $encodedRequest = json_encode($logData['request']);
 
-        $insertData = mysqli_stmt_execute($stmt);
+        $query = "INSERT INTO tblTransFULL (bank_code, account_no, username, transaction_type, request, response, amount, status, timestamp, account_holder, note) 
+                  VALUES (:bankId, :srcAccount, :username, :action, :request, :response, :amount, :status, :timestamp, :account_holder, :note)";
+        $stmt = $this->dbConnection->prepare($query);
 
-        mysqli_stmt_close($stmt);
+
+        $stmt->bindParam(':bankId', $logData['bankId'], PDO::PARAM_STR);
+        $stmt->bindParam(':srcAccount', $logData['srcAccount'], PDO::PARAM_STR);
+        $stmt->bindParam(':username', $logData['username'], PDO::PARAM_STR);
+        $stmt->bindParam(':action', $logData['action'], PDO::PARAM_STR);
+        $stmt->bindParam(':request', $encodedRequest, PDO::PARAM_STR);
+        $stmt->bindParam(':response', $logData['response'], PDO::PARAM_STR);
+        $stmt->bindParam(':amount', $logData['amount'], PDO::PARAM_STR);
+        $stmt->bindParam(':status', $logData['status'], PDO::PARAM_STR);
+        $stmt->bindParam(':timestamp', $logData['timestamp'], PDO::PARAM_STR);
+        $stmt->bindParam(':account_holder', $logData['account_holder'], PDO::PARAM_STR);
+        $stmt->bindParam(':note', $logData['note'], PDO::PARAM_STR);
+
+        $insertData = $stmt->execute();
 
         if ($insertData) {
             return [
@@ -65,7 +66,7 @@ class MobileLogController
         }
         return [
             'code' => 403,
-            'message' => 'Transaction Log Data Insertion Error'
+            'message' => 'Transaction Log Data Insertion Error: ' . implode(", ", $stmt->errorInfo())
         ];
     }
 }

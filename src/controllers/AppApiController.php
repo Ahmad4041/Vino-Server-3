@@ -2,6 +2,7 @@
 
 require 'BankDbController.php';
 require 'ConfigController.php';
+require 'MobileLogController.php';
 
 // Thrid Party Controllers
 require 'ThirdPartyControllers/CharmsApiController.php';

@@ -310,50 +310,50 @@ class BankDbController
     }
 
     public function balanceCheck($totalAmt)
-{
-    // Prepare and execute query to fetch the balance
-    $stmt = $this->dbConnection->prepare("SELECT TOP 1 Cuser, ValBal FROM tblPrebalance");
-    $stmt->execute();
-    $balanceCheck = $stmt->fetch(PDO::FETCH_ASSOC);
+    {
+        // Prepare and execute query to fetch the balance
+        $stmt = $this->dbConnection->prepare("SELECT TOP 1 Cuser, ValBal FROM tblPrebalance");
+        $stmt->execute();
+        $balanceCheck = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if (!$balanceCheck) {
-        return [
-            'code' => 404,
-            'message' => 'Prebalance: Record not found',
-            'old' => null,
-            'new' => null
-        ];
+        if (!$balanceCheck) {
+            return [
+                'code' => 404,
+                'message' => 'Prebalance: Record not found',
+                'old' => null,
+                'new' => null
+            ];
+        }
+
+        $newBalance = $balanceCheck['ValBal'] - $totalAmt;
+
+        if ($newBalance > 0) {
+            // Prepare and execute query to update the balance
+            $updateStmt = $this->dbConnection->prepare("UPDATE tblPrebalance SET ValBal = :newBalance WHERE Cuser = :cuser");
+            $updateStmt->bindParam(':newBalance', $newBalance, PDO::PARAM_INT);
+            $updateStmt->bindParam(':cuser', $balanceCheck['Cuser'], PDO::PARAM_STR);
+            $balanceUpdate = $updateStmt->execute();
+
+            return $balanceUpdate ? [
+                'code' => 200,
+                'message' => 'Success',
+                'old' => $balanceCheck['ValBal'],
+                'new' => $newBalance
+            ] : [
+                'code' => 403,
+                'message' => 'Prebalance: Balance update Error',
+                'old' => $balanceCheck['ValBal'],
+                'new' => $newBalance
+            ];
+        } else {
+            return [
+                'code' => 404,
+                'message' => 'Prebalance: Insufficient Balance update Error',
+                'old' => $balanceCheck['ValBal'],
+                'new' => $newBalance
+            ];
+        }
     }
-
-    $newBalance = $balanceCheck['ValBal'] - $totalAmt;
-
-    if ($newBalance > 0) {
-        // Prepare and execute query to update the balance
-        $updateStmt = $this->dbConnection->prepare("UPDATE tblPrebalance SET ValBal = :newBalance WHERE Cuser = :cuser");
-        $updateStmt->bindParam(':newBalance', $newBalance, PDO::PARAM_INT);
-        $updateStmt->bindParam(':cuser', $balanceCheck['Cuser'], PDO::PARAM_STR);
-        $balanceUpdate = $updateStmt->execute();
-
-        return $balanceUpdate ? [
-            'code' => 200,
-            'message' => 'Success',
-            'old' => $balanceCheck['ValBal'],
-            'new' => $newBalance
-        ] : [
-            'code' => 403,
-            'message' => 'Prebalance: Balance update Error',
-            'old' => $balanceCheck['ValBal'],
-            'new' => $newBalance
-        ];
-    } else {
-        return [
-            'code' => 404,
-            'message' => 'Prebalance: Insufficient Balance update Error',
-            'old' => $balanceCheck['ValBal'],
-            'new' => $newBalance
-        ];
-    }
-}
 
 
 
@@ -438,6 +438,37 @@ class BankDbController
             'data' => $banks,
         ];
     }
+
+
+    function logDbLogin($logData, $accountId)
+    {
+        $phoneId = $logData['PhoneID'] ?? '';
+
+        // Prepare the SQL statement
+        $sql = "INSERT INTO tblmobilelog (AccountID, PhoneID, Username) VALUES (:accountId, :phoneId, :username)";
+
+        // Prepare the statement
+        $stmt = $this->dbConnection->prepare($sql);
+
+        // Bind parameters
+        $stmt->bindParam(':accountId', $accountId);
+        $stmt->bindParam(':phoneId', $phoneId);
+        $stmt->bindParam(':username', $logData['Username']);
+
+        // Execute the statement and check if insertion was successful
+        if ($stmt->execute()) {
+            return [
+                'code' => 200,
+                'message' => 'Data Inserted Successfully'
+            ];
+        } else {
+            return [
+                'code' => 403,
+                'message' => 'Transaction Log Data Insertion Error'
+            ];
+        }
+    }
+
 
 
 
