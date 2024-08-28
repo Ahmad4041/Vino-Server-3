@@ -53,13 +53,13 @@ class AppApiController
                 'surname' => 'required',
                 'otherName' => 'nullable',
                 'gender' => 'required',
-                'dob' => 'required|date|before:18 years ago',
+                'dob' => 'required|date:d/m/Y|before:18 years ago',
                 'nationality' => 'required',
                 'residentialAddress' => 'required',
                 'contact' => 'required',
                 'email' => 'required|email',
                 'bvn' => '',
-                'nin' => 'required',
+                'nin' => '',
                 'occupation' => '',
                 'accountType' => 'required',
                 'userFileId' => 'nullable',
@@ -93,7 +93,7 @@ class AppApiController
                 ];
             } else {
                 return [
-                    'dcode' => 203,
+                    'dcode' => $newCustomer['code'],
                     'code' => 203,
                     'message' => $newCustomer['message'],
                     'data' => null
@@ -411,7 +411,7 @@ class AppApiController
             ];
 
             $rules = [
-                'pin' => 'required|integer|min:4',
+                'pin' => 'required|min:4',
             ];
 
             $validator = new Validator();
@@ -432,17 +432,17 @@ class AppApiController
 
             if ($verifyUserPin['code'] == 200) {
                 return [
-                    'dcode' => ErrorCodes::$SUCCESS_PIN_CREATED[0],
+                    'dcode' => ErrorCodes::$SUCCESS_PIN_VALIDATION[0],
                     'code' => 200,
-                    'message' => ErrorCodes::$SUCCESS_PIN_CREATED[1],
-                    'data' => null
+                    'message' => ErrorCodes::$SUCCESS_PIN_VALIDATION[1],
+                    'data' => ErrorCodes::$SUCCESS_PIN_VALIDATION[1]
                 ];
             } else {
                 return [
                     'dcode' => $verifyUserPin['code'],
                     'code' => 201,
                     'message' => $verifyUserPin['message'],
-                    'data' => null
+                    'data' => $verifyUserPin['message']
                 ];
             }
         } catch (Exception $e) {
@@ -516,7 +516,7 @@ class AppApiController
 
             $configData = $localDbConnection->fetchResponseData();
             $data['networks'] = $configData['networks'];
-            $data['utilities'] = $configData['utilities'];
+            $data['utilites'] = $configData['utilities'];
 
             $bankListData = $localDbConnection->fetchBankListData();
             $data['bank_list'] = $bankListData;
@@ -695,63 +695,77 @@ class AppApiController
     }
 
     public function uploadImage($bankid, $files)
-    {
-        try {
-            if (!isset($_FILES['file'])) {
-                throw new Exception('No file uploaded');
-            }
-
-            $file = $_FILES['file'];
-
-            // Basic file validation
-            if ($file['error'] !== UPLOAD_ERR_OK) {
-                throw new Exception('File upload failed');
-            }
-
-            $allowedMimes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
-            if (!in_array($file['type'], $allowedMimes)) {
-                throw new Exception('Invalid file type');
-            }
-
-            if ($file['size'] > 2048000) { // 2MB limit
-                throw new Exception('File size exceeds limit');
-            }
-
-            // Generate unique filename
-            $filename = time();
-            $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
-            $imageName = $filename . '.' . $extension;
-
-            // Define upload path using absolute path
-            $uploadDir = __DIR__ . '/images/';
-            $uploadPath = $uploadDir . $imageName;
-
-            // Ensure the upload directory exists
-            if (!is_dir($uploadDir)) {
-                mkdir($uploadDir, 0777, true);  // Create the directory if it doesn't exist
-            }
-
-            // Move uploaded file
-            if (move_uploaded_file($file['tmp_name'], $uploadPath)) {
-                $response = [
-                    'fileId' => $imageName,
-                    'type' => $file['type'],
-                ];
-
-                return sendCustomResponse('File uploaded successfully', $response, 'SUCCESS_FILE_UPLOADED', 200);
-            } else {
-                return sendCustomResponse('File upload failed', null, 'FAIL_UPLOAD_FILE_NOT_FOUND', 404);
-            }
-        } catch (Exception $e) {
-            return [
-                'dcode' => 500,
-                'code' => 500,
-                'message' => $e->getMessage(),
-                'data' => null
-            ];
+{
+    try {
+        if (!isset($_FILES['file'])) {
+            throw new Exception('No file uploaded');
         }
-    }
 
+        $file = $_FILES['file'];
+
+        // Basic file validation
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            throw new Exception('File upload failed with error code: ' . $file['error']);
+        }
+
+        $allowedMimes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp', 'image/bmp'];
+        
+        error_log("Received file type: " . $file['type']);
+
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mimeType = finfo_file($finfo, $file['tmp_name']);
+        finfo_close($finfo);
+
+        error_log("Detected MIME type: " . $mimeType);
+
+        if (!in_array($mimeType, $allowedMimes)) {
+            throw new Exception('Invalid file type: ' . $mimeType);
+        }
+
+        $imageInfo = getimagesize($file['tmp_name']);
+        if ($imageInfo === false) {
+            throw new Exception('File is not a valid image');
+        }
+
+        if ($file['size'] > 2048000) { // 2MB limit
+            throw new Exception('File size exceeds limit');
+        }
+
+        // Generate unique filename
+        $filename = time();
+        $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $imageName = $filename . '.' . $extension;
+
+        // Define upload path using absolute path
+        $uploadDir = __DIR__ . '/images/';
+        $uploadPath = $uploadDir . $imageName;
+
+        // Ensure the upload directory exists
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0777, true);  // Create the directory if it doesn't exist
+        }
+
+        // Move uploaded file
+        if (move_uploaded_file($file['tmp_name'], $uploadPath)) {
+            $response = [
+                'fileId' => $imageName,
+                'type' => $mimeType,
+            ];
+
+            return sendCustomResponse(ErrorCodes::$SUCCESS_FILE_UPLOADED[1], $response, ErrorCodes::$SUCCESS_FILE_UPLOADED[0], 200);
+        } else {
+            return sendCustomResponse(ErrorCodes::$FAIL_UPLOAD_FILE_NOT_FOUND[1], null,ErrorCodes::$FAIL_UPLOAD_FILE_NOT_FOUND[0], 404);
+        }
+    } catch (Exception $e) {
+        error_log("File upload error: " . $e->getMessage());
+        return [
+            'dcode' => 500,
+            'code' => 500,
+            'message' => $e->getMessage(),
+            'data' => null
+        ];
+    }
+}
 
 
     public function getTransaction($bankid, $request)
@@ -790,14 +804,14 @@ class AppApiController
                     'dcode' => ErrorCodes::$SUCCESS_ACCOUNT_TRANSACTION_FOUND[0],
                     'code' => 200,
                     'message' => ErrorCodes::$SUCCESS_ACCOUNT_TRANSACTION_FOUND[1],
-                    'data' => $getTransactionList['message']
+                    'data' => $getTransactionList['data']
                 ];
             } else {
                 return [
                     'dcode' => $getTransactionList['code'],
                     'code' => 403,
-                    'message' => $getTransactionList['message'],
-                    'data' => null
+                    'message' => $getTransactionList['data'],
+                    'data' => $getTransactionList['data']
                 ];
             }
         } catch (Exception $e) {

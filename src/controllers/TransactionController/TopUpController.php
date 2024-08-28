@@ -22,18 +22,23 @@ class TopUpMobileController
 
             $mainLogic = $this->coreLogic($request, $user, $bankid, "Topup Request for {$request['phoneNo']}.");
             if ($mainLogic['code'] != 200) {
-                return $this->handleFailedTransaction($mainLogic, $transactionLogData);
+                $note = $mainLogic['message'];
+                return $this->handleFailedTransaction($mainLogic, $transactionLogData, $note);
             }
 
             $vtpass = new VTPassController();
             $res = $vtpass->buyAirtimeLive($request['networkCode'], $request['phoneNo'], $request['amount']);
 
             if ($res['code'] !== "000") {
-                return $this->handleReversalProcess($mainLogic, $request, $bankid, $transactionLogData);
+                $note = "VTPass transaction failed with code {$res['code']}: {$res['response_description']}";
+                return $this->handleReversalProcess($mainLogic, $request, $bankid, $transactionLogData, $note);
             }
 
-            return $this->handleSuccessfulTransaction($res, $request, $bankid, $mainLogic, $transactionLogData);
+            $note = "Topup request Successful for {$request['phoneNo']}.";
+            return $this->handleSuccessfulTransaction($res, $request, $bankid, $mainLogic, $transactionLogData, $note);
         } catch (Exception $e) {
+            $note = "Exception occurred: " . $e->getMessage();
+            $this->logTransaction($transactionLogData, $this->customResponse($note, null, 500, 500), 'Error', $note);
             return [
                 'message' => $e->getMessage(),
                 'data' => null,
@@ -56,33 +61,33 @@ class TopUpMobileController
         ];
     }
 
-    private function handleFailedTransaction($mainLogic, $transactionLogData)
+    private function handleFailedTransaction($mainLogic, $transactionLogData, $note)
     {
         $response = $this->customResponse($mainLogic['message'], null, 400, 400);
-        $this->logTransaction($transactionLogData, $response, 'Error');
+        $this->logTransaction($transactionLogData, $response, 'Error', $note);
         return $response;
     }
 
-    private function handleReversalProcess($mainLogic, $request, $bankid, $transactionLogData)
+    private function handleReversalProcess($mainLogic, $request, $bankid, $transactionLogData, $note)
     {
         $coreBankConnection = new CoreBankController(UtilityDemo::getDatabaseConnection($bankid));
         $reversal = $coreBankConnection->doReversal2($mainLogic['requestId']);
 
         $status = $reversal['status'] == 202 ? 'Success' : 'Error';
         $description = $status == 'Success' ? "Reversal has been done Successfully" : "Reversal Error. Please Check";
-        $note = "Reversal {$status} on Phone No: {$request['phoneNo']} of amount {$request['amount']} from {$request['srcAccount']}";
+        $reversalNote = "Reversal {$status} on Phone No: {$request['phoneNo']} of amount {$request['amount']} from {$request['srcAccount']}";
 
-        $this->logDebitData($reversal['requestId'], $request, $bankid, $mainLogic['fee'], $description, $status, $note);
+        $this->logDebitData($reversal['requestId'], $request, $bankid, $mainLogic['fee'], $description, $status, $reversalNote);
 
-        $response = $this->customResponse("Switch Not Responding", $note, $status == 'Success' ? 200 : 203, 400);
-        $this->logTransaction($transactionLogData, $response, 'Error', $note);
+        $finalNote = "{$note}. {$reversalNote}";
+        $response = $this->customResponse("Switch Not Responding", $finalNote, $status == 'Success' ? 200 : 203, 400);
+        $this->logTransaction($transactionLogData, $response, 'Error', $finalNote);
 
         return $response;
     }
 
-    private function handleSuccessfulTransaction($res, $request, $bankid, $mainLogic, $transactionLogData)
+    private function handleSuccessfulTransaction($res, $request, $bankid, $mainLogic, $transactionLogData, $note)
     {
-        $note = "Topup request Successful for {$request['phoneNo']}.";
         $description = "Top up has been done Successfully.";
 
         $this->logDebitData($res['requestId'], $request, $bankid, $mainLogic['fee'], $description, 'Success', $note);
@@ -114,7 +119,6 @@ class TopUpMobileController
         $transactionLogData['status'] = $status;
         $transactionLogData['note'] = $note;
 
-        // $this->localDbConnection->transactionLog($transactionLogData);
         $this->logDbConnection->transactionLogDb($transactionLogData);
     }
 
@@ -125,11 +129,13 @@ class TopUpMobileController
 
         $validateCustomer = $this->bankDbConnection->customerValidate($srcAcct, $user['username']);
         if ($validateCustomer['code'] !== 200) {
+            $note = "Customer validation failed: " . $validateCustomer['message'];
             return $this->customResponse(ErrorCodes::$FAIL_TRANSACTION[1] . ', ' . $validateCustomer['message'], null, 403, 403);
         }
 
         $getCharges = $this->bankDbConnection->getMobileFees('FEE_TM');
         if ($getCharges['code'] !== 200) {
+            $note = "Failed to retrieve mobile fees: " . $getCharges['message'];
             return $this->customResponse(ErrorCodes::$FAIL_TRANSACTION[1] . ', ' . $getCharges['message'], null, 403, 403);
         }
 
@@ -137,6 +143,7 @@ class TopUpMobileController
         $totalAmount = $amount + $fee;
 
         if ($validateCustomer['balance'] < $totalAmount) {
+            $note = "Insufficient balance for the transaction.";
             return $this->customResponse(ErrorCodes::$FAIL_TRANSACTION[1] . ', ' . ErrorCodes::$FAIL_ACCOUNT_BALANCE_NOT_ENOUGH[1], null, 403, 403);
         }
 
@@ -150,15 +157,19 @@ class TopUpMobileController
             );
 
             if ($debitRequest['status'] !== 200) {
-                return $this->customResponse("Issuer or Switch Inoperative", $debitRequest['requestId'], 403, 403);
+                // var_dump($debitRequest);
+                $note = "BANK TSS: Debit request failed";
+                return $this->customResponse($note, $debitRequest['requestId'], 403, 403);
             }
         } catch (Exception $e) {
-            return $this->customResponse("An error occurred during the debit process: " . $e->getMessage(), null, 500, 500);
+            $note = "An error occurred during the debit process: " . $e->getMessage();
+            return $this->customResponse($note, null, 500, 500);
         }
 
         $costPrice = $amount + $getCharges['CostPrice'];
         $balance = $this->bankDbConnection->balanceCheck($costPrice, 'VINO');
         if ($balance['code'] !== 200) {
+            $note = "Balance check failed: " . $balance['message'];
             return $this->customResponse($balance['message'], $debitRequest['requestId'], 403, 201);
         }
 

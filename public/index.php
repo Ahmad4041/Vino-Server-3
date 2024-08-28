@@ -192,16 +192,9 @@ $app->get('/api/v2/{bankId}/app/user/current', function (Request $request, Respo
 
 
 // get current user's data
-$app->get('/api/v2/{bankId}/app/user/current/accounts/balance', function (Request $request, Response $response, array $args) use ($appController) {
+$app->get('/api/v2/{bankId}/app/user/current/accounts', function (Request $request, Response $response, array $args) use ($appController) {
+    $user = userAuthVerify();
 
-    session_start();
-
-    $jwtToken = getBearerToken();
-    $user = authenticateUser($jwtToken);
-
-    if (!$user) {
-        sendCustomResponse('Unauthorized', null, 401, 401);
-    }
 
     $result = $appController->currentUserAccountBalance((int)$args['bankId'], $user);
 

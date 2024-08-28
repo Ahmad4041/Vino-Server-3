@@ -278,7 +278,7 @@ class ConfigController
                     "service_type" => $row['serviceID'],
                     "name" => $row['name'],
                     "shortname" => $row['serviceID'],
-                    "product_id" => $count,
+                    "product_id" => 1,
                 ];
             }
             return [
@@ -286,7 +286,7 @@ class ConfigController
                 "service_type" => $row['serviceID'],
                 "name" => $row['name'],
                 "shortname" => $row['serviceID'],
-                "product_id" => $count,
+                "product_id" => 1,
             ];
         }, $categories)));
         return $res;

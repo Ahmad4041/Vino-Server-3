@@ -477,56 +477,61 @@ class BankDbController
     {
         $limit = 20;
         $offset = $page * $limit;
-
+    
         // Fetch transactions
-        $sql = "SELECT Sno, gjsource, AcctNo, particulars, Debit, Credit, trnDate, TrnTime 
-            FROM (
-                SELECT *, ROW_NUMBER() OVER (ORDER BY Sno DESC) AS RowNum 
-                FROM tblCustomerLedger 
-                WHERE AcctNo = :accountId
-            ) AS NumberedRows 
-            WHERE RowNum > :offset AND RowNum <= :limit
-            ORDER BY Sno DESC";
-
+        $sql = "
+        WITH NumberedRows AS (
+            SELECT Sno, gjsource, AcctNo, particulars, Debit, Credit, trnDate, TrnTime,
+                   ROW_NUMBER() OVER (ORDER BY Sno DESC) AS RowNum
+            FROM tblCustomerLedger
+            WHERE AcctNo = :accountId
+        )
+        SELECT Sno, gjsource, AcctNo, particulars, Debit, Credit, trnDate, TrnTime
+        FROM NumberedRows
+        WHERE RowNum > :offset AND RowNum <= :upperLimit
+        ORDER BY Sno DESC";
+    
         $stmt = $this->dbConnection->prepare($sql);
         $stmt->bindParam(':accountId', $accountId, PDO::PARAM_STR);
         $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
         $upperLimit = $offset + $limit;
-        $stmt->bindParam(':limit', $upperLimit, PDO::PARAM_INT);
+        $stmt->bindParam(':upperLimit', $upperLimit, PDO::PARAM_INT);
         $stmt->execute();
-
+    
         $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
+    
         // Count total rows
         $sqlCount = "SELECT COUNT(*) FROM tblCustomerLedger WHERE AcctNo = :accountId";
         $stmtCount = $this->dbConnection->prepare($sqlCount);
         $stmtCount->bindParam(':accountId', $accountId, PDO::PARAM_STR);
         $stmtCount->execute();
         $totalRow = $stmtCount->fetchColumn();
-
+    
         if (empty($transactions)) {
             return [
                 'code' => ErrorCodes::$FAIL_ACCOUNT_TRANSACTION_FOUND[0],
-                'message' => ErrorCodes::$FAIL_ACCOUNT_TRANSACTION_FOUND[1],
+                'data' => ErrorCodes::$FAIL_ACCOUNT_TRANSACTION_FOUND[1],
             ];
         }
-
+        
+    
         $transactionHistory = array_map(function ($row) {
+            $trnTime = new DateTime($row['TrnTime']);  
             return [
                 'id' => (int) $row['Sno'],
                 'reference' => $row['gjsource'],
                 'accountNo' => $row['AcctNo'],
                 'narration' => $row['particulars'],
-                'withdraw' => number_format((float) $row['Debit'], 2, '.', ''),
+                'withdraw' => (float) number_format((float) $row['Debit'], 2, '.', ''),
                 'withdraw2' => floatval($row['Credit']),
-                'deposit' => number_format((float) $row['Credit'], 2, '.', ''),
+                'deposit' => (float) number_format((float) $row['Credit'], 2, '.', ''),
                 'date' => date('Y-m-d', strtotime($row['trnDate'])),
-                'time' => date('H:i:s', strtotime($row['TrnTime'])),
+                'time' => $trnTime->format('H:i:s'),  
             ];
         }, $transactions);
-
+        
         $totalPages = ceil($totalRow / $limit);
-
+    
         $res = [
             'content' => $transactionHistory,
             'pageable' => [
@@ -555,10 +560,10 @@ class BankDbController
             'first' => ($page == 0),
             'empty' => empty($transactionHistory)
         ];
-
+    
         return [
             'code' => 200,
-            'message' => $res,
+            'data' => $res,
         ];
     }
 
@@ -868,7 +873,7 @@ class BankDbController
             $dcode = ErrorCodes::$FAIL_USER_ALREADY_EXIST[0];
             $code = 403;
             return [
-                'code' => $code,
+                'code' => $dcode,
                 'message' => $message . ', code:' . $dcode,
             ];
         }
