@@ -19,286 +19,280 @@ class FundTransferController
         $this->dbConnection = Database::getConnection($bankid);
     }
 
-    public function fundTransferLogic($bankid, $user, $request)
+    public function fundTransferLogic($bankid, $user, $request, $logData)
     {
         try {
-            $transactionLogData = $this->prepareTransactionLogData($bankid, $user, $request);
-            $transfer = $this->mobileTransferNew($request, $user['username'], $bankid);
-            return $this->handleTransferResponse($transfer, $request, $user, $transactionLogData);
+            $transfer = $this->mobileTransferNew($bankid, $user['username'], $request);
+
+            if ($transfer['code'] == 200) {
+                $data = [
+                    'path' => null,
+                    'error' => null,
+                ];
+                $response = [
+                    'message' => ErrorCodes::$SUCCESS_TRANSACTION[1],
+                    'dcode' => ErrorCodes::$SUCCESS_TRANSACTION[0],
+                    'data' => $data,
+                    'code' => 200,
+                ];
+
+                $logData['response'] = json_encode($response);
+                $logData['status'] = 'Success';
+                $logData['note'] = $transfer['message'];
+
+
+                $this->logDbConnection->transactionLogDb($logData);
+
+                return $response;
+            } else {
+                $response = [
+                    'code' => 403,
+                    'dcode' => $transfer['dcode'],
+                    'message' => $transfer['message'],
+                    'data' => $transfer['data'],
+                ];
+
+                $logData['response'] = json_encode($response);
+                $logData['status'] = 'Error';
+                $logData['note'] = $transfer['message'];
+
+                $this->logDbConnection->transactionLogDb($logData);
+
+                return $response;
+            }
         } catch (Exception $e) {
-            return $this->handleException($e);
+            return [
+                'dcode' => 500,
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null
+            ];
         }
     }
 
-    private function mobileTransferNew($request, $username, $bankId)
+    function mobileTransferNew($request, $username, $bankId)
     {
-        $customer = $this->getCustomerByAccount($request['sourceAccount']);
+        // Assuming these are passed in the $request array
+        $sourceAccount = $request['sourceAccount'];
+        $beneficiaryAccountNo = $request['beneficiaryAccountNo'];
+        $beneficiaryName = $request['beneficiaryName'];
+        $note = $request['note'];
+        $saveBeneficiary = $request['saveBeneficiary'];
+        $amount = $request['amount'];
+        $beneficiaryBankCode = $request['beneficiaryBankCode'];
+
+        // Database connection
+        // You'll need to implement your own database connection method
+        $db = $this->dbConnection;
+        // Get Customer by sourceAccount
+        $stmt = $db->prepare("SELECT * FROM tblcustomer WHERE Accountid = ?");
+        $stmt->execute([$sourceAccount]);
+        $customer = $stmt->fetch(PDO::FETCH_ASSOC);
+
         if (!$customer) {
-            return $this->createErrorResponse(ErrorCodes::$FAIL_TRANSACTION, 'Customer Not Found!', 403);
+            return [
+                'data' => 'Customer Not Found!',
+                'code' => 403,
+                'message' => ErrorCodes::$FAIL_TRANSACTION[1] . ', ' . 'Customer Not Found!',
+                'dcode' => ErrorCodes::$FAIL_TRANSACTION[0]
+            ];
         }
 
-        if ($customer['BalC1'] < $request['amount']) {
-            return $this->createErrorResponse(ErrorCodes::$FAIL_ACCOUNT_BALANCE_NOT_ENOUGH, 'Balance Not Enough', 403);
+        // Check Customer Balance is sufficient
+        if ($customer['BalC1'] < $amount) {
+            return [
+                'data' => 'Balance Not Enough',
+                'code' => 403,
+                'message' => ErrorCodes::$FAIL_ACCOUNT_BALANCE_NOT_ENOUGH[1],
+                'dcode' => ErrorCodes::$FAIL_ACCOUNT_BALANCE_NOT_ENOUGH[0]
+            ];
         }
 
-        $narration = "Transfer for {$request['beneficiaryName']} ({$request['beneficiaryAccountNo']}), {$request['note']}";
+        $narration = "Transfer for " . $beneficiaryName . " (" . $beneficiaryAccountNo . "), " . $note;
 
-        return ($bankId == $request['beneficiaryBankCode']) 
-            ? $this->handleInternalTransfer($request, $username, $customer, $narration)
-            : $this->handleExternalTransfer($request, $username, $customer, $narration);
-    }
+        // CoreBankController equivalent
+        $corebanking = new CoreBankController();
 
-    private function handleInternalTransfer($request, $username, $customer, $narration)
-    {
-        $chargesIFT = $this->getFees('FEE_IFT');
-        if (!$chargesIFT) {
-            return $this->createErrorResponse(ErrorCodes::$FAIL_TRANSACTION, 'Transaction Charges Not Found', 403);
-        }
+        if ($bankId == $beneficiaryBankCode) {
+            // Internal Fund Transfer
+            $stmt = $db->prepare("SELECT * FROM Fees WHERE Code = 'FEE_IFT'");
+            $stmt->execute();
+            $chargesIFT = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        $fee = $chargesIFT['SellPrice'];
-        $res = $this->coreBankConnection->fundsTransferInternal(
-            $request['sourceAccount'],
-            $request['bankId'],
-            $request['beneficiaryAccountNo'],
-            $request['beneficiaryBankCode'],
-            number_format((float)$request['amount'], 2, '.', ''),
-            number_format((float)$fee, 2, '.', ''),
-            $narration
-        );
-
-        if ($res['status'] == 200) {
-            if ($request['saveBeneficiary']) {
-                $this->saveBeneficiary($request['beneficiaryName'], $request['beneficiaryAccountNo'], $request['beneficiaryBankCode'], $username);
+            if (!$chargesIFT) {
+                return [
+                    'data' => 'Transaction Chargers Not Found',
+                    'code' => 403,
+                    'message' => ErrorCodes::$FAIL_TRANSACTION[1],
+                    'dcode' => ErrorCodes::$FAIL_TRANSACTION[0]
+                ];
             }
 
-            $note = "Internal Fund Transfer successful to account {$request['beneficiaryAccountNo']}.";
-            $this->localDbConnection->debitDataInsert($res['requestId'], $request['sourceAccount'], $request['bankId'], $request['amount'], number_format((float)$chargesIFT['CostPrice'], 2, '.', ''), $note, 'Success', $narration);
-            $this->logTransaction($res['requestId'], $request['sourceAccount'], $username, 'Internal Transfer', $request, $res, $request['amount'], 'Success', $customer['Customername'], $narration, $note);
+            $fee = $chargesIFT['SellPrice'];
 
-            return [
-                'code' => 200,
-                'message' => 'Transaction Successful',
-                'data' => $res,
-                'customer_name' => $customer['Customername'],
-                'note' => $note
-            ];
-        } else {
-            $note = "Internal Fund Transfer failed for account {$request['beneficiaryAccountNo']}.";
-            $this->localDbConnection->debitDataInsert($res['requestId'], $request['sourceAccount'], $request['bankId'], $request['amount'], number_format((float)$chargesIFT['CostPrice'], 2, '.', ''), $note, 'Error', $narration);
-            $this->logTransaction($res['requestId'], $request['sourceAccount'], $username, 'Internal Transfer', $request, $res, $request['amount'], 'Error', $customer['Customername'], $narration, $note);
+            $res = $corebanking->fundsTransferInternal($sourceAccount, $bankId, $beneficiaryAccountNo, $beneficiaryBankCode, number_format((float)$amount, 2, '.', ''), number_format((float)$fee, 2, '.', ''), $narration);
 
-            return $this->createErrorResponse(ErrorCodes::$FAIL_TRANSACTION, 'Issuer or Switch Inoperative', 403);
-        }
-    }
+            if ($res['status'] == 200) {
+                if ($saveBeneficiary) {
+                    $stmt = $db->prepare("SELECT COUNT(*) FROM tblMobileBeneficiaries WHERE AccountNo = ?");
+                    $stmt->execute([$beneficiaryAccountNo]);
+                    $exists = $stmt->fetchColumn();
 
-    private function handleExternalTransfer($request, $username, $customer, $narration)
-    {
-        $chargesEFT = $this->getFees('FEE_EFT');
-        if (!$chargesEFT) {
-            return $this->createErrorResponse(ErrorCodes::$FAIL_TRANSACTION, 'Transaction Charges Not Found', 403);
-        }
-
-        $fee = $chargesEFT['SellPrice'];
-        $preBalance = $this->getPreBalance();
-        if (is_null($preBalance) || $preBalance['ValBal'] < ($fee + $request['amount'])) {
-            return $this->createErrorResponse(ErrorCodes::$FAIL_TRANSACTION, 'Bank TSS', 403);
-        }
-
-        $account = $this->charmsApi->findAccount($request['beneficiaryAccountNo'], $request['beneficiaryBankCode']);
-
-        if ($account['responseCode'] == 200) {
-            $debit = $this->coreBankConnection->debitNew2(
-                $request['sourceAccount'],
-                $request['bankId'],
-                number_format((float)$request['amount'], 2, '.', ''),
-                number_format((float)$fee, 2, '.', ''),
-                $narration
-            );
-
-            if ($debit['status'] == 200) {
-                $requestId = generateRequestId();
-                $bankdebitinfo = $this->localDbConnection->bankCodeCheck($request['bankId']);
-                $status = $this->charmsApi->doFundsTransfer(
-                    $account['data']['responseData']['destinationinstitutioncode'],
-                    $account['data']['responseData']['accountnumber'],
-                    $account['data']['responseData']['accountname'],
-                    $narration,
-                    $request['amount'],
-                    $requestId,
-                    $account['data']['responseData']['hashvalue'],
-                    $bankdebitinfo['data']['debitbankname'],
-                    $bankdebitinfo['data']['debitbanknumber']
-                );
-
-                if ($status['responseCode'] == '00' && $status['requestSuccessful'] == true) {
-                    $this->updatePreBalance($request['amount'] + $chargesEFT['CostPrice']);
-                    if ($request['saveBeneficiary']) {
-                        $this->saveBeneficiary($request['beneficiaryName'], $request['beneficiaryAccountNo'], $request['beneficiaryBankCode'], $username);
+                    if (!$exists) {
+                        $stmt = $db->prepare("INSERT INTO tblMobileBeneficiaries (Name, AccountNo, BankCode, Username) VALUES (?, ?, ?, ?)");
+                        $stmt->execute([$beneficiaryName, $beneficiaryAccountNo, $beneficiaryBankCode, $username]);
+                        return [
+                            'code' => 200,
+                            'message' => 'Save Beneficery',
+                            'data' => true,
+                        ];
                     }
+                }
 
-                    $note = "External Fund Transfer successful to account {$request['beneficiaryAccountNo']}.";
-                    $this->localDbConnection->debitDataInsert($requestId, $request['sourceAccount'], $request['bankId'], $request['amount'], number_format((float)$chargesEFT['CostPrice'], 2, '.', ''), $note, 'Success', $narration);
-                    $this->logTransaction($requestId, $request['sourceAccount'], $username, 'External Transfer', $request, $status, $request['amount'], 'Success', $customer['Customername'], $narration, $note);
+                $description = 'Internal Fund Transfer has been done Successfully, on account ' . $beneficiaryAccountNo . '.';
+                $this->localDbConnection->debitDataInsert($res['requestId'], $sourceAccount, $bankId, $amount, number_format((float)$chargesIFT['CostPrice'], 2, '.', ''), $description, 'Success', $narration);
+
+                return [
+                    'code' => 200,
+                    'message' => $description,
+                    'data' => $res,
+                    // 'customer_name' => $customer['Customername'],
+                ];
+            } else {
+                $description = 'Bank TSS: Internal Fund Transfer Issue, on account ' . $beneficiaryAccountNo . '.';
+                $this->localDbConnection->debitDataInsert($res['requestId'], $sourceAccount, $bankId, $amount, number_format((float)$chargesIFT['CostPrice'], 2, '.', ''), $description, 'Error', $narration);
+
+                return [
+                    'data' => $res,
+                    'code' => 403,
+                    'message' => $description,
+                    'dcode' => ErrorCodes::$FAIL_TRANSACTION[0]
+                ];
+            }
+        } else {
+            // External Fund Transfer
+            $stmt = $db->prepare("SELECT * FROM Fees WHERE Code = 'FEE_EFT'");
+            $stmt->execute();
+            $chargesEFT = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$chargesEFT) {
+                return [
+                    'data' => 'Transaction Chargers Not Found',
+                    'code' => 403,
+                    'message' => ErrorCodes::$FAIL_TRANSACTION[1] . ', ' . 'Transaction Chargers Not Found',
+                    'dcode' => ErrorCodes::$FAIL_TRANSACTION[0]
+                ];
+            }
+
+            $fee = $chargesEFT['SellPrice'];
+
+            // Check prebalance
+            $stmt = $db->prepare("SELECT TOP 1 1 FROM tblPrebalance");
+            $stmt->execute();
+            $preBalance = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$preBalance) {
+                return [
+                    'data' => ErrorCodes::$FAIL_TRANSACTION[1],
+                    'code' => 403,
+                    'message' => 'Bank TSS',
+                    'dcode' => ErrorCodes::$FAIL_TRANSACTION[0]
+                ];
+            }
+
+            if ($preBalance['ValBal'] < ($fee + $amount)) {
+                return [
+                    'data' => ErrorCodes::$FAIL_TRANSACTION[1],
+                    'code' => 403,
+                    'message' => 'Bank TSS',
+                    'dcode' => ErrorCodes::$FAIL_TRANSACTION[0]
+                ];
+            }
+
+            // CharmsController equivalent
+            $accountFind = $this->charmsApi;
+            $account = $accountFind->findAccount($beneficiaryAccountNo, $beneficiaryBankCode);
+
+            if ($account['responseCode'] == 200) {
+                $debit = $corebanking->debitNew2($sourceAccount, $bankId, number_format((float)$amount, 2, '.', ''), number_format((float)$fee, 2, '.', ''), $narration);
+
+                if ($debit['status'] == 200) {
+                    $externaltransfer = $accountFind;
+                    $requestId = generateRequestId();
+                    $bankid = ['bankCode' => $bankId];
+                    $bankdebitinfo = $this->localDbConnection->bankCodeCheck($bankid);
+
+                    $status = $externaltransfer->doFundsTransfer(
+                        $account['data']['responseData']['destinationinstitutioncode'],
+                        $account['data']['responseData']['accountnumber'],
+                        $account['data']['responseData']['accountname'],
+                        $narration,
+                        $amount,
+                        $requestId,
+                        $account['data']['responseData']['hashvalue'],
+                        $bankdebitinfo['data']['debitbankname'],
+                        $bankdebitinfo['data']['debitbanknumber']
+                    );
+
+                    if ($status['responseCode'] == '00' && $status['requestSuccessful'] == true) {
+                        // Update pre-balance
+                        $this->bankDbConnection->balanceCheck($amount + $chargesEFT['CostPrice'], 'VINO');
+
+                        if ($saveBeneficiary) {
+                            $stmt = $db->prepare("SELECT COUNT(*) FROM tblMobileBeneficiaries WHERE AccountNo = ?");
+                            $stmt->execute([$beneficiaryAccountNo]);
+                            $exists = $stmt->fetchColumn();
+
+                            if (!$exists) {
+                                $stmt = $db->prepare("INSERT INTO tblMobileBeneficiaries (Name, AccountNo, BankCode, Username) VALUES (?, ?, ?, ?)");
+                                $stmt->execute([$beneficiaryName, $beneficiaryAccountNo, $beneficiaryBankCode, $username]);
+                                return [
+                                    'code' => 200,
+                                    'message' => 'Save Beneficery',
+                                    'data' => true,
+                                ];
+                            }
+                        }
+
+                        $description = 'External Fund Transfer has been done Successfully, on account ' . $beneficiaryAccountNo . '.';
+                        $this->localDbConnection->debitDataInsert($requestId, $sourceAccount, $bankId, $amount, number_format((float)$chargesEFT['CostPrice'], 2, '.', ''), $description, 'Success', $narration);
+
+                        return [
+                            'code' => 200,
+                            'message' => $description,
+                            'data' => [],
+                            // 'customer_name' => $customer['Customername'],
+                        ];
+                    } else {
+                        $description = 'Switch Not Responding: External Fund Transfer Issue, on account ' . $beneficiaryAccountNo . '.';
+                        $this->localDbConnection->debitDataInsert($requestId, $sourceAccount, $bankId, $amount, number_format((float)$chargesEFT['CostPrice'], 2, '.', ''), $description, 'Error', $narration);
+
+                        return [
+                            'data' => $status,
+                            'code' => 403,
+                            'message' => $description,
+                            'dcode' => ErrorCodes::$FAIL_TRANSACTION[0]
+                        ];
+                    }
+                } else {
+                    $description = 'Bank TSS: Debit Error, on account ' . $beneficiaryAccountNo . '.';
+                    $this->localDbConnection->debitDataInsert($debit['requestId'], $sourceAccount, $bankId, $amount, number_format((float)$chargesEFT['CostPrice'], 2, '.', ''), $description, 'Error', $narration);
 
                     return [
-                        'code' => 200,
-                        'message' => 'Transaction Successful',
-                        'data' => [],
-                        'customer_name' => $customer['Customername'],
-                        'note' => $note
+                        'data' => $debit,
+                        'code' => 403,
+                        'message' => $description,
+                        'dcode' => ErrorCodes::$FAIL_TRANSACTION[0]
                     ];
-                } else {
-                    $note = "External Fund Transfer failed for account {$request['beneficiaryAccountNo']}.";
-                    $this->localDbConnection->debitDataInsert($requestId, $request['sourceAccount'], $request['bankId'], $request['amount'], number_format((float)$chargesEFT['CostPrice'], 2, '.', ''), $note, 'Error', $narration);
-                    $this->logTransaction($requestId, $request['sourceAccount'], $username, 'External Transfer', $request, $status, $request['amount'], 'Error', $customer['Customername'], $narration, $note);
-
-                    return $this->createErrorResponse(ErrorCodes::$FAIL_TRANSACTION, 'Bank TSS Not Responding', 403);
                 }
             } else {
-                $note = "External Fund Transfer debit failed for account {$request['beneficiaryAccountNo']}.";
-                $this->localDbConnection->debitDataInsert($debit['requestId'], $request['sourceAccount'], $request['bankId'], $request['amount'], number_format((float)$chargesEFT['CostPrice'], 2, '.', ''), $note, 'Error', $narration);
-                $this->logTransaction($debit['requestId'], $request['sourceAccount'], $username, 'External Transfer', $request, $debit, $request['amount'], 'Error', $customer['Customername'], $narration, $note);
-                return $this->createErrorResponse(ErrorCodes::$FAIL_TRANSACTION, 'Bank TSS Not Responding', 403);
+                return [
+                    'data' => $account['message'],
+                    'code' => 403,
+                    'message' => ErrorCodes::$FAIL_TRANSACTION[1] . ', Account NOT FOUND! ',
+                    'dcode' => ErrorCodes::$FAIL_TRANSACTION[0]
+                ];
             }
-        } else {
-            return $this->createErrorResponse(ErrorCodes::$FAIL_TRANSACTION, 'Invalid Destination Account', 403);
         }
-    }
-
-    private function prepareTransactionLogData($bankid, $user, $request)
-    {
-        return [
-            'bank_code' => $request['beneficiaryBankCode'],
-            'username' => $user['username'],
-            'account_holder' => $request['beneficiaryName'],
-            'account_no' => $request['beneficiaryAccountNo'],
-            'amount' => $request['amount'],
-            'note' => $request['note'] ?? null,
-            'status' => '',
-            'timestamp' => date('Y-m-d H:i:s'),
-            'transaction_type' => 'Fund Transfer',
-            'request' => json_encode($request),
-            'response' => ''
-        ];
-    }
-
-    private function handleTransferResponse($transfer, $request, $user, $transactionLogData)
-    {
-        $transactionLogData['response'] = json_encode($transfer);
-        $transactionLogData['status'] = ($transfer['code'] == 200) ? 'Success' : 'Failed';
-        $transactionLogData['note'] = $this->getNoteFromTransfer($transfer);
-
-        $this->logDbConnection->transactionLogDb($transactionLogData);
-
-        return ($transfer['code'] == 200) 
-            ? $this->handleSuccessResponse($transfer) 
-            : $this->handleErrorResponse($transfer);
-    }
-
-    private function getNoteFromTransfer($transfer)
-    {
-        if (isset($transfer['note'])) {
-            return $transfer['note'];
-        } elseif (isset($transfer['message'])) {
-            return $transfer['message'];
-        } else {
-            return 'Transaction processed';
-        }
-    }
-
-    private function handleSuccessResponse($transfer)
-    {
-        return [
-            'code' => 200,
-            'dcode' => ErrorCodes::$SUCCESS_TRANSACTION[0],
-            'message' => ErrorCodes::$SUCCESS_TRANSACTION[1],
-            'data' => ['path' => null, 'error' => null],
-            'note' => $this->getNoteFromTransfer($transfer)
-        ];
-    }
-
-    private function handleErrorResponse($transfer)
-    {
-        return [
-            'code' => $transfer['code'] ?? 500,
-            'dcode' => $transfer['dcode'] ?? '',
-            'message' => $transfer['message'] ?? 'An error occurred',
-            'data' => $transfer['data'] ?? null,
-            'note' => $this->getNoteFromTransfer($transfer)
-        ];
-    }
-
-    private function handleException($e)
-    {
-        return [
-            'code' => 500,
-            'message' => 'Internal Server Error',
-            'data' => $e->getMessage(),
-            'note' => 'An unexpected error occurred during the transaction'
-        ];
-    }
-
-    private function getCustomerByAccount($accountId)
-    {
-        $stmt = $this->dbConnection->prepare("SELECT * FROM tblcustomers WHERE Accountid = ?");
-        $stmt->execute([$accountId]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
-    }
-
-    private function createErrorResponse($errorCode, $message, $httpCode)
-    {
-        return [
-            'data' => $message,
-            'code' => $httpCode,
-            'message' => $errorCode[1] . ', ' . $message,
-            'dcode' => $errorCode[0],
-            'note' => $message
-        ];
-    }
-
-    private function getFees($feeCode)
-    {
-        $stmt = $this->dbConnection->prepare("SELECT * FROM tblMobileFees WHERE Code = ?");
-        $stmt->execute([$feeCode]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
-    }
-
-    private function getPreBalance()
-    {
-        $stmt = $this->dbConnection->query("SELECT ValBal FROM tblPrebalance");
-        return $stmt->fetch(PDO::FETCH_ASSOC);
-    }
-
-    private function updatePreBalance($amount)
-    {
-        $stmt = $this->dbConnection->prepare("UPDATE tblPrebalance SET ValBal = ValBal - ?");
-        return $stmt->execute([$amount]);
-    }
-
-    private function saveBeneficiary($beneficiaryName, $beneficiaryAccountNo, $beneficiaryBankCode, $username)
-    {
-        $stmt = $this->dbConnection->prepare("INSERT INTO tblMobileBeneficiaries (Name, AccountNo, BankCode, Username) VALUES (?, ?, ?, ?)");
-        return $stmt->execute([$beneficiaryName, $beneficiaryAccountNo, $beneficiaryBankCode, $username]);
-    }
-
-    private function logTransaction($requestId, $srcAccount, $username, $action, $request, $response, $amount, $status, $accountHolder, $narration, $note)
-    {
-        $logData = [
-            'bank_code' => $requestId,
-            'account_no' => $srcAccount,
-            'username' => $username,
-            'action' => $action,
-            'request' => json_encode($request),
-            'response' => json_encode($response),
-            'amount' => $amount,
-            'status' => $status,
-            'timestamp' => date('Y-m-d H:i:s'),
-            'account_holder' => $accountHolder,
-            'note' => $note,
-            'transaction_type' => 'Fund Transfer',
-            'narration' => $narration
-        ];
-
-        $this->logDbConnection->transactionLogDb($logData);
     }
 }

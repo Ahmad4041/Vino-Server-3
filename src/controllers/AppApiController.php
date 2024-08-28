@@ -695,77 +695,77 @@ class AppApiController
     }
 
     public function uploadImage($bankid, $files)
-{
-    try {
-        if (!isset($_FILES['file'])) {
-            throw new Exception('No file uploaded');
-        }
+    {
+        try {
+            if (!isset($_FILES['file'])) {
+                throw new Exception('No file uploaded');
+            }
 
-        $file = $_FILES['file'];
+            $file = $_FILES['file'];
 
-        // Basic file validation
-        if ($file['error'] !== UPLOAD_ERR_OK) {
-            throw new Exception('File upload failed with error code: ' . $file['error']);
-        }
+            // Basic file validation
+            if ($file['error'] !== UPLOAD_ERR_OK) {
+                throw new Exception('File upload failed with error code: ' . $file['error']);
+            }
 
-        $allowedMimes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp', 'image/bmp'];
-        
-        error_log("Received file type: " . $file['type']);
+            $allowedMimes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp', 'image/bmp'];
 
-        $finfo = finfo_open(FILEINFO_MIME_TYPE);
-        $mimeType = finfo_file($finfo, $file['tmp_name']);
-        finfo_close($finfo);
+            error_log("Received file type: " . $file['type']);
 
-        error_log("Detected MIME type: " . $mimeType);
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mimeType = finfo_file($finfo, $file['tmp_name']);
+            finfo_close($finfo);
 
-        if (!in_array($mimeType, $allowedMimes)) {
-            throw new Exception('Invalid file type: ' . $mimeType);
-        }
+            error_log("Detected MIME type: " . $mimeType);
 
-        $imageInfo = getimagesize($file['tmp_name']);
-        if ($imageInfo === false) {
-            throw new Exception('File is not a valid image');
-        }
+            if (!in_array($mimeType, $allowedMimes)) {
+                throw new Exception('Invalid file type: ' . $mimeType);
+            }
 
-        if ($file['size'] > 2048000) { // 2MB limit
-            throw new Exception('File size exceeds limit');
-        }
+            $imageInfo = getimagesize($file['tmp_name']);
+            if ($imageInfo === false) {
+                throw new Exception('File is not a valid image');
+            }
 
-        // Generate unique filename
-        $filename = time();
-        $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
-        $imageName = $filename . '.' . $extension;
+            if ($file['size'] > 2048000) { // 2MB limit
+                throw new Exception('File size exceeds limit');
+            }
 
-        // Define upload path using absolute path
-        $uploadDir = __DIR__ . '/images/';
-        $uploadPath = $uploadDir . $imageName;
+            // Generate unique filename
+            $filename = time();
+            $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+            $imageName = $filename . '.' . $extension;
 
-        // Ensure the upload directory exists
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0777, true);  // Create the directory if it doesn't exist
-        }
+            // Define upload path using absolute path
+            $uploadDir = __DIR__ . '/images/';
+            $uploadPath = $uploadDir . $imageName;
 
-        // Move uploaded file
-        if (move_uploaded_file($file['tmp_name'], $uploadPath)) {
-            $response = [
-                'fileId' => $imageName,
-                'type' => $mimeType,
+            // Ensure the upload directory exists
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0777, true);  // Create the directory if it doesn't exist
+            }
+
+            // Move uploaded file
+            if (move_uploaded_file($file['tmp_name'], $uploadPath)) {
+                $response = [
+                    'fileId' => $imageName,
+                    'type' => $mimeType,
+                ];
+
+                return sendCustomResponse(ErrorCodes::$SUCCESS_FILE_UPLOADED[1], $response, ErrorCodes::$SUCCESS_FILE_UPLOADED[0], 200);
+            } else {
+                return sendCustomResponse(ErrorCodes::$FAIL_UPLOAD_FILE_NOT_FOUND[1], null, ErrorCodes::$FAIL_UPLOAD_FILE_NOT_FOUND[0], 404);
+            }
+        } catch (Exception $e) {
+            error_log("File upload error: " . $e->getMessage());
+            return [
+                'dcode' => 500,
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null
             ];
-
-            return sendCustomResponse(ErrorCodes::$SUCCESS_FILE_UPLOADED[1], $response, ErrorCodes::$SUCCESS_FILE_UPLOADED[0], 200);
-        } else {
-            return sendCustomResponse(ErrorCodes::$FAIL_UPLOAD_FILE_NOT_FOUND[1], null,ErrorCodes::$FAIL_UPLOAD_FILE_NOT_FOUND[0], 404);
         }
-    } catch (Exception $e) {
-        error_log("File upload error: " . $e->getMessage());
-        return [
-            'dcode' => 500,
-            'code' => 500,
-            'message' => $e->getMessage(),
-            'data' => null
-        ];
     }
-}
 
 
     public function getTransaction($bankid, $request)
@@ -1045,8 +1045,22 @@ class AppApiController
             ];
         };
 
+        $note = "Transfer fund request of " . $request['amount'] . ' on account number: ' . $request['beneficiaryAccountNo'];
+
+        $logData = [
+            'bank_code' => $bankid,
+            'username' => $user['username'],
+            'account_holder' => $user['username'],
+            'account_no' => $request['sourceAccount'],
+            'amount' => $request['amount'],
+            // 'note' => $note,
+            'timestamp' => date('Y-m-d H:i:s'),
+            'transaction_type' => 'Fund Transfer',
+            'request' => $request,
+        ];
+
         $fundTransferController = new FundTransferController($bankid);
-        return $fundTransferController->fundTransferLogic($bankid, $user, $request);
+        return $fundTransferController->fundTransferLogic($bankid, $user, $request, $logData);
     }
 
     public function fetchLiveConfigData($bankid)
