@@ -113,12 +113,11 @@ $app->get('/api/v2/{bankId}/validate-connection', function (Request $request, Re
 
 // register new customer
 $app->post('/api/v2/{bankId}/auth/register-user-customer-new', function (Request $request, Response $response, array $args) use ($appController) {
-    $bankId = (int)$args['bankId'];
-    $rawBody = $request->getBody()->__toString();
-    $data = json_decode($rawBody, true);
+
+    $data = requestParse($request);
 
 
-    $result = $appController->registerNewCustomer($bankId, $data);
+    $result = $appController->registerNewCustomer((int)$args['bankId'], $data);
 
     if ($result['code'] == 200) {
         return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
@@ -131,12 +130,9 @@ $app->post('/api/v2/{bankId}/auth/register-user-customer-new', function (Request
 
 // register existing customer
 $app->post('/api/v2/{bankId}/auth/register-user-customer-exist', function (Request $request, Response $response, array $args) use ($appController) {
-    $bankId = (int)$args['bankId'];
-    $rawBody = $request->getBody()->__toString();
-    $data = json_decode($rawBody, true);
+    $data = requestParse($request);
 
-
-    $result = $appController->registerExistCustomer($bankId, $data);
+    $result = $appController->registerExistCustomer((int)$args['bankId'], $data);
 
     if ($result['code'] == 200) {
         return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
@@ -148,12 +144,10 @@ $app->post('/api/v2/{bankId}/auth/register-user-customer-exist', function (Reque
 // generate user app token
 
 $app->post('/api/v2/{bankId}/auth/generate-token', function (Request $request, Response $response, array $args) use ($appController) {
-    $bankId = (int)$args['bankId'];
-    $rawBody = $request->getBody()->__toString();
-    $data = json_decode($rawBody, true);
+    $data = requestParse($request);
 
     $authController = new AuthController();
-    $result = $authController->mobileLoginNewLogic($bankId, $data);
+    $result = $authController->mobileLoginNewLogic((int)$args['bankId'], $data);
 
     if ($result['code'] == 200) {
         return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
@@ -172,14 +166,7 @@ $app->post('/api/v2/{bankId}/auth/generate-token', function (Request $request, R
 // get current user's information
 $app->get('/api/v2/{bankId}/app/user/current', function (Request $request, Response $response, array $args) use ($appController) {
 
-    session_start();
-
-    $jwtToken = getBearerToken();
-    $user = authenticateUser($jwtToken);
-
-    if (!$user) {
-        sendCustomResponse('Token Expired. Please Login again', null, 401, 401);
-    }
+    $user = userAuthVerify();
 
     $result = $appController->currentUser((int)$args['bankId'], $user);
 
@@ -449,17 +436,6 @@ $app->post('/api/v2/{bankId}/app/transaction/fund-transfer', function (Request $
         return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
     }
 });
-
-
-
-
-
-
-
-
-
-
-
 
 
 
