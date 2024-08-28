@@ -22,7 +22,7 @@ class FundTransferController
     public function fundTransferLogic($bankid, $user, $request, $logData)
     {
         try {
-            $transfer = $this->mobileTransferNew($bankid, $user['username'], $request);
+            $transfer = $this->mobileTransferNew($request, $user['username'], $bankid);
 
             if ($transfer['code'] == 200) {
                 $data = [
@@ -55,6 +55,8 @@ class FundTransferController
                 $logData['response'] = json_encode($response);
                 $logData['status'] = 'Error';
                 $logData['note'] = $transfer['message'];
+                // var_dump($logData);
+
 
                 $this->logDbConnection->transactionLogDb($logData);
 
@@ -76,7 +78,7 @@ class FundTransferController
         $sourceAccount = $request['sourceAccount'];
         $beneficiaryAccountNo = $request['beneficiaryAccountNo'];
         $beneficiaryName = $request['beneficiaryName'];
-        $note = $request['note'];
+        $note = $request['note'] ?? null;
         $saveBeneficiary = $request['saveBeneficiary'];
         $amount = $request['amount'];
         $beneficiaryBankCode = $request['beneficiaryBankCode'];
@@ -85,7 +87,7 @@ class FundTransferController
         // You'll need to implement your own database connection method
         $db = $this->dbConnection;
         // Get Customer by sourceAccount
-        $stmt = $db->prepare("SELECT * FROM tblcustomer WHERE Accountid = ?");
+        $stmt = $db->prepare("SELECT * FROM tblcustomers WHERE Accountid = ?");
         $stmt->execute([$sourceAccount]);
         $customer = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -115,7 +117,7 @@ class FundTransferController
 
         if ($bankId == $beneficiaryBankCode) {
             // Internal Fund Transfer
-            $stmt = $db->prepare("SELECT * FROM Fees WHERE Code = 'FEE_IFT'");
+            $stmt = $db->prepare("SELECT * FROM tblMobileFees WHERE Code = 'FEE_IFT'");
             $stmt->execute();
             $chargesIFT = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -171,7 +173,7 @@ class FundTransferController
             }
         } else {
             // External Fund Transfer
-            $stmt = $db->prepare("SELECT * FROM Fees WHERE Code = 'FEE_EFT'");
+            $stmt = $db->prepare("SELECT * FROM tblMobileFees WHERE Code = 'FEE_EFT'");
             $stmt->execute();
             $chargesEFT = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -187,7 +189,7 @@ class FundTransferController
             $fee = $chargesEFT['SellPrice'];
 
             // Check prebalance
-            $stmt = $db->prepare("SELECT TOP 1 1 FROM tblPrebalance");
+            $stmt = $db->prepare("SELECT TOP 1 * FROM tblPrebalance");
             $stmt->execute();
             $preBalance = $stmt->fetch(PDO::FETCH_ASSOC);
 
