@@ -1046,17 +1046,17 @@ class AppApiController
             ];
         };
 
-        $note = "Transfer fund request of " . $request['amount'] . ' on account number: ' . $request['beneficiaryAccountNo'];
+        // $note = "Transfer fund request of " . $request['amount'] . ' on account number: ' . $request['beneficiaryAccountNo'];
 
         $logData = [
-            'bank_code' => $bankid,
+            'bankId' => $bankid,
             'username' => $user['username'],
             'account_holder' => $user['username'],
-            'account_no' => $request['sourceAccount'],
+            'srcAccount' => $request['sourceAccount'],
             'amount' => $request['amount'],
             // 'note' => $note,
             'timestamp' => date('Y-m-d H:i:s'),
-            'transaction_type' => 'Fund Transfer',
+            'action' => 'Fund Transfer',
             'request' => $request,
         ];
 
