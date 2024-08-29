@@ -1152,7 +1152,7 @@ class AppApiController
 
             if ($beneficiaries['code'] == 200) {
                 return [
-                    'message' => ErrorCodes::$SUCCESS_TRANSACTION[1],
+                    'message' => 'Beneficiary Account Removed Successfully',
                     'dcode' => ErrorCodes::$SUCCESS_TRANSACTION[0],
                     'data' => $beneficiaries['data'],
                     'code' => 200,
