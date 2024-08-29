@@ -13,6 +13,7 @@ require 'ThirdPartyControllers/VtPassController.php';
 // Transaction Controller
 require 'TransactionController/TopUpController.php';
 require 'TransactionController/FundTransferController.php';
+require 'TransactionController/UtilityController.php';
 
 
 // require '../models/UtilityDemo.php';
@@ -167,6 +168,7 @@ class AppApiController
             ];
         }
     }
+
 
 
     public function currentUser($bankid, $user)
@@ -1063,6 +1065,81 @@ class AppApiController
         $fundTransferController = new FundTransferController($bankid);
         return $fundTransferController->fundTransferLogic($bankid, $user, $request, $logData);
     }
+
+    public function postUtilities($user, $bankid, $request)
+    {
+        try {
+            $data = [
+                'categoryCode' => $request['categoryCode'] ?? null,
+                'customerId' => $request['customerId'] ?? null,
+                'packageCode' => $request['packageCode'] ?? null,
+                'price' => $request['price'] ?? null,
+                'serviceProvider' => $request['serviceProvider'] ?? null,
+                'srcAccount' => $request['srcAccount'] ?? null,
+            ];
+
+            $rules = [
+                'categoryCode' => 'required',
+                'customerId' => 'required',
+                'packageCode' => 'required',
+                'price' => 'required',
+                'serviceProvider' => 'required',
+                'srcAccount' => 'required',
+            ];
+
+            $validator = new Validator();
+            $validation = $validator->make($data, $rules);
+
+            $validation->validate();
+
+            if ($validation->fails()) {
+                return [
+                    'message' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[1],
+                    'data' => $validation->errors()->toArray(),
+                    'dcode' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[0],
+                    'code' => 422,
+                ];
+            }
+
+            $logData = [
+                'bankId' => $bankid,
+                'username' => $user['username'],
+                'account_holder' => $user['username'],
+                'srcAccount' => $request['sourceAccount'],
+                'amount' => $request['price'],
+                'timestamp' => date('Y-m-d H:i:s'),
+                'action' => 'Utility',
+                'request' => $request,
+            ];
+
+            $utilityController = new UtilityController($bankid);
+            $regExistCustomer = $utilityController->purchaseUtilityServices($user, $bankid, $request, $logData);
+
+            if ($regExistCustomer['code'] == 200) {
+                return [
+                    'dcode' => ErrorCodes::$SUCCESS_USER_CREATED[0],
+                    'code' => 200,
+                    'message' => ErrorCodes::$SUCCESS_USER_CREATED[1],
+                    'data' => null
+                ];
+            } else {
+                return [
+                    'dcode' => $regExistCustomer['code'],
+                    'code' => 203,
+                    'message' => $regExistCustomer['message'],
+                    'data' => null
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'dcode' => 500,
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null
+            ];
+        }
+    }
+
 
     public function fetchLiveConfigData($bankid)
     {
