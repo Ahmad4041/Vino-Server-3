@@ -976,6 +976,7 @@ class AppApiController
         }
     }
 
+
     public function requestTopUpMobile($bankid, $user, $request)
     {
         $dataRequest = [
@@ -1082,6 +1083,95 @@ class AppApiController
             $dcode = 200;
             $code = 200;
             return sendCustomResponse($message, $data, $dcode, $code);
+        }
+    }
+
+    public function getBeneficiariesList($user, $bankid)
+    {
+        try {
+            $bankDbConnection = new BankDbController(Database::getConnection($bankid));
+            $beneficiaries = $bankDbConnection->beneficiaries($user['username']);
+
+            if ($beneficiaries['code'] == 200 && !empty($beneficiaries['data'])) {
+                $benes = $beneficiaries['data'];
+                $response = [];
+                foreach ($benes as $bene) {
+                    $response[] = [
+                        'id' => $bene['Id'],
+                        'name' => $bene['Name'],
+                        'accountNo' => $bene['AccountNo'],
+                        'bankCode' => $bene['BankCode'],
+                        'username' => $bene['Username'],
+                    ];
+                }
+            } else {
+                $response = [];
+            }
+            return [
+                'message' => ErrorCodes::$SUCCESS_FETCH_BENEFICIARIES[1],
+                'dcode' => ErrorCodes::$SUCCESS_FETCH_BENEFICIARIES[0],
+                'data' => $response,
+                'code' => 200,
+            ];
+        } catch (Exception $e) {
+            return [
+                'dcode' => 500,
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null,
+            ];
+        }
+    }
+
+    public function deleteBeneficiaries($user, $bankid, $request)
+    {
+        try {
+            $dataRequest = [
+                'id' => $request['id'] ?? null,
+            ];
+            $rules = [
+                'id' => 'required',
+            ];
+
+            $validator = new Validator();
+            $validation = $validator->make($dataRequest, $rules);
+
+            $validation->validate();
+
+            if ($validation->fails()) {
+                return [
+                    'message' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[1],
+                    'data' => $validation->errors()->toArray(),
+                    'dcode' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[0],
+                    'code' => 422,
+                ];
+            };
+
+            $bankDbConnection = new BankDbController(Database::getConnection($bankid));
+            $beneficiaries = $bankDbConnection->delBeneficiaries($user['username'], $request['id']);
+
+            if ($beneficiaries['code'] == 200) {
+                return [
+                    'message' => ErrorCodes::$SUCCESS_TRANSACTION[1],
+                    'dcode' => ErrorCodes::$SUCCESS_TRANSACTION[0],
+                    'data' => $beneficiaries['data'],
+                    'code' => 200,
+                ];
+            } else {
+                return [
+                    'message' => $beneficiaries['message'],
+                    'dcode' => $beneficiaries['data'],
+                    'data' => $beneficiaries['code'],
+                    'code' => 404,
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'dcode' => 500,
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null,
+            ];
         }
     }
 }

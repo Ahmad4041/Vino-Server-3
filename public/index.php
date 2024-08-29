@@ -437,7 +437,22 @@ $app->post('/api/v2/{bankId}/app/transaction/fund-transfer', function (Request $
     }
 });
 
+$app->get('/api/v2/{bankId}/app/transaction/beneficiaries', function (Request $request, Response $response, array $args) use ($appController) {
+    $user = userAuthVerify();
 
+    $result = $appController->getBeneficiariesList($user, (int)$args['bankId']);
+
+    return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+});
+
+$app->delete('/api/v2/{bankId}/app/transaction/beneficiaries', function (Request $request, Response $response, array $args) use ($appController) {
+    $user = userAuthVerify();
+    $requestData = requestParse($request);
+
+    $result = $appController->deleteBeneficiaries($user, (int)$args['bankId'], $requestData);
+
+    return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+});
 
 
 

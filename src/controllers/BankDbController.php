@@ -477,7 +477,7 @@ class BankDbController
     {
         $limit = 20;
         $offset = $page * $limit;
-    
+
         // Fetch transactions
         $sql = "
         WITH NumberedRows AS (
@@ -490,33 +490,33 @@ class BankDbController
         FROM NumberedRows
         WHERE RowNum > :offset AND RowNum <= :upperLimit
         ORDER BY Sno DESC";
-    
+
         $stmt = $this->dbConnection->prepare($sql);
         $stmt->bindParam(':accountId', $accountId, PDO::PARAM_STR);
         $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
         $upperLimit = $offset + $limit;
         $stmt->bindParam(':upperLimit', $upperLimit, PDO::PARAM_INT);
         $stmt->execute();
-    
+
         $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
+
         // Count total rows
         $sqlCount = "SELECT COUNT(*) FROM tblCustomerLedger WHERE AcctNo = :accountId";
         $stmtCount = $this->dbConnection->prepare($sqlCount);
         $stmtCount->bindParam(':accountId', $accountId, PDO::PARAM_STR);
         $stmtCount->execute();
         $totalRow = $stmtCount->fetchColumn();
-    
+
         if (empty($transactions)) {
             return [
                 'code' => ErrorCodes::$FAIL_ACCOUNT_TRANSACTION_FOUND[0],
                 'data' => ErrorCodes::$FAIL_ACCOUNT_TRANSACTION_FOUND[1],
             ];
         }
-        
-    
+
+
         $transactionHistory = array_map(function ($row) {
-            $trnTime = new DateTime($row['TrnTime']);  
+            $trnTime = new DateTime($row['TrnTime']);
             return [
                 'id' => (int) $row['Sno'],
                 'reference' => $row['gjsource'],
@@ -526,12 +526,12 @@ class BankDbController
                 'withdraw2' => floatval($row['Credit']),
                 'deposit' => (float) number_format((float) $row['Credit'], 2, '.', ''),
                 'date' => date('Y-m-d', strtotime($row['trnDate'])),
-                'time' => $trnTime->format('H:i:s'),  
+                'time' => $trnTime->format('H:i:s'),
             ];
         }, $transactions);
-        
+
         $totalPages = ceil($totalRow / $limit);
-    
+
         $res = [
             'content' => $transactionHistory,
             'pageable' => [
@@ -560,7 +560,7 @@ class BankDbController
             'first' => ($page == 0),
             'empty' => empty($transactionHistory)
         ];
-    
+
         return [
             'code' => 200,
             'data' => $res,
@@ -1017,6 +1017,51 @@ class BankDbController
             return [
                 'code' => 403,
                 'message' => 'Invalid Username or Password',
+            ];
+        }
+    }
+
+
+    public function beneficiaries($username)
+    {
+
+        $query = "SELECT `Id`, `Name`, `AccountNo`, `BankCode`, `Username`
+                  FROM `tblMobileBeneficiaries`
+                  WHERE `Username` = ?
+                  ORDER BY `Id` DESC";
+
+        $stmt = $this->dbConnection->prepare($query);
+        $stmt->execute([$username]);
+
+        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return [
+            'code' => 200,
+            'message' => 'Data fetched successfully.',
+            'data' => empty($data) ? null : $data,
+        ];
+    }
+
+    function delBeneficiaries($username, $id)
+    {
+
+        $stmt = $this->dbConnection->prepare("DELETE FROM tblMobileBeneficiaries WHERE Username = :username AND id = :id");
+
+        $stmt->bindParam(':username', $username, PDO::PARAM_STR);
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+
+        $result = $stmt->execute();
+
+        if ($stmt->rowCount() > 0) {
+            return [
+                'code' => 200,
+                'message' => 'Beneficiary deleted',
+                'data' => ['id' => $id, 'username' => $username]
+            ];
+        } else {
+            return [
+                'code' => 403,
+                'message' => 'Beneficiary not found!',
+                'data' => []
             ];
         }
     }
