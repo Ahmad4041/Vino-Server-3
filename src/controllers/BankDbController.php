@@ -1024,11 +1024,10 @@ class BankDbController
 
     public function beneficiaries($username)
     {
-
-        $query = "SELECT `Id`, `Name`, `AccountNo`, `BankCode`, `Username`
-                  FROM `tblMobileBeneficiaries`
-                  WHERE `Username` = ?
-                  ORDER BY `Id` DESC";
+        $query = "SELECT Id, Name, AccountNo, BankCode, Username
+                  FROM tblMobileBeneficiaries
+                  WHERE Username = ?
+                  ORDER BY Id DESC";
 
         $stmt = $this->dbConnection->prepare($query);
         $stmt->execute([$username]);
@@ -1040,6 +1039,7 @@ class BankDbController
             'data' => empty($data) ? null : $data,
         ];
     }
+
 
     function delBeneficiaries($username, $id)
     {
