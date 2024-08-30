@@ -65,10 +65,10 @@ class VTPassController
     public function buyAirtime($request)
     {
         $data = [
-            'request_id' => $request->request_id ?? $this->generateRequestID(),
-            'serviceID' => $request->serviceID,
-            'amount' => $request->amount,
-            'phone' => $request->phone
+            'request_id' => $request['request_id'] ?? generateRequestId(),
+            'serviceID' => $request['serviceID'],
+            'amount' => $request['amount'],
+            'phone' => $request['phone']
         ];
 
         return $this->makeRequest('POST', '/pay', $data);
@@ -77,7 +77,7 @@ class VTPassController
     public function buyAirtimeLive($serviceID, $phone, $amount)
     {
         $data = [
-            'request_id' => $this->generateRequestID(),
+            'request_id' => generateRequestID(),
             'serviceID' => $serviceID,
             'amount' => $amount,
             'phone' => $phone
@@ -122,12 +122,12 @@ class VTPassController
     public function buyData($request)
     {
         $data = [
-            'request_id' => $request->request_id ?? $this->generateRequestID(),
-            'serviceID' => $request->serviceID,
-            'billersCode' => $request->billersCode,
-            'variation_code' => $request->variation_code,
-            'amount' => $request->amount,
-            'phone' => $request->phone
+            'request_id' => $request['request_id'] ?? generateRequestId(),
+            'serviceID' => $request['serviceID'],
+            'billersCode' => $request['billersCode'],
+            'variation_code' => $request['variation_code'],
+            'amount' => $request['amount'],
+            'phone' => $request['phone']
         ];
 
         return $this->makeRequest('POST', '/pay', $data);
@@ -136,12 +136,12 @@ class VTPassController
     public function buyCable($request)
     {
         $data = [
-            'request_id' => $request->request_id ?? $this->generateRequestID(),
-            'serviceID' => $request->serviceID,
-            'billersCode' => $request->billersCode,
-            'variation_code' => $request->variation_code,
-            'amount' => $request->amount,
-            'phone' => $request->phone,
+            'request_id' => $request['request_id'] ?? generateRequestId(),
+            'serviceID' => $request['serviceID'],
+            'billersCode' => $request['billersCode'],
+            'variation_code' => $request['variation_code'],
+            'amount' => $request['amount'],
+            'phone' => $request['phone'],
             'subscription_type' => 'change'
         ];
 
@@ -171,12 +171,12 @@ class VTPassController
     public function buyElectricity($request)
     {
         $data = [
-            'request_id' => $request->request_id ?? $this->generateRequestID(),
-            'serviceID' => $request->serviceID,
-            'billersCode' => $request->billersCode,
-            'variation_code' => $request->variation_code,
-            'amount' => $request->amount,
-            'phone' => $request->phone
+            'request_id' => $request['request_id'] ?? generateRequestId(),
+            'serviceID' => $request['serviceID'],
+            'billersCode' => $request['billersCode'],
+            'variation_code' => $request['variation_code'],
+            'amount' => $request['amount'],
+            'phone' => $request['phone']
         ];
 
         return $this->makeRequest('POST', '/pay', $data);

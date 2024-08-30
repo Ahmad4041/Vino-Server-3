@@ -1105,7 +1105,7 @@ class AppApiController
                 'bankId' => $bankid,
                 'username' => $user['username'],
                 'account_holder' => $user['username'],
-                'srcAccount' => $request['sourceAccount'],
+                'srcAccount' => $request['srcAccount'],
                 'amount' => $request['price'],
                 'timestamp' => date('Y-m-d H:i:s'),
                 'action' => 'Utility',

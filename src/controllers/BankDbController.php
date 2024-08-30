@@ -1067,100 +1067,85 @@ class BankDbController
     }
 
     function validateAccount($accountID, $username)
-    {
-        // Prepare the SQL query to fetch all required data
-        $sql = "
-            SELECT 
-                mu.AccountID as mu_AccountID,
-                mu.Username as mu_Username,
-                c.Accountid as c_Accountid,
-                c.BalC1,
-                c.Telephone,
-                (SELECT COUNT(*) FROM tblPrebalance) as preBalanceExists
-            FROM 
-                tblMobileUsers mu
-            LEFT JOIN 
-                tblcustomers c ON mu.AccountID = c.Accountid
-            WHERE 
-                mu.AccountID = :accountID
-            UNION
-            SELECT 
-                mu.AccountID as mu_AccountID,
-                mu.Username as mu_Username,
-                c.Accountid as c_Accountid,
-                c.BalC1,
-                c.Telephone,
-                (SELECT COUNT(*) FROM tblPrebalance) as preBalanceExists
-            FROM 
-                tblMobileUsers mu
-            LEFT JOIN 
-                tblcustomers c ON mu.AccountID = c.Accountid
-            WHERE 
-                mu.Username = :username
-            LIMIT 1
-        ";
+{
+    // Prepare the SQL query to fetch all required data
+    $sql = "
+    SELECT 
+        mu.AccountID as mu_AccountID,
+        mu.Username as mu_Username,
+        c.Accountid as c_Accountid,
+        c.BalC1,
+        c.Telephone,
+        (SELECT COUNT(*) FROM tblPrebalance) as preBalanceExists
+    FROM 
+        tblMobileUsers mu
+    LEFT JOIN 
+        tblcustomers c ON mu.AccountID = c.Accountid
+    WHERE 
+        mu.AccountID = :accountID
+        OR mu.Username = :username
+    ";
 
-        // Prepare and execute the query
-        $stmt = $this->dbConnection->prepare($sql);
-        $stmt->bindParam(':accountID', $accountID, PDO::PARAM_STR);
-        $stmt->bindParam(':username', $username, PDO::PARAM_STR);
-        $stmt->execute();
+    // Prepare and execute the query
+    $stmt = $this->dbConnection->prepare($sql);
+    $stmt->bindParam(':accountID', $accountID, PDO::PARAM_STR);
+    $stmt->bindParam(':username', $username, PDO::PARAM_STR);
+    $stmt->execute();
 
-        // Fetch the result
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+    // Fetch the result
+    $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        // Check if the account exists
-        if (!$result || !$result['mu_AccountID']) {
-            return [
-                'code' => 403,
-                'message' => 'User not found',
-                'data' => 'User not found',
-            ];
-        }
-
-        // Check if the username is valid
-        if ($result['mu_Username'] !== $username) {
-            return [
-                'code' => 403,
-                'message' => 'Invalid user',
-                'data' => 'Invalid user',
-                'stage' => "invalid user"
-            ];
-        }
-
-        // Check if prebalance exists
-        if ($result['preBalanceExists'] == 0) {
-            return [
-                'code' => 403,
-                'data' => 'FAIL_TRANSACTION', // Replace with actual error code
-                'message' => 'Bank TSS',
-                'stage' => "getprebalance"
-            ];
-        }
-
-        // Check if customer exists
-        if (!$result['c_Accountid']) {
-            return [
-                'code' => 403,
-                'message' => 'Customer not found',
-                'stage' => "getcustomer",
-                'data' => 'Customer not found',
-            ];
-        }
-
-        // If all checks pass, return the customer data
+    // Check if the account exists
+    if (!$result) {
         return [
-            'code' => 200,
-            'message' => 'Success',
-            'data' => [
-                'AccountID' => $result['mu_AccountID'],
-                'Username' => $result['mu_Username'],
-                'BalC1' => $result['BalC1'],
-                'Telephone' => $result['Telephone']
-            ]
+            'code' => 403,
+            'message' => 'User not found',
+            'data' => 'User not found',
         ];
     }
 
+    // Check if the username matches the account
+    if ($result['mu_Username'] !== $username || $result['mu_AccountID'] !== $accountID) {
+        return [
+            'code' => 403,
+            'message' => 'Invalid user',
+            'data' => 'Invalid user',
+            'stage' => "invalid user"
+        ];
+    }
+
+    // Check if prebalance exists
+    if ($result['preBalanceExists'] == 0) {
+        return [
+            'code' => 403,
+            'data' => 'FAIL_TRANSACTION',
+            'message' => 'Bank TSS',
+            'stage' => "getprebalance"
+        ];
+    }
+
+    // Check if customer exists
+    if (!$result['c_Accountid']) {
+        return [
+            'code' => 403,
+            'message' => 'Customer not found',
+            'stage' => "getcustomer",
+            'data' => 'Customer not found',
+        ];
+    }
+
+    // If all checks pass, return the customer data
+    return [
+        'code' => 200,
+        'message' => 'Success',
+        'data' => [
+            'AccountID' => $result['mu_AccountID'],
+            'Username' => $result['mu_Username'],
+            'BalC1' => $result['BalC1'],
+            'Telephone' => $result['Telephone']
+        ]
+    ];
+}
     function getServiceFee($categoryCode)
     {
         $feeValues = ['priceSell' => null, 'priceCost' => null];
@@ -1176,7 +1161,7 @@ class BankDbController
         if (isset($categoryCodeMap[$lowercaseCategoryCode])) {
             $feeCode = $categoryCodeMap[$lowercaseCategoryCode];
 
-            $stmt = $this->dbConnection->prepare("SELECT SellPrice, CostPrice FROM tblMobileFees WHERE Code = :code LIMIT 1");
+            $stmt = $this->dbConnection->prepare("SELECT TOP 1 SellPrice, CostPrice FROM tblMobileFees WHERE Code = :code");
             $stmt->bindParam(':code', $feeCode, PDO::PARAM_STR);
             $stmt->execute();
 

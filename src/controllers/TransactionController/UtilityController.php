@@ -52,7 +52,7 @@ class UtilityController
 
                 $response = [
                     'code' => 403,
-                    'dcode' => $postUtility['dcode'],
+                    'dcode' => $postUtility['code'],
                     'message' => $responseMessage,
                     'data' => $postUtility['data'],
                 ];
@@ -60,16 +60,6 @@ class UtilityController
                 $logData['response'] = json_encode($response);
                 $logData['status'] = 'Error';
                 $logData['note'] = $logNote;
-                $response = [
-                    'code' => 403,
-                    'dcode' => $postUtility['dcode'],
-                    'message' => $postUtility['message'],
-                    'data' => $postUtility['data'],
-                ];
-
-                $logData['response'] = json_encode($response);
-                $logData['status'] = 'Error';
-                $logData['note'] = $postUtility['message'];
 
                 $this->logDbConnection->transactionLogDb($logData);
 
@@ -88,6 +78,7 @@ class UtilityController
     public function postUtilities($request, $user, $bankid)
     {
         $validateUser = $this->bankDbConnection->validateAccount($request['srcAccount'], $user['username']);
+        // var_dump($validateUser);
         if ($validateUser['code'] == 200) {
             $serviceFee = $this->bankDbConnection->getServiceFee($request['categoryCode']);
 
@@ -104,7 +95,7 @@ class UtilityController
 
             $requestId = generateRequestId();
             $vtPassResponse = $this->callVtPass($request, $validateUser['data']['Telephone'], $bankid, $requestId);
-            if ($vtPassResponse['code'] === '000') {
+            if ($vtPassResponse['code'] == '000') {
                 $purcahse_code = ($vtPassResponse['purchased_code'] === '') ? '' : $vtPassResponse['token'];
                 $note = 'Utility payment ' . $request['categoryCode'] . '. ' . $purcahse_code;
                 $debitRequest = $this->coreBankConnection->debitNew2($request['srcAccount'], $bankid, number_format((float)$request['price'], 2, '.', ''), number_format((float)$serviceFee['priceSell'], 2, '.', ''), $note);
@@ -134,15 +125,26 @@ class UtilityController
                     'data' => ErrorCodes::$FAIL_TRANSACTION[1],
                 ];
             } else {
-                $description = 'VTpass transaction error of amount ' . $totalSellCost . ' from ' . $request['srcAccount'] . ', VTPass API Issue !!' . $vtPassResponse["response_description"];
+                // Check if 'response_description' is an array and extract the 'desc' value if available
+                // $desc = is_array($vtPassResponse["response_description"]) && isset($vtPassResponse["response_description"])
+                //     ? $vtPassResponse["response_description"]
+                //     : '';
+
+                    // var_dump($desc);
+                    // var_dump($vtPassResponse['response_description']);
+                // Adjust the $description line to include the extracted 'desc' value
+                $description = 'VTpass transaction error of amount ' . $totalSellCost . ' from ' . $request['srcAccount'] . ', VTPass API Issue !! ' ;
+
+                // $description = 'VTpass transaction error of amount ' . $totalSellCost . ' from ' . $request['srcAccount'] . ', VTPass API Issue !!' . $vtPassResponse["response_description"];
                 $this->localDbConnection->debitDataInsert('', $request['srcAccount'], $bankid, $request['price'], $serviceFee['priceSell'], $description, 'Error', $note = '');
                 return [
                     'code' =>  203,
                     'message' => ['Switch Not Responding', $description],
-                    'data' => 'VTPass API Issue !!' . $vtPassResponse["response_description"],
+                    'data' => 'VTPass API Issue !!' .   ' Response Code: ' . $vtPassResponse['code'],
                 ];
             }
         }
+        return $validateUser;
     }
 
     public function callVtPass($request, $phoneNo, $bankId, $requestId)
@@ -167,7 +169,35 @@ class UtilityController
             },
             'electricity' => function () use ($vtPassConnection, $requestData) {
                 $verifyMeterNo = $vtPassConnection->verifyMeterNumber($requestData);
-                return ($verifyMeterNo['code'] === '000') ? $vtPassConnection->buyElectricity($requestData) : $verifyMeterNo;
+                
+                if ($verifyMeterNo['code'] === '000') {
+                    if (isset($verifyMeterNo['content']['WrongBillersCode']) && $verifyMeterNo['content']['WrongBillersCode'] === true) {
+                        return [
+                            'status' => 'error',
+                            'code' => 403,
+                            'message' => $verifyMeterNo['content']['error'] ?? 'Invalid meter number',
+                            'data' => $verifyMeterNo
+                        ];
+                    }
+                    
+                    if (isset($verifyMeterNo['content']['Can_Vend']) && $verifyMeterNo['content']['Can_Vend'] === 'yes') {
+                        return $vtPassConnection->buyElectricity($requestData);
+                    } else {
+                        return [
+                            'status' => 'error',
+                            'code' => 403,
+                            'message' => 'Cannot vend for this meter at the moment',
+                            'data' => $verifyMeterNo
+                        ];
+                    }
+                } else {
+                    return [
+                        'status' => 'error',
+                        'code' => 403,
+                        'message' => 'Meter verification failed',
+                        'data' => $verifyMeterNo
+                    ];
+                }
             },
             'cable' => function () use ($vtPassConnection, $requestData) {
                 $testMode = true; // This should be set based on your application's configuration
