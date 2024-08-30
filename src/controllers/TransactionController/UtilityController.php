@@ -33,8 +33,8 @@ class UtilityController
                 ];
 
                 $logData['response'] = json_encode($response);
-                $logData['status'] = 'SUCCESS';
-                $logData['note'] = $postUtility['message'];
+                $logData['status'] = 'Success';
+                $logData['note'] = $postUtility['data']['description'];
 
 
                 $this->logDbConnection->transactionLogDb($logData);
@@ -42,6 +42,24 @@ class UtilityController
 
                 return $response;
             } else {
+                if (is_array($postUtility['message'])) {
+                    $responseMessage = $postUtility['message'][0] ?? '';
+                    $logNote = $postUtility['message'][1] ?? '';
+                } else {
+                    $responseMessage = $postUtility['message'];
+                    $logNote = $postUtility['message'];
+                }
+
+                $response = [
+                    'code' => 403,
+                    'dcode' => $postUtility['dcode'],
+                    'message' => $responseMessage,
+                    'data' => $postUtility['data'],
+                ];
+
+                $logData['response'] = json_encode($response);
+                $logData['status'] = 'Error';
+                $logData['note'] = $logNote;
                 $response = [
                     'code' => 403,
                     'dcode' => $postUtility['dcode'],
@@ -78,7 +96,7 @@ class UtilityController
             if ($validateUser['data']['BalC1'] < $totalSellCost) {
                 return [
                     'code' =>  ErrorCodes::$FAIL_ACCOUNT_BALANCE_NOT_ENOUGH[0],
-                    'message' =>  ErrorCodes::$FAIL_ACCOUNT_BALANCE_NOT_ENOUGH[1],
+                    'message' =>  [ErrorCodes::$FAIL_ACCOUNT_BALANCE_NOT_ENOUGH[1], ErrorCodes::$FAIL_ACCOUNT_BALANCE_NOT_ENOUGH[1]],
                     'stage' => "fee",
                     'data' => ErrorCodes::$FAIL_ACCOUNT_BALANCE_NOT_ENOUGH[1],
                 ];
@@ -90,6 +108,39 @@ class UtilityController
                 $purcahse_code = ($vtPassResponse['purchased_code'] === '') ? '' : $vtPassResponse['token'];
                 $note = 'Utility payment ' . $request['categoryCode'] . '. ' . $purcahse_code;
                 $debitRequest = $this->coreBankConnection->debitNew2($request['srcAccount'], $bankid, number_format((float)$request['price'], 2, '.', ''), number_format((float)$serviceFee['priceSell'], 2, '.', ''), $note);
+
+                $requestId = $debitRequest['requestId'];
+                $status = 'SUCCESS';
+                if ($debitRequest['status'] == 200) {
+                    $totalCost = $serviceFee['priceCost'] + $request['price'];
+                    $this->bankDbConnection->balanceCheck($totalCost, 'VINO');
+                    $description = 'Client Debit has been done Successfully of amount ' . $totalSellCost . ' from ' . $request['srcAccount'] . '|' . $purcahse_code;
+                    $this->localDbConnection->debitDataInsert($requestId, $request['srcAccount'], $bankid,  $request['price'], number_format((float)$serviceFee['priceSell'], 2, '.', ''), $description, $status, $note);
+                    return [
+                        'code' => 200,
+                        'message' => 'Utility transaction has been done Successfully',
+                        'data' => [
+                            'status' => $status,
+                            'reference' => (array_key_exists("purchased_code", $vtPassResponse)) ? $vtPassResponse['purchased_code'] : '',
+                            'description' =>  $description
+                        ],
+                    ];
+                }
+                $description = 'Client Debit failure of amount ' . $totalSellCost . ' from ' . $request['srcAccount'];
+                $this->localDbConnection->debitDataInsert($requestId, $request['srcAccount'], $bankid, $request['price'], $serviceFee['priceSell'], $description, $status, $note);
+                return [
+                    'code' =>  203,
+                    'message' => ['Bank TSS: Issuer or Switch Inoperative', $description],
+                    'data' => ErrorCodes::$FAIL_TRANSACTION[1],
+                ];
+            } else {
+                $description = 'VTpass transaction error of amount ' . $totalSellCost . ' from ' . $request['srcAccount'] . ', VTPass API Issue !!' . $vtPassResponse["response_description"];
+                $this->localDbConnection->debitDataInsert('', $request['srcAccount'], $bankid, $request['price'], $serviceFee['priceSell'], $description, 'Error', $note = '');
+                return [
+                    'code' =>  203,
+                    'message' => ['Switch Not Responding', $description],
+                    'data' => 'VTPass API Issue !!' . $vtPassResponse["response_description"],
+                ];
             }
         }
     }
