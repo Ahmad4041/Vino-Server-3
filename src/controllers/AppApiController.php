@@ -1415,6 +1415,7 @@ class AppApiController
     public function getCardWallet($user, $bankid)
     {
         try {
+
             $bankDbConnection = new BankDbController(Database::getConnection($bankid));
             $data = $bankDbConnection->dataCardWallet($user['username']);
 
@@ -1429,6 +1430,60 @@ class AppApiController
                 return [
                     'message' => ErrorCodes::$FAIL_CARD_WALLET_CREATED[1],
                     'dcode' => ErrorCodes::$FAIL_CARD_WALLET_CREATED[0],
+                    'data' => [],
+                    'code' => 400,
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'dcode' => 500,
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null,
+            ];
+        }
+    }
+
+    public function deleteCardWallet($user, $bankid, $request)
+    {
+        try {
+
+            $dataRequest = [
+                'Sno' => $request['Sno'] ?? null,
+            ];
+            $rules = [
+                'Sno' => 'required',
+            ];
+
+            $validator = new Validator();
+            $validation = $validator->make($dataRequest, $rules);
+
+            $validation->validate();
+
+            if ($validation->fails()) {
+                return [
+                    'message' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[1],
+                    'data' => $validation->errors()->toArray(),
+                    'dcode' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[0],
+                    'code' => 422,
+                ];
+            };
+
+
+            $bankDbConnection = new BankDbController(Database::getConnection($bankid));
+            $data = $bankDbConnection->deleteCardWallet($user['username'], $request['Sno']);
+
+            if ($data['code'] == 200) {
+                return [
+                    'message' => ErrorCodes::$SUCCESS_CARD_WALLET_DELETED[1],
+                    'dcode' => ErrorCodes::$SUCCESS_CARD_WALLET_DELETED[0],
+                    'data' => $data['data'],
+                    'code' => 200,
+                ];
+            } else {
+                return [
+                    'message' => ErrorCodes::$FAIL_CARD_WALLET_DELETED[1],
+                    'dcode' => ErrorCodes::$FAIL_CARD_WALLET_DELETED[0],
                     'data' => [],
                     'code' => 400,
                 ];

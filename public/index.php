@@ -508,6 +508,18 @@ $app->get('/api/v2/{bankId}/app/card-wallet', function (Request $request, Respon
     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
 });
 
+
+$app->delete('/api/v2/{bankId}/app/card-wallet', function (Request $request, Response $response, array $args) use ($appController) {
+    $user = userAuthVerify();
+    $requestData = requestParse($request);
+
+    $result = $appController->deleteCardWallet($user, (int)$args['bankId'], $requestData);
+
+    return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+});
+
+
+
 // $app->post('/api/v2/{bankId}/app/card-wallet', function (Request $request, Response $response, array $args) use ($appController) {
 //     $user = userAuthVerify();
 
@@ -516,13 +528,7 @@ $app->get('/api/v2/{bankId}/app/card-wallet', function (Request $request, Respon
 //     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
 // });
 
-// $app->delete('/api/v2/{bankId}/app/card-wallet', function (Request $request, Response $response, array $args) use ($appController) {
-//     $user = userAuthVerify();
 
-//     $result = $appController->postCardWallet($user, (int)$args['bankId']);
-
-//     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
-// });
 
 
 $app->run();

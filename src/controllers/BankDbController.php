@@ -1429,4 +1429,40 @@ class BankDbController
             ];
         }
     }
+
+    function deleteCardWallet($username, $cardId)
+    {
+        $deleteQuery = "
+            DELETE cv 
+            FROM tblMobileCardVault cv
+            JOIN (SELECT Sno FROM tblMobileCardVault WHERE Username = ? AND Sno = ?) as sub
+            ON cv.Sno = sub.Sno
+            WHERE cv.Username = ?;
+        ";
+
+        try {
+            $deleteStmt = $this->dbConnection->prepare($deleteQuery);
+            $deleteStmt->execute([$username, $cardId, $username]);
+
+            if ($deleteStmt->rowCount() > 0) {
+                return [
+                    'code' => 200,
+                    'message' => 'Deleted Successfully',
+                    'data' => ['Sno' => $cardId, 'Username' => $username],
+                ];
+            } else {
+                return [
+                    'code' => 404,
+                    'message' => 'Card wallet not found or not deleted',
+                    'data' => '',
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'code' => 500,
+                'message' => 'An error occurred while deleting the card wallet: ' . $e->getMessage(),
+                'data' => [],
+            ];
+        }
+    }
 }
