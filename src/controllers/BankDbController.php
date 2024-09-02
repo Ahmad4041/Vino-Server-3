@@ -1083,7 +1083,7 @@ class BankDbController
         tblcustomers c ON mu.AccountID = c.Accountid
     WHERE 
         mu.AccountID = :accountID
-        OR mu.Username = :username
+        AND mu.Username = :username
     ";
 
     // Prepare and execute the query
@@ -1103,9 +1103,10 @@ class BankDbController
             'data' => 'User not found',
         ];
     }
+    // var_dump($result);
 
     // Check if the username matches the account
-    if ($result['mu_Username'] !== $username || $result['mu_AccountID'] !== $accountID) {
+    if ($result['mu_Username'] != $username || $result['mu_AccountID'] != $accountID) {
         return [
             'code' => 403,
             'message' => 'Invalid user',
