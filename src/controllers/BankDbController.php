@@ -1294,4 +1294,71 @@ class BankDbController
             ];
         }
     }
+
+
+    function verifyCheque($username, $chequeNo)
+    {
+        $query = "
+            SELECT TOP 1 c.Accountid, c.Customername, s.ChequeNo 
+            FROM tblcustomers c
+            LEFT JOIN tblmobilestopcheque s 
+                ON c.Accountid = s.AccountID 
+                AND s.Cuser = ? 
+                AND s.ChequeNo = ?
+            WHERE c.Surname = ?;
+        ";
+
+        $stmt = $this->dbConnection->prepare($query);
+        $stmt->execute([$username, $chequeNo, $username]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$result || !$result['Accountid']) {
+            return [
+                'code' => ErrorCodes::$FAIL_CUSTOMER_FOUND[0],
+                'message' => ErrorCodes::$FAIL_CUSTOMER_FOUND[1],
+                'data' => '',
+            ];
+        }
+
+        if ($result['ChequeNo']) {
+            return [
+                'code' => ErrorCodes::$FAIL_CHEQUENO_STOP_PAYMENT_REQUEST_ALREADY_EXIST[0],
+                'message' => ErrorCodes::$FAIL_CHEQUENO_STOP_PAYMENT_REQUEST_ALREADY_EXIST[1],
+                'data' => [],
+            ];
+        }
+
+        try {
+            $insertQuery = "
+                INSERT INTO tblmobilestopcheque (AccountID, AccountName, ChequeNo, Ddate, Cuser)
+                VALUES (?, ?, ?, GETDATE(), ?);
+            ";
+
+            $insertStmt = $this->dbConnection->prepare($insertQuery);
+            $insertStmt->execute([
+                $result['Accountid'],
+                $result['Customername'],
+                $chequeNo,
+                $username
+            ]);
+
+            return [
+                'code' => 2022,
+                'message' => 'The cheque stop payment request succeeded',
+                'data' => [
+                    'AccountID' => $result['Accountid'],
+                    'AccountName' => $result['Customername'],
+                    'ChequeNo' => (int) $chequeNo,
+                    'Ddate' => date('Y-m-d H:i:s'),
+                    'Cuser' => $username,
+                ],
+            ];
+        } catch (Exception $e) {
+            return [
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => '',
+            ];
+        }
+    }
 }

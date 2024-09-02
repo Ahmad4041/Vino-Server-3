@@ -1357,4 +1357,57 @@ class AppApiController
             ];
         }
     }
+
+
+    public function requestChequeStopPayment($user, $bankid, $request)
+    {
+        try {
+            $dataRequest = [
+                'chequeNo' => $request['chequeNo'] ?? null,
+            ];
+            $rules = [
+                'chequeNo' => 'required',
+            ];
+
+            $validator = new Validator();
+            $validation = $validator->make($dataRequest, $rules);
+
+            $validation->validate();
+
+            if ($validation->fails()) {
+                return [
+                    'message' => ErrorCodes::$FAIL_CHEQUENO_VALIDATE[1],
+                    'data' => $validation->errors()->toArray(),
+                    'dcode' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[0],
+                    'code' => 422,
+                ];
+            };
+
+            $bankDbConnection = new BankDbController(Database::getConnection($bankid));
+            $verifyCheque = $bankDbConnection->verifyCheque($user['username'], $request['chequeNo']);
+
+            if ($verifyCheque['code'] == 2022) {
+                return [
+                    'message' => ErrorCodes::$SUCCESS_REQUESTING_CHEQUE_STOP_PAYMENT[1],
+                    'dcode' => ErrorCodes::$SUCCESS_REQUESTING_CHEQUE_STOP_PAYMENT[0],
+                    'data' => [],
+                    'code' => 200,
+                ];
+            } else {
+                return [
+                    'message' => $verifyCheque['message'],
+                    'dcode' => $verifyCheque['code'],
+                    'data' => [],
+                    'code' => 400,
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'dcode' => 500,
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null,
+            ];
+        }
+    }
 }
