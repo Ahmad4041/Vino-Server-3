@@ -1428,8 +1428,8 @@ class AppApiController
                 ];
             } else {
                 return [
-                    'message' => ErrorCodes::$FAIL_CARD_WALLET_CREATED[1],
-                    'dcode' => ErrorCodes::$FAIL_CARD_WALLET_CREATED[0],
+                    'message' => 'Empty Card Wallet',
+                    'dcode' => '400',
                     'data' => [],
                     'code' => 400,
                 ];
@@ -1501,20 +1501,20 @@ class AppApiController
     {
         try {
             $dataRequest = [
-                'authorizationCode' => $request['authorizationCode'],
-                'cardType' => $request['cardType'],
-                'last4' => $request['last4'],
-                'expMonth' => $request['expMonth'],
-                'expYear' => $request['expYear'],
-                'bin' => $request['bin'],
-                'bank' => $request['bank'],
-                'channel' => $request['channel'],
-                'signature' => $request['signature'],
-                'reusable' => $request['reusable'],
-                'countryCode' => $request['countryCode'],
-                'accountName' => $request['accountName'],
-                'cvv' => $request['cvv'],
-                'reference' => $request['reference'],
+                'authorizationCode' => $request['authorizationCode'] ?? null,
+                'cardType' => $request['cardType'] ?? null,
+                'last4' => $request['last4'] ?? null,
+                'expMonth' => $request['expMonth'] ?? null,
+                'expYear' => $request['expYear'] ?? null,
+                'bin' => $request['bin'] ?? null,
+                'bank' => $request['bank'] ?? null,
+                'channel' => $request['channel'] ?? null,
+                'signature' => $request['signature'] ?? null,
+                'reusable' => $request['reusable'] ?? null,
+                'countryCode' => $request['countryCode'] ?? null,
+                'accountName' => $request['accountName'] ?? null,
+                'cvv' => $request['cvv'] ?? null,
+                'reference' => $request['reference'] ?? null,
             ];
 
             $rules = [
@@ -1562,7 +1562,7 @@ class AppApiController
                 return [
                     'message' => ErrorCodes::$FAIL_CARD_WALLET_CREATED[1],
                     'dcode' => ErrorCodes::$FAIL_CARD_WALLET_CREATED[0],
-                    'data' => [],
+                    'data' => $data['message'],
                     'code' => 400,
                 ];
             }

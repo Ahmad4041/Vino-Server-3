@@ -1506,14 +1506,14 @@ class BankDbController
 
             $insertQuery = "
                 INSERT INTO tblMobileCardVault 
-                    (Username, CardNo, CardExpMonth, CardExpYear, CardCVV, CardBank, CardChannel, CardSignature, CountryCode, AccountName, TransID, Ddate, Active) 
+                    (Username, CardNo, CardExpMonth, CardExpYear, CardCVV, CardBank, CardChannel, CardSignature, CountryCode, CardName, TransID, Ddate, Active, AuthCode, CardType) 
                 VALUES 
-                    (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE(), 'ACTIVE');
+                    (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE(), 'ACTIVE', ?, ?);
             ";
 
             $insertStmt = $this->dbConnection->prepare($insertQuery);
             $insertStmt->execute([
-                $result['Customername'],
+                $username,
                 $cardno,
                 $request['expMonth'],
                 $request['expYear'],
@@ -1524,13 +1524,15 @@ class BankDbController
                 $request['countryCode'],
                 $result['Customername'],
                 $request['reference'],
+                $request['authorizationCode'],
+                $request['cardType'],
             ]);
 
             return [
                 'code' => 200,
                 'message' => 'The Card successfully Added!',
                 'data' => [
-                    'Username' => $result['Customername'],
+                    'Username' => $username,
                     'CardNo' => $cardno,
                     'CardExpMonth' => $request['expMonth'],
                     'CardExpYear' => $request['expYear'],
@@ -1539,7 +1541,7 @@ class BankDbController
                     'CardChannel' => $request['channel'],
                     'CardSignature' => $request['signature'],
                     'CountryCode' => $request['countryCode'],
-                    'AccountName' => $result['Customername'],
+                    'CardName' => $result['Customername'],
                     'TransID' => $request['reference'],
                     'Ddate' => date('Y-m-d H:i:s'),
                     'Active' => 'ACTIVE',
