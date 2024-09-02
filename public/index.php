@@ -464,6 +464,15 @@ $app->post('/api/v2/{bankId}/app/transaction/utilities', function (Request $requ
     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
 });
 
+$app->post('/api/v2/{bankId}/app/transaction/customer-debit-card-block', function (Request $request, Response $response, array $args) use ($appController) {
+    $user = userAuthVerify();
+    $requestData = requestParse($request);
+
+    $result = $appController->blockCustomerDebitCard($user, (int)$args['bankId'], $requestData);
+
+    return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+});
+
 
 
 

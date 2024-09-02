@@ -1251,4 +1251,57 @@ class AppApiController
             ];
         }
     }
+
+
+    public function blockCustomerDebitCard($user, $bankid, $request)
+    {
+        try {
+            $dataRequest = [
+                'accountNo' => $request['accountNo'] ?? null,
+            ];
+            $rules = [
+                'accountNo' => 'required',
+            ];
+
+            $validator = new Validator();
+            $validation = $validator->make($dataRequest, $rules);
+
+            $validation->validate();
+
+            if ($validation->fails()) {
+                return [
+                    'message' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[1],
+                    'data' => $validation->errors()->toArray(),
+                    'dcode' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[0],
+                    'code' => 422,
+                ];
+            };
+
+            $bankDbConnection = new BankDbController(Database::getConnection($bankid));
+            $Customerinfo = $bankDbConnection->CustomerBlockdebitcards($user['username'], $request['accountNo']);
+
+            if ($Customerinfo['code'] == 2025) {
+                return [
+                    'message' => ErrorCodes::$SUCCESS_DEBIT_CARD_BLOCK_REQUEST[1],
+                    'dcode' => ErrorCodes::$SUCCESS_DEBIT_CARD_BLOCK_REQUEST[0],
+                    'data' => $Customerinfo['data'],
+                    'code' => 200,
+                ];
+            } else {
+                return [
+                    'message' => ErrorCodes::$FAIL_BLOCK_DEBIT_CARD_REQUEST[1],
+                    'dcode' => ErrorCodes::$FAIL_BLOCK_DEBIT_CARD_REQUEST[0],
+                    'data' => [],
+                    'code' => 404,
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'dcode' => 500,
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null,
+            ];
+        }
+    }
 }

@@ -1067,9 +1067,9 @@ class BankDbController
     }
 
     function validateAccount($accountID, $username)
-{
-    // Prepare the SQL query to fetch all required data
-    $sql = "
+    {
+        // Prepare the SQL query to fetch all required data
+        $sql = "
     SELECT 
         mu.AccountID as mu_AccountID,
         mu.Username as mu_Username,
@@ -1086,66 +1086,66 @@ class BankDbController
         OR mu.Username = :username
     ";
 
-    // Prepare and execute the query
-    $stmt = $this->dbConnection->prepare($sql);
-    $stmt->bindParam(':accountID', $accountID, PDO::PARAM_STR);
-    $stmt->bindParam(':username', $username, PDO::PARAM_STR);
-    $stmt->execute();
+        // Prepare and execute the query
+        $stmt = $this->dbConnection->prepare($sql);
+        $stmt->bindParam(':accountID', $accountID, PDO::PARAM_STR);
+        $stmt->bindParam(':username', $username, PDO::PARAM_STR);
+        $stmt->execute();
 
-    // Fetch the result
-    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        // Fetch the result
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // Check if the account exists
-    if (!$result) {
+        // Check if the account exists
+        if (!$result) {
+            return [
+                'code' => 403,
+                'message' => 'User not found',
+                'data' => 'User not found',
+            ];
+        }
+
+        // Check if the username matches the account
+        if ($result['mu_Username'] !== $username || $result['mu_AccountID'] !== $accountID) {
+            return [
+                'code' => 403,
+                'message' => 'Invalid user',
+                'data' => 'Invalid user',
+                'stage' => "invalid user"
+            ];
+        }
+
+        // Check if prebalance exists
+        if ($result['preBalanceExists'] == 0) {
+            return [
+                'code' => 403,
+                'data' => 'FAIL_TRANSACTION',
+                'message' => 'Bank TSS',
+                'stage' => "getprebalance"
+            ];
+        }
+
+        // Check if customer exists
+        if (!$result['c_Accountid']) {
+            return [
+                'code' => 403,
+                'message' => 'Customer not found',
+                'stage' => "getcustomer",
+                'data' => 'Customer not found',
+            ];
+        }
+
+        // If all checks pass, return the customer data
         return [
-            'code' => 403,
-            'message' => 'User not found',
-            'data' => 'User not found',
+            'code' => 200,
+            'message' => 'Success',
+            'data' => [
+                'AccountID' => $result['mu_AccountID'],
+                'Username' => $result['mu_Username'],
+                'BalC1' => $result['BalC1'],
+                'Telephone' => $result['Telephone']
+            ]
         ];
     }
-
-    // Check if the username matches the account
-    if ($result['mu_Username'] !== $username || $result['mu_AccountID'] !== $accountID) {
-        return [
-            'code' => 403,
-            'message' => 'Invalid user',
-            'data' => 'Invalid user',
-            'stage' => "invalid user"
-        ];
-    }
-
-    // Check if prebalance exists
-    if ($result['preBalanceExists'] == 0) {
-        return [
-            'code' => 403,
-            'data' => 'FAIL_TRANSACTION',
-            'message' => 'Bank TSS',
-            'stage' => "getprebalance"
-        ];
-    }
-
-    // Check if customer exists
-    if (!$result['c_Accountid']) {
-        return [
-            'code' => 403,
-            'message' => 'Customer not found',
-            'stage' => "getcustomer",
-            'data' => 'Customer not found',
-        ];
-    }
-
-    // If all checks pass, return the customer data
-    return [
-        'code' => 200,
-        'message' => 'Success',
-        'data' => [
-            'AccountID' => $result['mu_AccountID'],
-            'Username' => $result['mu_Username'],
-            'BalC1' => $result['BalC1'],
-            'Telephone' => $result['Telephone']
-        ]
-    ];
-}
     function getServiceFee($categoryCode)
     {
         $feeValues = ['priceSell' => null, 'priceCost' => null];
@@ -1174,5 +1174,67 @@ class BankDbController
         }
 
         return $feeValues;
+    }
+
+    function customerBlockDebitCards($user, $accountno)
+    {
+        $query = "
+            SELECT TOP 1 c.Accountid, c.customerName 
+            FROM tblcustomers c
+            JOIN tblMobileDebitCard d ON c.Accountid = d.AccountID
+            WHERE c.Accountid = ? AND d.Active = 'Yes';
+        ";
+
+        $stmt = $this->dbConnection->prepare($query);
+        $stmt->execute([$accountno]);
+        $customer = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($customer) {
+            try {
+                $this->dbConnection->beginTransaction();
+
+                $insertQuery = "
+                    INSERT INTO tblMobileATMZero (AcctNo, AcctName, Note, Cuser, Ddate)
+                    VALUES (?, ?, ?, ?, GETDATE());
+                ";
+                $insertStmt = $this->dbConnection->prepare($insertQuery);
+                $insertStmt->execute([
+                    $customer['Accountid'],
+                    $customer['customerName'],
+                    $accountno,
+                    $user['username']
+                ]);
+
+                $updateQuery = "
+                    UPDATE tblMobileDebitCard 
+                    SET Active = 'No' 
+                    WHERE AccountID = ?;
+                ";
+                $updateStmt = $this->dbConnection->prepare($updateQuery);
+                $updateStmt->execute([$accountno]);
+
+                $this->dbConnection->commit();
+
+                return [
+                    'code' => 2025,
+                    'message' => 'Debit card blocked successfully',
+                    'data' => null,
+                ];
+            } catch (Exception $e) {
+                $this->dbConnection->rollBack();
+
+                return [
+                    'code' => 1035,
+                    'message' => 'Failed to block the debit card',
+                    'data' => '',
+                ];
+            }
+        }
+
+        return [
+            'code' => ErrorCodes::$FAIL_BLOCK_DEBIT_CARD_REQUEST[0],
+            'message' => ErrorCodes::$FAIL_BLOCK_DEBIT_CARD_REQUEST[1],
+            'data' => '',
+        ];
     }
 }
