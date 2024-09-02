@@ -1465,4 +1465,92 @@ class BankDbController
             ];
         }
     }
+
+
+
+    function createCardWallet($username, $request)
+    {
+        $authcode = $request['authorizationCode'];
+        $cardno = $request['last4'];
+
+        $query = "
+            SELECT TOP 1 c.Accountid, c.Customername, v.Sno 
+            FROM tblcustomers c
+            LEFT JOIN tblMobileCardVault v 
+                ON c.Surname = v.Username 
+                AND v.AuthCode = ? 
+                AND v.CardNo = ?
+            WHERE c.Surname = ?;
+        ";
+
+        try {
+            $stmt = $this->dbConnection->prepare($query);
+            $stmt->execute([$authcode, $cardno, $username]);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$result || !$result['Accountid']) {
+                return [
+                    'code' => 1038,
+                    'message' => 'Customer not found',
+                    'data' => '',
+                ];
+            }
+
+            if ($result['Sno']) {
+                return [
+                    'code' => 1038,
+                    'message' => 'The Card is already Added!',
+                    'data' => '',
+                ];
+            }
+
+            $insertQuery = "
+                INSERT INTO tblMobileCardVault 
+                    (Username, CardNo, CardExpMonth, CardExpYear, CardCVV, CardBank, CardChannel, CardSignature, CountryCode, AccountName, TransID, Ddate, Active) 
+                VALUES 
+                    (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE(), 'ACTIVE');
+            ";
+
+            $insertStmt = $this->dbConnection->prepare($insertQuery);
+            $insertStmt->execute([
+                $result['Customername'],
+                $cardno,
+                $request['expMonth'],
+                $request['expYear'],
+                $request['cvv'],
+                $request['bank'],
+                $request['channel'],
+                $request['signature'],
+                $request['countryCode'],
+                $result['Customername'],
+                $request['reference'],
+            ]);
+
+            return [
+                'code' => 200,
+                'message' => 'The Card successfully Added!',
+                'data' => [
+                    'Username' => $result['Customername'],
+                    'CardNo' => $cardno,
+                    'CardExpMonth' => $request['expMonth'],
+                    'CardExpYear' => $request['expYear'],
+                    'CardCVV' => $request['cvv'],
+                    'CardBank' => $request['bank'],
+                    'CardChannel' => $request['channel'],
+                    'CardSignature' => $request['signature'],
+                    'CountryCode' => $request['countryCode'],
+                    'AccountName' => $result['Customername'],
+                    'TransID' => $request['reference'],
+                    'Ddate' => date('Y-m-d H:i:s'),
+                    'Active' => 'ACTIVE',
+                ],
+            ];
+        } catch (Exception $e) {
+            return [
+                'code' => 500,
+                'message' => 'An error occurred while adding the card: ' . $e->getMessage(),
+                'data' => '',
+            ];
+        }
+    }
 }

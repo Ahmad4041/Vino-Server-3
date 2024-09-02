@@ -1497,4 +1497,82 @@ class AppApiController
             ];
         }
     }
+    public function postCardWallet($user, $bankid, $request)
+    {
+        try {
+            $dataRequest = [
+                'authorizationCode' => $request['authorizationCode'],
+                'cardType' => $request['cardType'],
+                'last4' => $request['last4'],
+                'expMonth' => $request['expMonth'],
+                'expYear' => $request['expYear'],
+                'bin' => $request['bin'],
+                'bank' => $request['bank'],
+                'channel' => $request['channel'],
+                'signature' => $request['signature'],
+                'reusable' => $request['reusable'],
+                'countryCode' => $request['countryCode'],
+                'accountName' => $request['accountName'],
+                'cvv' => $request['cvv'],
+                'reference' => $request['reference'],
+            ];
+
+            $rules = [
+                'authorizationCode' => 'required',
+                'cardType' => 'required',
+                'last4' => 'required',
+                'expMonth' => 'required|min:1|max:12',
+                'expYear' => 'required|min:' . date('Y') . '|max:' . (date('Y') + 20),
+                'bin' => 'required',
+                'bank' => 'required',
+                'channel' => 'required',
+                'signature' => 'required',
+                'reusable' => 'required',
+                'countryCode' => 'required',
+                'accountName' => 'required',
+                'cvv' => 'required',
+                'reference' => 'required',
+            ];
+            $validator = new Validator();
+            $validation = $validator->make($dataRequest, $rules);
+
+            $validation->validate();
+
+            if ($validation->fails()) {
+                return [
+                    'message' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[1],
+                    'data' => $validation->errors()->toArray(),
+                    'dcode' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[0],
+                    'code' => 422,
+                ];
+            };
+
+
+            $bankDbConnection = new BankDbController(Database::getConnection($bankid));
+            $data = $bankDbConnection->createCardWallet($user['username'], $request);
+
+            if ($data['code'] == 200) {
+                return [
+                    'message' => ErrorCodes::$SUCCESS_CARD_WALLET_CREATED[1],
+                    'dcode' => ErrorCodes::$SUCCESS_CARD_WALLET_CREATED[0],
+                    'data' => $data['data'],
+                    'code' => 200,
+                ];
+            } else {
+                return [
+                    'message' => ErrorCodes::$FAIL_CARD_WALLET_CREATED[1],
+                    'dcode' => ErrorCodes::$FAIL_CARD_WALLET_CREATED[0],
+                    'data' => [],
+                    'code' => 400,
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'dcode' => 500,
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null,
+            ];
+        }
+    }
 }

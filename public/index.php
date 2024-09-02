@@ -520,13 +520,15 @@ $app->delete('/api/v2/{bankId}/app/card-wallet', function (Request $request, Res
 
 
 
-// $app->post('/api/v2/{bankId}/app/card-wallet', function (Request $request, Response $response, array $args) use ($appController) {
-//     $user = userAuthVerify();
+$app->post('/api/v2/{bankId}/app/card-wallet', function (Request $request, Response $response, array $args) use ($appController) {
+    $user = userAuthVerify();
+    $requestData = requestParse($request);
 
-//     $result = $appController->deleteCardWallet($user, (int)$args['bankId']);
 
-//     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
-// });
+    $result = $appController->postCardWallet($user, (int)$args['bankId'], $requestData);
+
+    return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+});
 
 
 
