@@ -1237,4 +1237,61 @@ class BankDbController
             'data' => '',
         ];
     }
+
+    function requestChequeBook($username, $numberOfCheques)
+    {
+
+        $query = "
+            SELECT TOP 1 c.Accountid, c.Customername, m.Cuser 
+            FROM tblcustomers c
+            LEFT JOIN tblmobilecheque m ON c.Accountid = m.AccountID AND m.Cuser = ?
+            WHERE c.Surname = ?;
+        ";
+
+        $stmt = $this->dbConnection->prepare($query);
+        $stmt->execute([$username, $username]);
+        $customer = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$customer || !$customer['Accountid']) {
+            return [
+                'code' => 403,
+                'message' => 'Customer not found',
+                'data' => [],
+            ];
+        }
+
+        if ($customer['Cuser']) {
+            return [
+                'code' => ErrorCodes::$FAIL_CHEQUE_BOOK_REQUEST_ALREADY_EXIST[0],
+                'message' => ErrorCodes::$FAIL_CHEQUE_BOOK_REQUEST_ALREADY_EXIST[1],
+                'data' => '',
+            ];
+        }
+
+        try {
+            $insertQuery = "
+                INSERT INTO tblmobilecheque (AccountID, AccountName, ChequeLeaf, Ddate, Cuser)
+                VALUES (?, ?, ?, GETDATE(), ?);
+            ";
+            $insertStmt = $this->dbConnection->prepare($insertQuery);
+            $insertStmt->execute([
+                $customer['Accountid'],
+                $customer['Customername'],
+                $numberOfCheques,
+                $username
+            ]);
+
+            return [
+                'code' => 2023,
+                'message' => 'The cheque book request was successful',
+                'data' => null,
+            ];
+        } catch (Exception $e) {
+            return [
+                'code' => 500,
+                'message' => 'Failed to request cheque book',
+                'data' => '',
+            ];
+        }
+    }
 }

@@ -1304,4 +1304,57 @@ class AppApiController
             ];
         }
     }
+
+
+    public function requestChequeBook($user, $bankid, $request)
+    {
+        try {
+            $dataRequest = [
+                'numberOfCheques' => $request['numberOfCheques'] ?? null,
+            ];
+            $rules = [
+                'numberOfCheques' => 'required',
+            ];
+
+            $validator = new Validator();
+            $validation = $validator->make($dataRequest, $rules);
+
+            $validation->validate();
+
+            if ($validation->fails()) {
+                return [
+                    'message' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[1],
+                    'data' => $validation->errors()->toArray(),
+                    'dcode' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[0],
+                    'code' => 422,
+                ];
+            };
+
+            $bankDbConnection = new BankDbController(Database::getConnection($bankid));
+            $requestChequeBook = $bankDbConnection->requestChequeBook($user['username'], $request['numberOfCheques']);
+
+            if ($requestChequeBook['code'] == 2023) {
+                return [
+                    'message' => ErrorCodes::$SUCCESS_REQUESTING_CHEQUE_BOOK[1],
+                    'dcode' => ErrorCodes::$SUCCESS_REQUESTING_CHEQUE_BOOK[0],
+                    'data' => [],
+                    'code' => 200,
+                ];
+            } else {
+                return [
+                    'message' => $requestChequeBook['message'],
+                    'dcode' => $requestChequeBook['code'],
+                    'data' => [],
+                    'code' => 404,
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'dcode' => 500,
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null,
+            ];
+        }
+    }
 }
