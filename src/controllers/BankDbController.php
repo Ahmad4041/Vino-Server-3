@@ -1067,9 +1067,9 @@ class BankDbController
     }
 
     function validateAccount($accountID, $username)
-{
-    // Prepare the SQL query to fetch all required data
-    $sql = "
+    {
+        // Prepare the SQL query to fetch all required data
+        $sql = "
     SELECT 
         mu.AccountID as mu_AccountID,
         mu.Username as mu_Username,
@@ -1086,24 +1086,23 @@ class BankDbController
         AND mu.Username = :username
     ";
 
-    // Prepare and execute the query
-    $stmt = $this->dbConnection->prepare($sql);
-    $stmt->bindParam(':accountID', $accountID, PDO::PARAM_STR);
-    $stmt->bindParam(':username', $username, PDO::PARAM_STR);
-    $stmt->execute();
+        // Prepare and execute the query
+        $stmt = $this->dbConnection->prepare($sql);
+        $stmt->bindParam(':accountID', $accountID, PDO::PARAM_STR);
+        $stmt->bindParam(':username', $username, PDO::PARAM_STR);
+        $stmt->execute();
 
-    // Fetch the result
-    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        // Fetch the result
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // Check if the account exists
-    if (!$result) {
-        return [
-            'code' => 403,
-            'message' => 'User not found',
-            'data' => 'User not found',
-        ];
-    }
-    // var_dump($result);
+        // Check if the account exists
+        if (!$result) {
+            return [
+                'code' => 403,
+                'message' => 'User not found',
+                'data' => 'User not found',
+            ];
+        }
 
     // Check if the username matches the account
     if ($result['mu_Username'] != $username || $result['mu_AccountID'] != $accountID) {
@@ -1115,38 +1114,38 @@ class BankDbController
         ];
     }
 
-    // Check if prebalance exists
-    if ($result['preBalanceExists'] == 0) {
+        // Check if prebalance exists
+        if ($result['preBalanceExists'] == 0) {
+            return [
+                'code' => 403,
+                'data' => 'FAIL_TRANSACTION',
+                'message' => 'Bank TSS',
+                'stage' => "getprebalance"
+            ];
+        }
+
+        // Check if customer exists
+        if (!$result['c_Accountid']) {
+            return [
+                'code' => 403,
+                'message' => 'Customer not found',
+                'stage' => "getcustomer",
+                'data' => 'Customer not found',
+            ];
+        }
+
+        // If all checks pass, return the customer data
         return [
-            'code' => 403,
-            'data' => 'FAIL_TRANSACTION',
-            'message' => 'Bank TSS',
-            'stage' => "getprebalance"
+            'code' => 200,
+            'message' => 'Success',
+            'data' => [
+                'AccountID' => $result['mu_AccountID'],
+                'Username' => $result['mu_Username'],
+                'BalC1' => $result['BalC1'],
+                'Telephone' => $result['Telephone']
+            ]
         ];
     }
-
-    // Check if customer exists
-    if (!$result['c_Accountid']) {
-        return [
-            'code' => 403,
-            'message' => 'Customer not found',
-            'stage' => "getcustomer",
-            'data' => 'Customer not found',
-        ];
-    }
-
-    // If all checks pass, return the customer data
-    return [
-        'code' => 200,
-        'message' => 'Success',
-        'data' => [
-            'AccountID' => $result['mu_AccountID'],
-            'Username' => $result['mu_Username'],
-            'BalC1' => $result['BalC1'],
-            'Telephone' => $result['Telephone']
-        ]
-    ];
-}
     function getServiceFee($categoryCode)
     {
         $feeValues = ['priceSell' => null, 'priceCost' => null];
@@ -1175,5 +1174,383 @@ class BankDbController
         }
 
         return $feeValues;
+    }
+
+    function customerBlockDebitCards($user, $accountno)
+    {
+        $query = "
+            SELECT TOP 1 c.Accountid, c.customerName 
+            FROM tblcustomers c
+            JOIN tblMobileDebitCard d ON c.Accountid = d.AccountID
+            WHERE c.Accountid = ? AND d.Active = 'Yes';
+        ";
+
+        $stmt = $this->dbConnection->prepare($query);
+        $stmt->execute([$accountno]);
+        $customer = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($customer) {
+            try {
+                $this->dbConnection->beginTransaction();
+
+                $insertQuery = "
+                    INSERT INTO tblMobileATMZero (AcctNo, AcctName, Note, Cuser, Ddate)
+                    VALUES (?, ?, ?, ?, GETDATE());
+                ";
+                $insertStmt = $this->dbConnection->prepare($insertQuery);
+                $insertStmt->execute([
+                    $customer['Accountid'],
+                    $customer['customerName'],
+                    $accountno,
+                    $user['username']
+                ]);
+
+                $updateQuery = "
+                    UPDATE tblMobileDebitCard 
+                    SET Active = 'No' 
+                    WHERE AccountID = ?;
+                ";
+                $updateStmt = $this->dbConnection->prepare($updateQuery);
+                $updateStmt->execute([$accountno]);
+
+                $this->dbConnection->commit();
+
+                return [
+                    'code' => 2025,
+                    'message' => 'Debit card blocked successfully',
+                    'data' => null,
+                ];
+            } catch (Exception $e) {
+                $this->dbConnection->rollBack();
+
+                return [
+                    'code' => 1035,
+                    'message' => 'Failed to block the debit card',
+                    'data' => '',
+                ];
+            }
+        }
+
+        return [
+            'code' => ErrorCodes::$FAIL_BLOCK_DEBIT_CARD_REQUEST[0],
+            'message' => ErrorCodes::$FAIL_BLOCK_DEBIT_CARD_REQUEST[1],
+            'data' => '',
+        ];
+    }
+
+    function requestChequeBook($username, $numberOfCheques)
+    {
+
+        $query = "
+            SELECT TOP 1 c.Accountid, c.Customername, m.Cuser 
+            FROM tblcustomers c
+            LEFT JOIN tblmobilecheque m ON c.Accountid = m.AccountID AND m.Cuser = ?
+            WHERE c.Surname = ?;
+        ";
+
+        $stmt = $this->dbConnection->prepare($query);
+        $stmt->execute([$username, $username]);
+        $customer = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$customer || !$customer['Accountid']) {
+            return [
+                'code' => 403,
+                'message' => 'Customer not found',
+                'data' => [],
+            ];
+        }
+
+        if ($customer['Cuser']) {
+            return [
+                'code' => ErrorCodes::$FAIL_CHEQUE_BOOK_REQUEST_ALREADY_EXIST[0],
+                'message' => ErrorCodes::$FAIL_CHEQUE_BOOK_REQUEST_ALREADY_EXIST[1],
+                'data' => '',
+            ];
+        }
+
+        try {
+            $insertQuery = "
+                INSERT INTO tblmobilecheque (AccountID, AccountName, ChequeLeaf, Ddate, Cuser)
+                VALUES (?, ?, ?, GETDATE(), ?);
+            ";
+            $insertStmt = $this->dbConnection->prepare($insertQuery);
+            $insertStmt->execute([
+                $customer['Accountid'],
+                $customer['Customername'],
+                $numberOfCheques,
+                $username
+            ]);
+
+            return [
+                'code' => 2023,
+                'message' => 'The cheque book request was successful',
+                'data' => null,
+            ];
+        } catch (Exception $e) {
+            return [
+                'code' => 500,
+                'message' => 'Failed to request cheque book',
+                'data' => '',
+            ];
+        }
+    }
+
+
+    function verifyCheque($username, $chequeNo)
+    {
+        $query = "
+            SELECT TOP 1 c.Accountid, c.Customername, s.ChequeNo 
+            FROM tblcustomers c
+            LEFT JOIN tblmobilestopcheque s 
+                ON c.Accountid = s.AccountID 
+                AND s.Cuser = ? 
+                AND s.ChequeNo = ?
+            WHERE c.Surname = ?;
+        ";
+
+        $stmt = $this->dbConnection->prepare($query);
+        $stmt->execute([$username, $chequeNo, $username]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$result || !$result['Accountid']) {
+            return [
+                'code' => ErrorCodes::$FAIL_CUSTOMER_FOUND[0],
+                'message' => ErrorCodes::$FAIL_CUSTOMER_FOUND[1],
+                'data' => '',
+            ];
+        }
+
+        if ($result['ChequeNo']) {
+            return [
+                'code' => ErrorCodes::$FAIL_CHEQUENO_STOP_PAYMENT_REQUEST_ALREADY_EXIST[0],
+                'message' => ErrorCodes::$FAIL_CHEQUENO_STOP_PAYMENT_REQUEST_ALREADY_EXIST[1],
+                'data' => [],
+            ];
+        }
+
+        try {
+            $insertQuery = "
+                INSERT INTO tblmobilestopcheque (AccountID, AccountName, ChequeNo, Ddate, Cuser)
+                VALUES (?, ?, ?, GETDATE(), ?);
+            ";
+
+            $insertStmt = $this->dbConnection->prepare($insertQuery);
+            $insertStmt->execute([
+                $result['Accountid'],
+                $result['Customername'],
+                $chequeNo,
+                $username
+            ]);
+
+            return [
+                'code' => 2022,
+                'message' => 'The cheque stop payment request succeeded',
+                'data' => [
+                    'AccountID' => $result['Accountid'],
+                    'AccountName' => $result['Customername'],
+                    'ChequeNo' => (int) $chequeNo,
+                    'Ddate' => date('Y-m-d H:i:s'),
+                    'Cuser' => $username,
+                ],
+            ];
+        } catch (Exception $e) {
+            return [
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => '',
+            ];
+        }
+    }
+
+    function dataCardWallet($username)
+    {
+        $query = "
+            SELECT 
+                Sno,
+                AuthCode AS authorization_code,
+                CardNo AS card_no,
+                CardName AS account_name,
+                CardBank AS bank,
+                CardType AS card_type,
+                CardChannel AS channel,
+                CountryCode AS country_code,
+                CardExpMonth AS exp_month,
+                CardExpYear AS exp_year,
+                (CASE WHEN CountryCode = 'Active' THEN 1 ELSE 0 END) AS reusable,
+                CardSignature AS signature,
+                CardCVV AS cvv,
+                TransID AS reference
+            FROM tblMobileCardVault
+            WHERE Username = ?;
+        ";
+
+        try {
+            $stmt = $this->dbConnection->prepare($query);
+            $stmt->execute([$username]);
+            $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            if ($data) {
+                $res = array_map(function ($row) {
+                    return [
+                        'Sno' => (int) $row['Sno'],
+                        'authorization_code' => $row['authorization_code'],
+                        'card_no' => $row['card_no'],
+                        'account_name' => $row['account_name'],
+                        'bank' => $row['bank'],
+                        'card_type' => $row['card_type'],
+                        'channel' => $row['channel'],
+                        'country_code' => $row['country_code'],
+                        'exp_month' => $row['exp_month'],
+                        'exp_year' => $row['exp_year'],
+                        'reusable' => (bool) $row['reusable'],
+                        'signature' => $row['signature'],
+                        'cvv' => $row['cvv'],
+                        'reference' => $row['reference']
+                    ];
+                }, $data);
+
+                return [
+                    'code' => 200,
+                    'message' => ErrorCodes::$SUCCESS_FETCH[1],
+                    'data' => $res,
+                ];
+            } else {
+                return [
+                    'code' => 404,
+                    'message' => 'Empty Card Wallet',
+                    'data' => [],
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'code' => 500,
+                'message' => 'An error occurred while fetching the card wallet: ' . $e->getMessage(),
+                'data' => [],
+            ];
+        }
+    }
+
+    function deleteCardWallet($username, $cardId)
+    {
+        $deleteQuery = "
+            DELETE cv 
+            FROM tblMobileCardVault cv
+            JOIN (SELECT Sno FROM tblMobileCardVault WHERE Username = ? AND Sno = ?) as sub
+            ON cv.Sno = sub.Sno
+            WHERE cv.Username = ?;
+        ";
+
+        try {
+            $deleteStmt = $this->dbConnection->prepare($deleteQuery);
+            $deleteStmt->execute([$username, $cardId, $username]);
+
+            if ($deleteStmt->rowCount() > 0) {
+                return [
+                    'code' => 200,
+                    'message' => 'Deleted Successfully',
+                    'data' => ['Sno' => $cardId, 'Username' => $username],
+                ];
+            } else {
+                return [
+                    'code' => 404,
+                    'message' => 'Card wallet not found or not deleted',
+                    'data' => '',
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'code' => 500,
+                'message' => 'An error occurred while deleting the card wallet: ' . $e->getMessage(),
+                'data' => [],
+            ];
+        }
+    }
+
+
+
+    function createCardWallet($username, $request)
+    {
+        $authcode = $request['authorizationCode'];
+        $cardno = $request['last4'];
+
+        $query = "
+            SELECT TOP 1 c.Accountid, c.Customername, v.Sno 
+            FROM tblcustomers c
+            LEFT JOIN tblMobileCardVault v 
+                ON c.Surname = v.Username 
+                AND v.AuthCode = ? 
+                AND v.CardNo = ?
+            WHERE c.Surname = ?;
+        ";
+
+        try {
+            $stmt = $this->dbConnection->prepare($query);
+            $stmt->execute([$authcode, $cardno, $username]);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$result || !$result['Accountid']) {
+                return [
+                    'code' => 1038,
+                    'message' => 'Customer not found',
+                    'data' => '',
+                ];
+            }
+
+            if ($result['Sno']) {
+                return [
+                    'code' => 1038,
+                    'message' => 'The Card is already Added!',
+                    'data' => '',
+                ];
+            }
+
+            $insertQuery = "
+                INSERT INTO tblMobileCardVault 
+                    (Username, CardNo, CardExpMonth, CardExpYear, CardCVV, CardBank, CardChannel, CardSignature, CountryCode, AccountName, TransID, Ddate, Active) 
+                VALUES 
+                    (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE(), 'ACTIVE');
+            ";
+
+            $insertStmt = $this->dbConnection->prepare($insertQuery);
+            $insertStmt->execute([
+                $result['Customername'],
+                $cardno,
+                $request['expMonth'],
+                $request['expYear'],
+                $request['cvv'],
+                $request['bank'],
+                $request['channel'],
+                $request['signature'],
+                $request['countryCode'],
+                $result['Customername'],
+                $request['reference'],
+            ]);
+
+            return [
+                'code' => 200,
+                'message' => 'The Card successfully Added!',
+                'data' => [
+                    'Username' => $result['Customername'],
+                    'CardNo' => $cardno,
+                    'CardExpMonth' => $request['expMonth'],
+                    'CardExpYear' => $request['expYear'],
+                    'CardCVV' => $request['cvv'],
+                    'CardBank' => $request['bank'],
+                    'CardChannel' => $request['channel'],
+                    'CardSignature' => $request['signature'],
+                    'CountryCode' => $request['countryCode'],
+                    'AccountName' => $result['Customername'],
+                    'TransID' => $request['reference'],
+                    'Ddate' => date('Y-m-d H:i:s'),
+                    'Active' => 'ACTIVE',
+                ],
+            ];
+        } catch (Exception $e) {
+            return [
+                'code' => 500,
+                'message' => 'An error occurred while adding the card: ' . $e->getMessage(),
+                'data' => '',
+            ];
+        }
     }
 }

@@ -1251,4 +1251,328 @@ class AppApiController
             ];
         }
     }
+
+
+    public function blockCustomerDebitCard($user, $bankid, $request)
+    {
+        try {
+            $dataRequest = [
+                'accountNo' => $request['accountNo'] ?? null,
+            ];
+            $rules = [
+                'accountNo' => 'required',
+            ];
+
+            $validator = new Validator();
+            $validation = $validator->make($dataRequest, $rules);
+
+            $validation->validate();
+
+            if ($validation->fails()) {
+                return [
+                    'message' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[1],
+                    'data' => $validation->errors()->toArray(),
+                    'dcode' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[0],
+                    'code' => 422,
+                ];
+            };
+
+            $bankDbConnection = new BankDbController(Database::getConnection($bankid));
+            $Customerinfo = $bankDbConnection->CustomerBlockdebitcards($user['username'], $request['accountNo']);
+
+            if ($Customerinfo['code'] == 2025) {
+                return [
+                    'message' => ErrorCodes::$SUCCESS_DEBIT_CARD_BLOCK_REQUEST[1],
+                    'dcode' => ErrorCodes::$SUCCESS_DEBIT_CARD_BLOCK_REQUEST[0],
+                    'data' => $Customerinfo['data'],
+                    'code' => 200,
+                ];
+            } else {
+                return [
+                    'message' => ErrorCodes::$FAIL_BLOCK_DEBIT_CARD_REQUEST[1],
+                    'dcode' => ErrorCodes::$FAIL_BLOCK_DEBIT_CARD_REQUEST[0],
+                    'data' => [],
+                    'code' => 404,
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'dcode' => 500,
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null,
+            ];
+        }
+    }
+
+
+    public function requestChequeBook($user, $bankid, $request)
+    {
+        try {
+            $dataRequest = [
+                'numberOfCheques' => $request['numberOfCheques'] ?? null,
+            ];
+            $rules = [
+                'numberOfCheques' => 'required',
+            ];
+
+            $validator = new Validator();
+            $validation = $validator->make($dataRequest, $rules);
+
+            $validation->validate();
+
+            if ($validation->fails()) {
+                return [
+                    'message' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[1],
+                    'data' => $validation->errors()->toArray(),
+                    'dcode' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[0],
+                    'code' => 422,
+                ];
+            };
+
+            $bankDbConnection = new BankDbController(Database::getConnection($bankid));
+            $requestChequeBook = $bankDbConnection->requestChequeBook($user['username'], $request['numberOfCheques']);
+
+            if ($requestChequeBook['code'] == 2023) {
+                return [
+                    'message' => ErrorCodes::$SUCCESS_REQUESTING_CHEQUE_BOOK[1],
+                    'dcode' => ErrorCodes::$SUCCESS_REQUESTING_CHEQUE_BOOK[0],
+                    'data' => [],
+                    'code' => 200,
+                ];
+            } else {
+                return [
+                    'message' => $requestChequeBook['message'],
+                    'dcode' => $requestChequeBook['code'],
+                    'data' => [],
+                    'code' => 404,
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'dcode' => 500,
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null,
+            ];
+        }
+    }
+
+
+    public function requestChequeStopPayment($user, $bankid, $request)
+    {
+        try {
+            $dataRequest = [
+                'chequeNo' => $request['chequeNo'] ?? null,
+            ];
+            $rules = [
+                'chequeNo' => 'required',
+            ];
+
+            $validator = new Validator();
+            $validation = $validator->make($dataRequest, $rules);
+
+            $validation->validate();
+
+            if ($validation->fails()) {
+                return [
+                    'message' => ErrorCodes::$FAIL_CHEQUENO_VALIDATE[1],
+                    'data' => $validation->errors()->toArray(),
+                    'dcode' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[0],
+                    'code' => 422,
+                ];
+            };
+
+            $bankDbConnection = new BankDbController(Database::getConnection($bankid));
+            $verifyCheque = $bankDbConnection->verifyCheque($user['username'], $request['chequeNo']);
+
+            if ($verifyCheque['code'] == 2022) {
+                return [
+                    'message' => ErrorCodes::$SUCCESS_REQUESTING_CHEQUE_STOP_PAYMENT[1],
+                    'dcode' => ErrorCodes::$SUCCESS_REQUESTING_CHEQUE_STOP_PAYMENT[0],
+                    'data' => [],
+                    'code' => 200,
+                ];
+            } else {
+                return [
+                    'message' => $verifyCheque['message'],
+                    'dcode' => $verifyCheque['code'],
+                    'data' => [],
+                    'code' => 400,
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'dcode' => 500,
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null,
+            ];
+        }
+    }
+
+
+    public function getCardWallet($user, $bankid)
+    {
+        try {
+
+            $bankDbConnection = new BankDbController(Database::getConnection($bankid));
+            $data = $bankDbConnection->dataCardWallet($user['username']);
+
+            if ($data['code'] == 200) {
+                return [
+                    'message' => ErrorCodes::$SUCCESS_FETCH[1],
+                    'dcode' => ErrorCodes::$SUCCESS_FETCH[0],
+                    'data' => $data['data'],
+                    'code' => 200,
+                ];
+            } else {
+                return [
+                    'message' => ErrorCodes::$FAIL_CARD_WALLET_CREATED[1],
+                    'dcode' => ErrorCodes::$FAIL_CARD_WALLET_CREATED[0],
+                    'data' => [],
+                    'code' => 400,
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'dcode' => 500,
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null,
+            ];
+        }
+    }
+
+    public function deleteCardWallet($user, $bankid, $request)
+    {
+        try {
+
+            $dataRequest = [
+                'Sno' => $request['Sno'] ?? null,
+            ];
+            $rules = [
+                'Sno' => 'required',
+            ];
+
+            $validator = new Validator();
+            $validation = $validator->make($dataRequest, $rules);
+
+            $validation->validate();
+
+            if ($validation->fails()) {
+                return [
+                    'message' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[1],
+                    'data' => $validation->errors()->toArray(),
+                    'dcode' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[0],
+                    'code' => 422,
+                ];
+            };
+
+
+            $bankDbConnection = new BankDbController(Database::getConnection($bankid));
+            $data = $bankDbConnection->deleteCardWallet($user['username'], $request['Sno']);
+
+            if ($data['code'] == 200) {
+                return [
+                    'message' => ErrorCodes::$SUCCESS_CARD_WALLET_DELETED[1],
+                    'dcode' => ErrorCodes::$SUCCESS_CARD_WALLET_DELETED[0],
+                    'data' => $data['data'],
+                    'code' => 200,
+                ];
+            } else {
+                return [
+                    'message' => ErrorCodes::$FAIL_CARD_WALLET_DELETED[1],
+                    'dcode' => ErrorCodes::$FAIL_CARD_WALLET_DELETED[0],
+                    'data' => [],
+                    'code' => 400,
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'dcode' => 500,
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null,
+            ];
+        }
+    }
+    public function postCardWallet($user, $bankid, $request)
+    {
+        try {
+            $dataRequest = [
+                'authorizationCode' => $request['authorizationCode'],
+                'cardType' => $request['cardType'],
+                'last4' => $request['last4'],
+                'expMonth' => $request['expMonth'],
+                'expYear' => $request['expYear'],
+                'bin' => $request['bin'],
+                'bank' => $request['bank'],
+                'channel' => $request['channel'],
+                'signature' => $request['signature'],
+                'reusable' => $request['reusable'],
+                'countryCode' => $request['countryCode'],
+                'accountName' => $request['accountName'],
+                'cvv' => $request['cvv'],
+                'reference' => $request['reference'],
+            ];
+
+            $rules = [
+                'authorizationCode' => 'required',
+                'cardType' => 'required',
+                'last4' => 'required',
+                'expMonth' => 'required|min:1|max:12',
+                'expYear' => 'required|min:' . date('Y') . '|max:' . (date('Y') + 20),
+                'bin' => 'required',
+                'bank' => 'required',
+                'channel' => 'required',
+                'signature' => 'required',
+                'reusable' => 'required',
+                'countryCode' => 'required',
+                'accountName' => 'required',
+                'cvv' => 'required',
+                'reference' => 'required',
+            ];
+            $validator = new Validator();
+            $validation = $validator->make($dataRequest, $rules);
+
+            $validation->validate();
+
+            if ($validation->fails()) {
+                return [
+                    'message' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[1],
+                    'data' => $validation->errors()->toArray(),
+                    'dcode' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[0],
+                    'code' => 422,
+                ];
+            };
+
+
+            $bankDbConnection = new BankDbController(Database::getConnection($bankid));
+            $data = $bankDbConnection->createCardWallet($user['username'], $request);
+
+            if ($data['code'] == 200) {
+                return [
+                    'message' => ErrorCodes::$SUCCESS_CARD_WALLET_CREATED[1],
+                    'dcode' => ErrorCodes::$SUCCESS_CARD_WALLET_CREATED[0],
+                    'data' => $data['data'],
+                    'code' => 200,
+                ];
+            } else {
+                return [
+                    'message' => ErrorCodes::$FAIL_CARD_WALLET_CREATED[1],
+                    'dcode' => ErrorCodes::$FAIL_CARD_WALLET_CREATED[0],
+                    'data' => [],
+                    'code' => 400,
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'dcode' => 500,
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null,
+            ];
+        }
+    }
 }
