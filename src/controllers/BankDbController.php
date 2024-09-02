@@ -1361,4 +1361,72 @@ class BankDbController
             ];
         }
     }
+
+    function dataCardWallet($username)
+    {
+        $query = "
+            SELECT 
+                Sno,
+                AuthCode AS authorization_code,
+                CardNo AS card_no,
+                CardName AS account_name,
+                CardBank AS bank,
+                CardType AS card_type,
+                CardChannel AS channel,
+                CountryCode AS country_code,
+                CardExpMonth AS exp_month,
+                CardExpYear AS exp_year,
+                (CASE WHEN CountryCode = 'Active' THEN 1 ELSE 0 END) AS reusable,
+                CardSignature AS signature,
+                CardCVV AS cvv,
+                TransID AS reference
+            FROM tblMobileCardVault
+            WHERE Username = ?;
+        ";
+
+        try {
+            $stmt = $this->dbConnection->prepare($query);
+            $stmt->execute([$username]);
+            $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            if ($data) {
+                $res = array_map(function ($row) {
+                    return [
+                        'Sno' => (int) $row['Sno'],
+                        'authorization_code' => $row['authorization_code'],
+                        'card_no' => $row['card_no'],
+                        'account_name' => $row['account_name'],
+                        'bank' => $row['bank'],
+                        'card_type' => $row['card_type'],
+                        'channel' => $row['channel'],
+                        'country_code' => $row['country_code'],
+                        'exp_month' => $row['exp_month'],
+                        'exp_year' => $row['exp_year'],
+                        'reusable' => (bool) $row['reusable'],
+                        'signature' => $row['signature'],
+                        'cvv' => $row['cvv'],
+                        'reference' => $row['reference']
+                    ];
+                }, $data);
+
+                return [
+                    'code' => 200,
+                    'message' => ErrorCodes::$SUCCESS_FETCH[1],
+                    'data' => $res,
+                ];
+            } else {
+                return [
+                    'code' => 404,
+                    'message' => 'Empty Card Wallet',
+                    'data' => [],
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'code' => 500,
+                'message' => 'An error occurred while fetching the card wallet: ' . $e->getMessage(),
+                'data' => [],
+            ];
+        }
+    }
 }

@@ -494,5 +494,36 @@ $app->post('/api/v2/{bankId}/app/transaction/request-cheque-stop-payment', funct
 
 
 
+// ********************************************************************************************
+// **************************************************************************************
+// ********************************************************************************
+// ******************************************** CARD-WALLET endpoimts START ************************************************
+
+
+$app->get('/api/v2/{bankId}/app/card-wallet', function (Request $request, Response $response, array $args) use ($appController) {
+    $user = userAuthVerify();
+
+    $result = $appController->getCardWallet($user, (int)$args['bankId']);
+
+    return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+});
+
+// $app->post('/api/v2/{bankId}/app/card-wallet', function (Request $request, Response $response, array $args) use ($appController) {
+//     $user = userAuthVerify();
+
+//     $result = $appController->deleteCardWallet($user, (int)$args['bankId']);
+
+//     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+// });
+
+// $app->delete('/api/v2/{bankId}/app/card-wallet', function (Request $request, Response $response, array $args) use ($appController) {
+//     $user = userAuthVerify();
+
+//     $result = $appController->postCardWallet($user, (int)$args['bankId']);
+
+//     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+// });
+
+
 $app->run();
 ?>

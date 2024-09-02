@@ -1410,4 +1410,36 @@ class AppApiController
             ];
         }
     }
+
+
+    public function getCardWallet($user, $bankid)
+    {
+        try {
+            $bankDbConnection = new BankDbController(Database::getConnection($bankid));
+            $data = $bankDbConnection->dataCardWallet($user['username']);
+
+            if ($data['code'] == 200) {
+                return [
+                    'message' => ErrorCodes::$SUCCESS_FETCH[1],
+                    'dcode' => ErrorCodes::$SUCCESS_FETCH[0],
+                    'data' => $data['data'],
+                    'code' => 200,
+                ];
+            } else {
+                return [
+                    'message' => ErrorCodes::$FAIL_CARD_WALLET_CREATED[1],
+                    'dcode' => ErrorCodes::$FAIL_CARD_WALLET_CREATED[0],
+                    'data' => [],
+                    'code' => 400,
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'dcode' => 500,
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null,
+            ];
+        }
+    }
 }
