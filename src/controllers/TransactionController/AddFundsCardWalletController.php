@@ -33,7 +33,7 @@ class AddFundsCardWalletController
         $chargeResult = $this->chargeFromCard($request, $username, $customerDetails, $bankCode, $bankName);
 
         if ($chargeResult['status'] === 'ACCEPTED') {
-            $cardVault = $this->bankDbConnection->createAddMoneyRecord($customerDetails, $request, $chargeResult, $bankCode);
+            $cardVault = $this->bankDbConnection->createAddMoneyRecord($customerDetails, $request, $chargeResult, $bankCode, $username);
             return $this->createResponse(200, 'Successful', $cardVault);
         } else {
             return $this->createResponse(404, 'Error');

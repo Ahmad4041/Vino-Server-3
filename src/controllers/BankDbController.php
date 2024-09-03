@@ -1575,27 +1575,28 @@ class BankDbController
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    public function createAddMoneyRecord($customerDetails, $request, $chargeResult, $bankId)
+    public function createAddMoneyRecord($customerDetails, $request, $chargeResult, $bankId, $username)
     {
         $stmt = $this->dbConnection->prepare("
-            INSERT INTO tblAddMoney (AcctName, CardNo, VionTransCode, Amt, BankID, Charges, MerchantFee, AppFee, ClientResponse, Status, TransDate)
-            VALUES (:acctName, :cardNo, :vionTransCode, :amt, :bankId, :charges, :merchantFee, :appFee, :clientResponse, :status, :transDate)
+            INSERT INTO tblAddMoney (AcctName, CardNo, VinoTransCode, Amt, BankID, Charges, MerchantFee, AppFee, ClientResponse, Status, TransDate, AcctNo, Username)
+            VALUES (:acctName, :cardNo, :vinoTransCode, :amt, :bankId, :charges, :merchantFee, :appFee, :clientResponse, :status, :transDate, :acctNo, :username)
         ");
 
-        $stmt->execute([
+        return $stmt->execute([
             ':acctName' => $customerDetails['Surname'],
             ':cardNo' => $request['cardNo'],
-            ':vionTransCode' => json_encode($chargeResult),
+            ':vinoTransCode' => json_encode($chargeResult),
             ':amt' => $chargeResult['totalAmount'],
             ':bankId' => $bankId,
             ':charges' => $chargeResult['appFee'] + $chargeResult['preGeneratedFee'],
             ':merchantFee' => $chargeResult['merchantFee'],
             ':appFee' => $chargeResult['appFee'],
             ':clientResponse' => json_encode($chargeResult),
-            ':status' => json_encode($chargeResult),
-            ':transDate' => date('Y-m-d H:i:s')
+            ':status' => $chargeResult['status'],
+            ':transDate' => date('Y-m-d H:i:s'),
+            ':acctNo' => $request['accountNo'],
+            ':username' => $username
         ]);
 
-        return $this->dbConnection->lastInsertId();
     }
 }

@@ -1583,9 +1583,9 @@ class AppApiController
     {
         try {
             $dataRequest = [
-                'accountNo' => $request['accountNo'],
-                'amount' => $request['amount'],
-                'cardNo' => $request['cardNo'],
+                'accountNo' => $request['accountNo'] ?? null,
+                'amount' => $request['amount'] ?? null,
+                'cardNo' => $request['cardNo'] ?? null,
             ];
 
             $rules = [

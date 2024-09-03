@@ -334,7 +334,7 @@ class LocalDbController
 
     public function getBankName($bankid)
     {
-        $sql = "SELECT Top 1 bankname FROM banks WHERE bankcode = :bankid";
+        $sql = "SELECT bankname FROM banks WHERE bankcode = :bankid LIMIT 1";
         $stmt = $this->dbConnection->prepare($sql);
         $stmt->bindParam(':bankid', $bankid, PDO::PARAM_STR);
 
