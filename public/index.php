@@ -556,7 +556,7 @@ $app->post('/api/v2/{bankId}/app/extra/customer-faq', function (Request $request
 });
 
 
-$app->post('/api/v2/{bankId}/app/customer-query', function (Request $request, Response $response, array $args) use ($appController) {
+$app->post('/api/v2/{bankId}/app/extra/customer-query', function (Request $request, Response $response, array $args) use ($appController) {
     $user = userAuthVerify();
     $requestData = requestParse($request);
 
@@ -566,7 +566,7 @@ $app->post('/api/v2/{bankId}/app/customer-query', function (Request $request, Re
 });
 
 
-$app->post('/api/v2/{bankId}/app/broadcast-messages', function (Request $request, Response $response, array $args) use ($appController) {
+$app->post('/api/v2/{bankId}/app/extra/broadcast-messages', function (Request $request, Response $response, array $args) use ($appController) {
     $user = userAuthVerify();
     $requestData = requestParse($request);
 

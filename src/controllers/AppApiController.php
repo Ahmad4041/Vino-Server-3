@@ -1643,7 +1643,7 @@ class AppApiController
         try {
             $dataRequest = [
                 'accountNo' => $request['accountNo'] ?? null,
-                'question' => $request['amount'] ?? null,
+                'question' => $request['question'] ?? null,
             ];
 
             $rules = [
@@ -1772,7 +1772,7 @@ class AppApiController
                 $data = [
                     'Username' => $customerInfo['data']['Username'],
                     'AccountId' => $customerInfo['data']['AccountID'],
-                    'AccountName' => $customerInfo['data']['AccountName'],
+                    // 'AccountName' => $customerInfo['data']['AccountName'],
                     'Message' => $customerInfo['data']['Message'],
                     'MType' => $customerInfo['data']['MType'],
                     'Seen' => $customerInfo['data']['Seen'],

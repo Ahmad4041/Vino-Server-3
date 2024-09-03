@@ -1603,51 +1603,42 @@ class BankDbController
     function gettingCustomerFAQ($username, $question, $accountNo)
     {
         $sql = "INSERT INTO tblMobileQuest (Username, AccountID, AccountName, Question, Ddate, Adate, Auser)
-            SELECT ?, c.Accountid, c.customername, ?, NOW(), NOW(), NOW()
-            FROM tblcustomers c
-            WHERE c.Accountid = ?";
+                SELECT :username, c.Accountid, c.customername, :question, GETDATE(), GETDATE(), GETDATE()
+                FROM tblcustomers c
+                WHERE c.Accountid = :accountNo";
 
+        // Prepare the statement
         $stmt = $this->dbConnection->prepare($sql);
 
-        if (!$stmt) {
+        // Bind parameters
+        $stmt->bindParam(':username', $username);
+        $stmt->bindParam(':question', $question);
+        $stmt->bindParam(':accountNo', $accountNo);
+
+        // Execute the query
+        $stmt->execute();
+
+        // Get the last inserted ID
+        $insertedId = $this->dbConnection->lastInsertId();
+        $affectedRows = $stmt->rowCount();
+
+        // Check if rows were affected
+        if ($affectedRows > 0) {
             return [
-                'code' => 500,
-                'message' => 'Failed to prepare statement',
-                'data' => '',
+                'code' => 200,
+                'message' => 'Customer FAQ inserted successfully',
+                'data' => [
+                    'Sno' => $insertedId,
+                    'Username' => $username,
+                    'AccountID' => $accountNo,
+                    'Question' => $question,
+                    'Ddate' => date('Y-m-d H:i:s'),
+                ],
             ];
-        }
-
-        $stmt->bind_param("sss", $username, $question, $accountNo);
-
-        if ($stmt->execute()) {
-            $insertedId = $stmt->insert_id;
-            $affectedRows = $stmt->affected_rows;
-            $stmt->close();
-
-            if ($affectedRows > 0) {
-                return [
-                    'code' => 200,
-                    'message' => 'Customer FAQ inserted successfully',
-                    'data' => [
-                        'Sno' => $insertedId,
-                        'Username' => $username,
-                        'AccountID' => $accountNo,
-                        'Question' => $question,
-                        'Ddate' => date('Y-m-d H:i:s'),
-                    ],
-                ];
-            } else {
-                return [
-                    'code' => ErrorCodes::$FAIL_ACCOUNT_HOLDER_FOUND[0],
-                    'message' => ErrorCodes::$FAIL_ACCOUNT_HOLDER_FOUND[1],
-                    'data' => '',
-                ];
-            }
         } else {
-            $stmt->close();
             return [
-                'code' => 500,
-                'message' => 'Failed to insert FAQ',
+                'code' => ErrorCodes::$FAIL_ACCOUNT_HOLDER_FOUND[0],
+                'message' => ErrorCodes::$FAIL_ACCOUNT_HOLDER_FOUND[1],
                 'data' => '',
             ];
         }
@@ -1660,55 +1651,47 @@ class BankDbController
         $type = $request['type'];
 
         $sql = "INSERT INTO tblMobileMSG (Username, AccountID, AccountName, Message, Seen, Ddate, MType)
-            SELECT ?, c.Accountid, c.customername, ?, 'UNSEEN', NOW(), ?
-            FROM tblcustomer c
-            WHERE c.Accountid = ?";
+                SELECT :username, c.Accountid, c.customername, :message, 'UNSEEN', GETDATE(), :type
+                FROM tblcustomers c
+                WHERE c.Accountid = :accountno";
 
+        // Prepare the statement
         $stmt = $this->dbConnection->prepare($sql);
 
-        if (!$stmt) {
-            return [
-                'code' => 500,
-                'message' => 'Failed to prepare statement',
-                'data' => '',
+        // Bind parameters
+        $stmt->bindParam(':username', $username);
+        $stmt->bindParam(':message', $message);
+        $stmt->bindParam(':type', $type);
+        $stmt->bindParam(':accountno', $accountno);
+
+        // Execute the query
+        $stmt->execute();
+
+        // Get the last inserted ID
+        $insertedId = $this->dbConnection->lastInsertId();
+        $affectedRows = $stmt->rowCount();
+
+        // Check if rows were affected
+        if ($affectedRows > 0) {
+            $insertedData = [
+                'id' => $insertedId,
+                'Username' => $username,
+                'AccountID' => $accountno,
+                'Message' => $message,
+                'Seen' => 'UNSEEN',
+                'Ddate' => date('Y-m-d H:i:s'),
+                'MType' => $type,
             ];
-        }
 
-        $stmt->bind_param("ssss", $username, $message, $type, $accountno);
-
-        if ($stmt->execute()) {
-            $insertedId = $stmt->insert_id;
-            $affectedRows = $stmt->affected_rows;
-            $stmt->close();
-
-            if ($affectedRows > 0) {
-                $insertedData = [
-                    'id' => $insertedId,
-                    'Username' => $username,
-                    'AccountID' => $accountno,
-                    'Message' => $message,
-                    'Seen' => 'UNSEEN',
-                    'Ddate' => date('Y-m-d H:i:s'),
-                    'MType' => $type,
-                ];
-
-                return [
-                    'code' => 200,
-                    'message' => 'Customer Query saved successfully',
-                    'data' => $insertedData,
-                ];
-            } else {
-                return [
-                    'code' => ErrorCodes::$FAIL_ACCOUNT_HOLDER_FOUND[0],
-                    'message' => ErrorCodes::$FAIL_ACCOUNT_HOLDER_FOUND[1],
-                    'data' => '',
-                ];
-            }
-        } else {
-            $stmt->close();
             return [
-                'code' => 404,
-                'message' => 'Customer Query not saved!',
+                'code' => 200,
+                'message' => 'Customer Query saved successfully',
+                'data' => $insertedData,
+            ];
+        } else {
+            return [
+                'code' => ErrorCodes::$FAIL_ACCOUNT_HOLDER_FOUND[0],
+                'message' => ErrorCodes::$FAIL_ACCOUNT_HOLDER_FOUND[1],
                 'data' => '',
             ];
         }
@@ -1719,29 +1702,16 @@ class BankDbController
     function getBroadcastMessages()
     {
         $sql = "SELECT Sno, MsgNo, Msg FROM tblMobileBroadcast ORDER BY MsgNo DESC";
+
+        // Prepare the statement
         $stmt = $this->dbConnection->prepare($sql);
 
-        if (!$stmt) {
-            return [
-                'code' => 500,
-                'message' => 'Failed to prepare statement',
-                'data' => '',
-            ];
-        }
+        // Execute the query
+        $stmt->execute();
 
-        if (!$stmt->execute()) {
-            $stmt->close();
-            return [
-                'code' => 500,
-                'message' => 'Failed to execute query',
-                'data' => '',
-            ];
-        }
-
-        $result = $stmt->get_result();
+        // Fetch all results as an associative array
         $data = [];
-
-        while ($row = $result->fetch_assoc()) {
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $data[] = [
                 'Sno' => (int) $row['Sno'],
                 'MsgNo' => (string) $row['MsgNo'],
@@ -1749,8 +1719,7 @@ class BankDbController
             ];
         }
 
-        $stmt->close();
-
+        // Check if data is empty and return appropriate response
         if (empty($data)) {
             return [
                 'code' => ErrorCodes::$FAIL_BROADCAST_MESSAGE_FOUND[0],
