@@ -1635,4 +1635,239 @@ class AppApiController
             ];
         }
     }
+
+
+
+    public function customerFAQ($user, $bankid, $request)
+    {
+        try {
+            $dataRequest = [
+                'accountNo' => $request['accountNo'] ?? null,
+                'question' => $request['amount'] ?? null,
+            ];
+
+            $rules = [
+                'accountNo' => 'required',
+                'question' => 'required',
+            ];
+            $validator = new Validator();
+            $validation = $validator->make($dataRequest, $rules);
+
+            $validation->validate();
+
+            if ($validation->fails()) {
+                return [
+                    'message' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[1],
+                    'data' => $validation->errors()->toArray(),
+                    'dcode' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[0],
+                    'code' => 422,
+                ];
+            };
+
+            $bankDbConnection = new BankDbController(Database::getConnection($bankid));
+            $data = $bankDbConnection->gettingCustomerFAQ($user['username'], $request['question'], $request['accountNo']);
+
+            if ($data['code'] == 200) {
+                return [
+                    'message' => ErrorCodes::$SUCCESS_CUSTOMER_FAQ_REQUEST[1],
+                    'dcode' => ErrorCodes::$SUCCESS_CUSTOMER_FAQ_REQUEST[0],
+                    'data' => $data['data'],
+                    'code' => 200,
+                ];
+            } else {
+                return [
+                    'message' => ErrorCodes::$FAIL_CUSTOMER_FAQ_REQUEST[1],
+                    'dcode' => ErrorCodes::$FAIL_CUSTOMER_FAQ_REQUEST[0],
+                    'data' => [],
+                    'code' => 400,
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'dcode' => 500,
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null,
+            ];
+        }
+    }
+
+
+
+    // public function broadcastMessages($user, $bankid, $request)
+    // {
+    //     try {
+    //         $dataRequest = [
+    //             'accountNo' => $request['accountNo'] ?? null,
+    //             'amount' => $request['amount'] ?? null,
+    //             'cardNo' => $request['cardNo'] ?? null,
+    //         ];
+
+    //         $rules = [
+    //             'accountNo' => 'required',
+    //             'amount' => 'required',
+    //             'cardNo' => 'required',
+    //         ];
+    //         $validator = new Validator();
+    //         $validation = $validator->make($dataRequest, $rules);
+
+    //         $validation->validate();
+
+    //         if ($validation->fails()) {
+    //             return [
+    //                 'message' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[1],
+    //                 'data' => $validation->errors()->toArray(),
+    //                 'dcode' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[0],
+    //                 'code' => 422,
+    //             ];
+    //         };
+
+    //         $bankDbConnection = new BankDbController(Database::getConnection($bankid));
+    //         $data = $bankDbConnection->cardWalletAddFunds($user['username'], $request, $bankid);
+
+    //         if ($data['code'] == 200) {
+    //             return [
+    //                 'message' => ErrorCodes::$SUCCESS_TRANSACTION[1],
+    //                 'dcode' => ErrorCodes::$SUCCESS_TRANSACTION[0],
+    //                 'data' => $data['data'],
+    //                 'code' => 200,
+    //             ];
+    //         } else {
+    //             return [
+    //                 'message' => ErrorCodes::$FAIL_TRANSACTION[1],
+    //                 'dcode' => ErrorCodes::$FAIL_TRANSACTION[0],
+    //                 'data' => [],
+    //                 'code' => 400,
+    //             ];
+    //         }
+    //     } catch (Exception $e) {
+    //         return [
+    //             'dcode' => 500,
+    //             'code' => 500,
+    //             'message' => $e->getMessage(),
+    //             'data' => null,
+    //         ];
+    //     }
+    // }
+
+
+
+    // public function customerQuery($user, $bankid, $request)
+    // {
+    //     try {
+    //         $dataRequest = [
+    //             'accountNo' => $request['accountNo'] ?? null,
+    //             'amount' => $request['amount'] ?? null,
+    //             'cardNo' => $request['cardNo'] ?? null,
+    //         ];
+
+    //         $rules = [
+    //             'accountNo' => 'required',
+    //             'amount' => 'required',
+    //             'cardNo' => 'required',
+    //         ];
+    //         $validator = new Validator();
+    //         $validation = $validator->make($dataRequest, $rules);
+
+    //         $validation->validate();
+
+    //         if ($validation->fails()) {
+    //             return [
+    //                 'message' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[1],
+    //                 'data' => $validation->errors()->toArray(),
+    //                 'dcode' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[0],
+    //                 'code' => 422,
+    //             ];
+    //         };
+
+    //         $bankDbConnection = new BankDbController(Database::getConnection($bankid));
+    //         $data = $bankDbConnection->cardWalletAddFunds($user['username'], $request, $bankid);
+
+    //         if ($data['code'] == 200) {
+    //             return [
+    //                 'message' => ErrorCodes::$SUCCESS_TRANSACTION[1],
+    //                 'dcode' => ErrorCodes::$SUCCESS_TRANSACTION[0],
+    //                 'data' => $data['data'],
+    //                 'code' => 200,
+    //             ];
+    //         } else {
+    //             return [
+    //                 'message' => ErrorCodes::$FAIL_TRANSACTION[1],
+    //                 'dcode' => ErrorCodes::$FAIL_TRANSACTION[0],
+    //                 'data' => [],
+    //                 'code' => 400,
+    //             ];
+    //         }
+    //     } catch (Exception $e) {
+    //         return [
+    //             'dcode' => 500,
+    //             'code' => 500,
+    //             'message' => $e->getMessage(),
+    //             'data' => null,
+    //         ];
+    //     }
+    // }
+
+
+
+    // public function requestLoan($user, $bankid, $request)
+    // {
+    //     try {
+    //         $dataRequest = [
+    //             'accountNo' => $request['accountNo'] ?? null,
+    //             'amount' => $request['amount'] ?? null,
+    //             'cardNo' => $request['cardNo'] ?? null,
+    //         ];
+
+    //         $rules = [
+    //             'accountNo' => 'required',
+    //             'amount' => 'required',
+    //             'cardNo' => 'required',
+    //         ];
+    //         $validator = new Validator();
+    //         $validation = $validator->make($dataRequest, $rules);
+
+    //         $validation->validate();
+
+    //         if ($validation->fails()) {
+    //             return [
+    //                 'message' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[1],
+    //                 'data' => $validation->errors()->toArray(),
+    //                 'dcode' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[0],
+    //                 'code' => 422,
+    //             ];
+    //         };
+
+    //         $bankDbConnection = new BankDbController(Database::getConnection($bankid));
+    //         $data = $bankDbConnection->cardWalletAddFunds($user['username'], $request, $bankid);
+
+    //         if ($data['code'] == 200) {
+    //             return [
+    //                 'message' => ErrorCodes::$SUCCESS_TRANSACTION[1],
+    //                 'dcode' => ErrorCodes::$SUCCESS_TRANSACTION[0],
+    //                 'data' => $data['data'],
+    //                 'code' => 200,
+    //             ];
+    //         } else {
+    //             return [
+    //                 'message' => ErrorCodes::$FAIL_TRANSACTION[1],
+    //                 'dcode' => ErrorCodes::$FAIL_TRANSACTION[0],
+    //                 'data' => [],
+    //                 'code' => 400,
+    //             ];
+    //         }
+    //     } catch (Exception $e) {
+    //         return [
+    //             'dcode' => 500,
+    //             'code' => 500,
+    //             'message' => $e->getMessage(),
+    //             'data' => null,
+    //         ];
+    //     }
+    // }
+
+
+
+
+
 }

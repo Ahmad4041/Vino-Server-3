@@ -541,6 +541,54 @@ $app->post('/api/v2/{bankId}/app/card-wallet/add-funds', function (Request $requ
 });
 
 
+// ********************************************************************************************
+// **************************************************************************************
+// ********************************************************************************
+// ******************************************** Extra endpoimts START ************************************************
+
+$app->post('/api/v2/{bankId}/app/extra/customer-faq', function (Request $request, Response $response, array $args) use ($appController) {
+    $user = userAuthVerify();
+    $requestData = requestParse($request);
+
+    $result = $appController->customerFAQ($user, (int)$args['bankId'], $requestData);
+
+    return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+});
+
+
+// $app->post('/api/v2/{bankId}/app/customer-query', function (Request $request, Response $response, array $args) use ($appController) {
+//     $user = userAuthVerify();
+//     $requestData = requestParse($request);
+
+//     $result = $appController->customerQuery($user, (int)$args['bankId'], $requestData);
+
+//     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+// });
+
+
+// $app->post('/api/v2/{bankId}/app/broadcast-messages', function (Request $request, Response $response, array $args) use ($appController) {
+//     $user = userAuthVerify();
+//     $requestData = requestParse($request);
+
+//     $result = $appController->broadcastMessages($user, (int)$args['bankId'], $requestData);
+
+//     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+// });
+
+
+
+// $app->post('/api/v2/{bankId}/app/extra/request-loan', function (Request $request, Response $response, array $args) use ($appController) {
+//     $user = userAuthVerify();
+//     $requestData = requestParse($request);
+
+//     $result = $appController->requestLoan($user, (int)$args['bankId'], $requestData);
+
+//     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+// });
+
+
+
+
 
 
 $app->run();

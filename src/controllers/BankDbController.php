@@ -1597,6 +1597,59 @@ class BankDbController
             ':acctNo' => $request['accountNo'],
             ':username' => $username
         ]);
+    }
 
+
+    function gettingCustomerFAQ($accountNo, $question, $username)
+    {
+        $sql = "INSERT INTO tblMobileQuest (Username, AccountID, AccountName, Question, Ddate, Adate, Auser)
+            SELECT ?, c.Accountid, c.customername, ?, NOW(), NOW(), NOW()
+            FROM tblcustomers c
+            WHERE c.Accountid = ?";
+
+        $stmt = $this->dbConnection->prepare($sql);
+
+        if (!$stmt) {
+            return [
+                'code' => 500,
+                'message' => 'Failed to prepare statement',
+                'data' => '',
+            ];
+        }
+
+        $stmt->bind_param("sss", $username, $question, $accountNo);
+
+        if ($stmt->execute()) {
+            $insertedId = $stmt->insert_id;
+            $affectedRows = $stmt->affected_rows;
+            $stmt->close();
+
+            if ($affectedRows > 0) {
+                return [
+                    'code' => 200,
+                    'message' => 'Customer FAQ inserted successfully',
+                    'data' => [
+                        'Sno' => $insertedId,
+                        'Username' => $username,
+                        'AccountID' => $accountNo,
+                        'Question' => $question,
+                        'Ddate' => date('Y-m-d H:i:s'),
+                    ],
+                ];
+            } else {
+                return [
+                    'code' => ErrorCodes::$FAIL_ACCOUNT_HOLDER_FOUND[0],
+                    'message' => ErrorCodes::$FAIL_ACCOUNT_HOLDER_FOUND[1],
+                    'data' => '',
+                ];
+            }
+        } else {
+            $stmt->close();
+            return [
+                'code' => 500,
+                'message' => 'Failed to insert FAQ',
+                'data' => '',
+            ];
+        }
     }
 }
