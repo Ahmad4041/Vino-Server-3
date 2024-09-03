@@ -1713,4 +1713,56 @@ class BankDbController
             ];
         }
     }
+
+
+
+    function getBroadcastMessages()
+    {
+        $sql = "SELECT Sno, MsgNo, Msg FROM tblMobileBroadcast ORDER BY MsgNo DESC";
+        $stmt = $this->dbConnection->prepare($sql);
+
+        if (!$stmt) {
+            return [
+                'code' => 500,
+                'message' => 'Failed to prepare statement',
+                'data' => '',
+            ];
+        }
+
+        if (!$stmt->execute()) {
+            $stmt->close();
+            return [
+                'code' => 500,
+                'message' => 'Failed to execute query',
+                'data' => '',
+            ];
+        }
+
+        $result = $stmt->get_result();
+        $data = [];
+
+        while ($row = $result->fetch_assoc()) {
+            $data[] = [
+                'Sno' => (int) $row['Sno'],
+                'MsgNo' => (string) $row['MsgNo'],
+                'Msg' => $row['Msg'],
+            ];
+        }
+
+        $stmt->close();
+
+        if (empty($data)) {
+            return [
+                'code' => ErrorCodes::$FAIL_BROADCAST_MESSAGE_FOUND[0],
+                'message' => ErrorCodes::$FAIL_BROADCAST_MESSAGE_FOUND[1],
+                'data' => '',
+            ];
+        } else {
+            return [
+                'code' => 200,
+                'message' => ErrorCodes::$SUCCESS_BROADCAST_MESSAGE_FOUND[1],
+                'data' => $data,
+            ];
+        }
+    }
 }
