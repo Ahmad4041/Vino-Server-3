@@ -1600,7 +1600,7 @@ class BankDbController
     }
 
 
-    function gettingCustomerFAQ($accountNo, $question, $username)
+    function gettingCustomerFAQ($username, $question, $accountNo)
     {
         $sql = "INSERT INTO tblMobileQuest (Username, AccountID, AccountName, Question, Ddate, Adate, Auser)
             SELECT ?, c.Accountid, c.customername, ?, NOW(), NOW(), NOW()
@@ -1648,6 +1648,67 @@ class BankDbController
             return [
                 'code' => 500,
                 'message' => 'Failed to insert FAQ',
+                'data' => '',
+            ];
+        }
+    }
+
+    function customerQueryMessage($username, $request)
+    {
+        $accountno = $request['accountNo'];
+        $message = $request['message'];
+        $type = $request['type'];
+
+        $sql = "INSERT INTO tblMobileMSG (Username, AccountID, AccountName, Message, Seen, Ddate, MType)
+            SELECT ?, c.Accountid, c.customername, ?, 'UNSEEN', NOW(), ?
+            FROM tblcustomer c
+            WHERE c.Accountid = ?";
+
+        $stmt = $this->dbConnection->prepare($sql);
+
+        if (!$stmt) {
+            return [
+                'code' => 500,
+                'message' => 'Failed to prepare statement',
+                'data' => '',
+            ];
+        }
+
+        $stmt->bind_param("ssss", $username, $message, $type, $accountno);
+
+        if ($stmt->execute()) {
+            $insertedId = $stmt->insert_id;
+            $affectedRows = $stmt->affected_rows;
+            $stmt->close();
+
+            if ($affectedRows > 0) {
+                $insertedData = [
+                    'id' => $insertedId,
+                    'Username' => $username,
+                    'AccountID' => $accountno,
+                    'Message' => $message,
+                    'Seen' => 'UNSEEN',
+                    'Ddate' => date('Y-m-d H:i:s'),
+                    'MType' => $type,
+                ];
+
+                return [
+                    'code' => 200,
+                    'message' => 'Customer Query saved successfully',
+                    'data' => $insertedData,
+                ];
+            } else {
+                return [
+                    'code' => ErrorCodes::$FAIL_ACCOUNT_HOLDER_FOUND[0],
+                    'message' => ErrorCodes::$FAIL_ACCOUNT_HOLDER_FOUND[1],
+                    'data' => '',
+                ];
+            }
+        } else {
+            $stmt->close();
+            return [
+                'code' => 404,
+                'message' => 'Customer Query not saved!',
                 'data' => '',
             ];
         }

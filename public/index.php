@@ -556,14 +556,14 @@ $app->post('/api/v2/{bankId}/app/extra/customer-faq', function (Request $request
 });
 
 
-// $app->post('/api/v2/{bankId}/app/customer-query', function (Request $request, Response $response, array $args) use ($appController) {
-//     $user = userAuthVerify();
-//     $requestData = requestParse($request);
+$app->post('/api/v2/{bankId}/app/customer-query', function (Request $request, Response $response, array $args) use ($appController) {
+    $user = userAuthVerify();
+    $requestData = requestParse($request);
 
-//     $result = $appController->customerQuery($user, (int)$args['bankId'], $requestData);
+    $result = $appController->customerQuery($user, (int)$args['bankId'], $requestData);
 
-//     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
-// });
+    return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+});
 
 
 // $app->post('/api/v2/{bankId}/app/broadcast-messages', function (Request $request, Response $response, array $args) use ($appController) {
