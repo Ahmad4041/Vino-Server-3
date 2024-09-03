@@ -330,4 +330,34 @@ class LocalDbController
             ];
         }
     }
+
+
+    public function getBankName($bankid)
+    {
+        $sql = "SELECT Top 1 bankname FROM banks WHERE bankcode = :bankid";
+        $stmt = $this->dbConnection->prepare($sql);
+        $stmt->bindParam(':bankid', $bankid, PDO::PARAM_STR);
+
+        if ($stmt->execute()) {
+            $getBankName = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($getBankName) {
+                return [
+                    'code' => 200,
+                    'message' => 'Success',
+                    'bankName' => $getBankName['bankname'],
+                ];
+            } else {
+                return [
+                    'code' => 404,
+                    'message' => 'Bank Not Found',
+                ];
+            }
+        } else {
+            return [
+                'code' => 500,
+                'message' => 'Database Query Failed',
+            ];
+        }
+    }
 }

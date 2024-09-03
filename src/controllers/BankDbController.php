@@ -1104,15 +1104,15 @@ class BankDbController
             ];
         }
 
-    // Check if the username matches the account
-    if ($result['mu_Username'] != $username || $result['mu_AccountID'] != $accountID) {
-        return [
-            'code' => 403,
-            'message' => 'Invalid user',
-            'data' => 'Invalid user',
-            'stage' => "invalid user"
-        ];
-    }
+        // Check if the username matches the account
+        if ($result['mu_Username'] != $username || $result['mu_AccountID'] != $accountID) {
+            return [
+                'code' => 403,
+                'message' => 'Invalid user',
+                'data' => 'Invalid user',
+                'stage' => "invalid user"
+            ];
+        }
 
         // Check if prebalance exists
         if ($result['preBalanceExists'] == 0) {
@@ -1552,5 +1552,48 @@ class BankDbController
                 'data' => '',
             ];
         }
+    }
+
+    public function getCustomerDetails($username, $accountNo)
+    {
+        $stmt = $this->dbConnection->prepare("
+            SELECT c.*, m.AccountID as userAcctId 
+            FROM tblcustomers c
+            JOIN tblMobileUsers m ON m.Username = :username
+            WHERE c.Accountid = :accountNo
+        ");
+        $stmt->execute([':username' => $username, ':accountNo' => $accountNo]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function getCardVault($cardNo, $username)
+    {
+        $stmt = $this->dbConnection->prepare("SELECT * FROM tblMobileCardVault WHERE CardNo = :cardNo AND Username = :username");
+        $stmt->execute([':cardNo' => $cardNo, ':username' => $username]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function createAddMoneyRecord($customerDetails, $request, $chargeResult, $bankId)
+    {
+        $stmt = $this->dbConnection->prepare("
+            INSERT INTO tblAddMoney (AcctName, CardNo, VionTransCode, Amt, BankID, Charges, MerchantFee, AppFee, ClientResponse, Status, TransDate)
+            VALUES (:acctName, :cardNo, :vionTransCode, :amt, :bankId, :charges, :merchantFee, :appFee, :clientResponse, :status, :transDate)
+        ");
+
+        $stmt->execute([
+            ':acctName' => $customerDetails['Surname'],
+            ':cardNo' => $request['cardNo'],
+            ':vionTransCode' => json_encode($chargeResult),
+            ':amt' => $chargeResult['totalAmount'],
+            ':bankId' => $bankId,
+            ':charges' => $chargeResult['appFee'] + $chargeResult['preGeneratedFee'],
+            ':merchantFee' => $chargeResult['merchantFee'],
+            ':appFee' => $chargeResult['appFee'],
+            ':clientResponse' => json_encode($chargeResult),
+            ':status' => json_encode($chargeResult),
+            ':transDate' => date('Y-m-d H:i:s')
+        ]);
+
+        return $this->dbConnection->lastInsertId();
     }
 }

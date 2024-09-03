@@ -14,6 +14,7 @@ require 'ThirdPartyControllers/VtPassController.php';
 require 'TransactionController/TopUpController.php';
 require 'TransactionController/FundTransferController.php';
 require 'TransactionController/UtilityController.php';
+require 'TransactionController/AddFundsCardWalletController.php';
 
 
 // require '../models/UtilityDemo.php';
@@ -1497,6 +1498,8 @@ class AppApiController
             ];
         }
     }
+
+
     public function postCardWallet($user, $bankid, $request)
     {
         try {
@@ -1562,6 +1565,63 @@ class AppApiController
                 return [
                     'message' => ErrorCodes::$FAIL_CARD_WALLET_CREATED[1],
                     'dcode' => ErrorCodes::$FAIL_CARD_WALLET_CREATED[0],
+                    'data' => [],
+                    'code' => 400,
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'dcode' => 500,
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null,
+            ];
+        }
+    }
+
+    public function addFundsToCardWallet($user, $bankid, $request)
+    {
+        try {
+            $dataRequest = [
+                'accountNo' => $request['accountNo'],
+                'amount' => $request['amount'],
+                'cardNo' => $request['cardNo'],
+            ];
+
+            $rules = [
+                'accountNo' => 'required',
+                'amount' => 'required',
+                'cardNo' => 'required',
+            ];
+            $validator = new Validator();
+            $validation = $validator->make($dataRequest, $rules);
+
+            $validation->validate();
+
+            if ($validation->fails()) {
+                return [
+                    'message' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[1],
+                    'data' => $validation->errors()->toArray(),
+                    'dcode' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[0],
+                    'code' => 422,
+                ];
+            };
+
+
+            $cardWalletConnection = new AddFundsCardWalletController($bankid);
+            $data = $cardWalletConnection->cardWalletAddFunds($user['username'], $request, $bankid);
+
+            if ($data['code'] == 200) {
+                return [
+                    'message' => ErrorCodes::$SUCCESS_TRANSACTION[1],
+                    'dcode' => ErrorCodes::$SUCCESS_TRANSACTION[0],
+                    'data' => $data['data'],
+                    'code' => 200,
+                ];
+            } else {
+                return [
+                    'message' => ErrorCodes::$FAIL_TRANSACTION[1],
+                    'dcode' => ErrorCodes::$FAIL_TRANSACTION[0],
                     'data' => [],
                     'code' => 400,
                 ];

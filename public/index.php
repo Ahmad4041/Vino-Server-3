@@ -531,6 +531,16 @@ $app->post('/api/v2/{bankId}/app/card-wallet', function (Request $request, Respo
 });
 
 
+$app->post('/api/v2/{bankId}/app/card-wallet/add-funds', function (Request $request, Response $response, array $args) use ($appController) {
+    $user = userAuthVerify();
+    $requestData = requestParse($request);
+
+    $result = $appController->addFundsToCardWallet($user, (int)$args['bankId'], $requestData);
+
+    return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+});
+
+
 
 
 $app->run();
