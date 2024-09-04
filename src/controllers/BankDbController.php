@@ -1865,4 +1865,99 @@ class BankDbController
             ];
         }
     }
+
+
+
+    function createPiggyEntity($user, $request)
+    {
+        $username = $user['username'];
+        $accountId = $user['accountId'];
+        $title = $request['title'];
+
+        try {
+            // Fetch customer and existing piggy entity data using JOIN query
+            $query = "SELECT c.Accountid, c.Surname, p.id as piggy_id 
+                  FROM tblcustomers c
+                  LEFT JOIN tblMobilePiggySavingsMaster p 
+                  ON p.Username = :username AND p.Title = :title
+                  WHERE c.Accountid = :accountid";
+
+            $stmt = $this->dbConnection->prepare($query);
+            $stmt->bindParam(':username', $username);
+            $stmt->bindParam(':title', $title);
+            $stmt->bindParam(':accountid', $accountId);
+            $stmt->execute();
+
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($result && is_null($result['piggy_id'])) {
+                // Prepare data for insertion
+                $now = date('Y-m-d H:i:s');
+                $params = [
+                    ':accountNo' => $result['Accountid'],
+                    ':fundingSource' => $request['funding_source'],
+                    ':totalAmount' => $request['amount'],
+                    ':currentBalance' => $request['amount'],
+                    ':cycle' => $request['cycle'],
+                    ':executedCycle' => $request['cycle'],
+                    ':chargesEarlyWithdrawal' => $result['Accountid'],
+                    ':terms' => $request['terms'],
+                    ':maturityDate' => $request['maturity_date'],
+                    ':title' => $request['title'],
+                    ':amountPerCycle' => $request['amount'],
+                    ':withdrawalDate' => $now,
+                    ':withdrawalAmount' => $request['amount'],
+                    ':withdrawalStatus' => 0,
+                    ':createdAt' => time(),
+                    ':username' => $result['Surname'],
+                    ':nextCycleDate' => $now,
+                ];
+
+                // Insert new piggy savings record
+                $insertQuery = "INSERT INTO tblMobilePiggySavingsMaster 
+                            (AccountNo, FundingSource, TotalAmount, CurrentBalance, Cycle, ExecutedCycle, 
+                             ChargesEarlyWithdrawal, Terms, MaturityDate, Title, AmountPerCycle, 
+                             WithdrawalDate, WithdrawalAmount, WithdrawalStatus, CreatedAt, Username, NextCycleDate) 
+                            VALUES 
+                            (:accountNo, :fundingSource, :totalAmount, :currentBalance, :cycle, :executedCycle, 
+                             :chargesEarlyWithdrawal, :terms, :maturityDate, :title, :amountPerCycle, 
+                             :withdrawalDate, :withdrawalAmount, :withdrawalStatus, :createdAt, :username, :nextCycleDate)";
+
+                $insertStmt = $this->dbConnection->prepare($insertQuery);
+                $insertStmt->execute($params);
+
+                // Return success response
+                return [
+                    'code' => 200,
+                    'message' => 'Piggy created successfully',
+                    'data' => [
+                        'AccountNo' => $result['Accountid'],
+                        'FundingSource' => $request['funding_source'],
+                        'TotalAmount' => $request['amount'],
+                        'CurrentBalance' => $request['amount'],
+                        'Cycle' => $request['cycle'],
+                        'ExecutedCycle' => $request['cycle'],
+                        'Terms' => $request['terms'],
+                        'MaturityDate' => $request['maturity_date'],
+                        'Title' => $request['title'],
+                        'CreatedAt' => $now,
+                    ],
+                ];
+            } else {
+                // Return error response if piggy entity exists
+                return [
+                    'code' => 403,
+                    'message' => 'Use a different name to create piggy savings.',
+                    'data' => '',
+                ];
+            }
+        } catch (PDOException $e) {
+            // Handle any database errors
+            return [
+                'code' => 500,
+                'message' => 'An error occurred while creating piggy savings: ' . $e->getMessage(),
+                'data' => '',
+            ];
+        }
+    }
 }

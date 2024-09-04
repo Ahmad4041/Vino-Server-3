@@ -1928,4 +1928,79 @@ class AppApiController
             ];
         }
     }
+
+
+
+    public function createPiggyAccount($user, $bankid, $request)
+    {
+        try {
+            $dataRequest = [
+                'funding_source' => $request['funding_source'] ?? null,
+                'amount' => $request['amount'] ?? null,
+                'cycle' => $request['cycle'] ?? null,
+                'terms' => $request['terms'] ?? null,
+                'maturity_date' => $request['maturity_date'] ?? null,
+                'title' => $request['title'] ?? null,
+            ];
+
+            $rules = [
+                'funding_source' => 'required',
+                'amount' => 'required',
+                'cycle' => 'required',
+                'terms' => 'required',
+                'maturity_date' => 'required',
+                'title' => 'required',
+            ];
+
+            $validator = new Validator();
+            $validation = $validator->make($dataRequest, $rules);
+
+            $validation->validate();
+
+            if ($validation->fails()) {
+                return [
+                    'message' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[1],
+                    'data' => $validation->errors()->toArray(),
+                    'dcode' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[0],
+                    'code' => 422,
+                ];
+            };
+
+            $bankDbConnection = new BankDbController(Database::getConnection($bankid));
+            $createPiggy = $bankDbConnection->createPiggyEntity($user, $request);
+
+            if ($createPiggy['code'] == 200) {
+                $data = [
+                    'AccountNo' => $createPiggy['data']['AccountNo'],
+                    'TotalAmount' => $createPiggy['data']['TotalAmount'],
+                    'Title' => $createPiggy['data']['Title'],
+                    'Username' => $createPiggy['data']['Username'],
+                    'Terms' => $createPiggy['data']['Terms'],
+                    'MaturityDate' => $createPiggy['data']['MaturityDate'],
+                    'Ddate' => $createPiggy['data']['Ddate'],
+                    'CreatedAt' => $createPiggy['data']['CreatedAt'],
+                ];
+                return [
+                    'message' => ErrorCodes::$SUCCESS_PIGGY_ACCOUNT_CREATED[1],
+                    'dcode' => ErrorCodes::$SUCCESS_PIGGY_ACCOUNT_CREATED[0],
+                    'data' => $data,
+                    'code' => 200,
+                ];
+            } else {
+                return [
+                    'message' => ErrorCodes::$FAIL_PIGGY_ACCOUNT_CREATED[1],
+                    'dcode' => ErrorCodes::$FAIL_PIGGY_ACCOUNT_CREATED[0],
+                    'data' => [],
+                    'code' => 400,
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'dcode' => 500,
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null,
+            ];
+        }
+    }
 }

@@ -602,14 +602,14 @@ $app->get('/api/v2/{bankId}/app/piggy', function (Request $request, Response $re
 });
 
 
-// $app->post('/api/v2/{bankId}/app/piggy', function (Request $request, Response $response, array $args) use ($appController) {
-//     $user = userAuthVerify();
-//     $requestData = requestParse($request);
+$app->post('/api/v2/{bankId}/app/piggy', function (Request $request, Response $response, array $args) use ($appController) {
+    $user = userAuthVerify();
+    $requestData = requestParse($request);
 
-//     $result = $appController->createPiggy($user, (int)$args['bankId'], $requestData);
+    $result = $appController->createPiggyAccount($user, (int)$args['bankId'], $requestData);
 
-//     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
-// });
+    return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+});
 
 
 // $app->put('/api/v2/{bankId}/app/piggy/withdraw', function (Request $request, Response $response, array $args) use ($appController) {
