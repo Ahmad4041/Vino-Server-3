@@ -577,14 +577,14 @@ $app->post('/api/v2/{bankId}/app/extra/broadcast-messages', function (Request $r
 
 
 
-// $app->post('/api/v2/{bankId}/app/extra/request-loan', function (Request $request, Response $response, array $args) use ($appController) {
-//     $user = userAuthVerify();
-//     $requestData = requestParse($request);
+$app->post('/api/v2/{bankId}/app/extra/request-loan', function (Request $request, Response $response, array $args) use ($appController) {
+    $user = userAuthVerify();
+    $requestData = requestParse($request);
 
-//     $result = $appController->requestLoan($user, (int)$args['bankId'], $requestData);
+    $result = $appController->requestLoan($user, (int)$args['bankId'], $requestData);
 
-//     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
-// });
+    return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+});
 
 
 

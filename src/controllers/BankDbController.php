@@ -1734,4 +1734,76 @@ class BankDbController
             ];
         }
     }
+
+
+    function requestLoan($request)
+    {
+        $sql = "SELECT TOP 1 c.Customername, c.Telephone 
+        FROM tblcustomer AS c 
+        WHERE c.Accountid = :accountid";
+        $stmt = $this->dbConnection->prepare($sql);
+        $stmt->bindParam(':accountid', $request['accountNo']);
+        $stmt->execute();
+        $customer = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($customer) {
+            $loanData = [
+                'AcctNo' => $request['accountNo'],
+                'AcctName' => $customer['Customername'],
+                'Telephone' => $customer['Telephone'],
+                'LoanAmt' => $request['loanAmount'],
+                'LoanPurpose' => $request['purpose'],
+                'LoanDurationType' => $request['durationType'],
+                'LoanDuration' => $request['duration'],
+                'userPhoto' => $request['userPhoto'],
+                'nicPhoto' => $request['nicPhoto'],
+                'Guarantor1Name' => $request['Guarantor1Name'],
+                'Guarantor1Add' => $request['Guarantor1Add'],
+                'Guarantor1TelNo' => $request['Guarantor1TelNo'],
+                'Guarantor2Name' => $request['Guarantor2Name'],
+                'Guarantor2Add' => $request['Guarantor2Add'],
+                'Guarantor2TelNo' => $request['Guarantor2TelNo'],
+                'Cola1File' => $request['Cola1File'],
+                'Cola2File' => $request['Cola2File'],
+                'Cola3File' => $request['Cola3File'],
+                'IDFile' => $request['nicPhoto'],
+                'ReqDate' => date('Y-m-d H:i:s'),
+                'TransID' => time(),
+                'Cuser' => 'VINO',
+                'Ddate' => date('Y-m-d H:i:s')
+            ];
+
+            $insertSql = "INSERT INTO tblMobileLoanNew 
+                      (AcctNo, AcctName, Telephone, LoanAmt, LoanPurpose, LoanDurationType, LoanDuration, userPhoto, 
+                       nicPhoto, Guarantor1Name, Guarantor1Add, Guarantor1TelNo, Guarantor2Name, Guarantor2Add, 
+                       Guarantor2TelNo, Cola1File, Cola2File, Cola3File, IDFile, ReqDate, TransID, Cuser, Ddate)
+                      VALUES 
+                      (:AcctNo, :AcctName, :Telephone, :LoanAmt, :LoanPurpose, :LoanDurationType, :LoanDuration, 
+                       :userPhoto, :nicPhoto, :Guarantor1Name, :Guarantor1Add, :Guarantor1TelNo, :Guarantor2Name, 
+                       :Guarantor2Add, :Guarantor2TelNo, :Cola1File, :Cola2File, :Cola3File, :IDFile, :ReqDate, 
+                       :TransID, :Cuser, :Ddate)";
+
+            $insertStmt = $this->dbConnection->prepare($insertSql);
+            $insertStmt->execute($loanData);
+
+            return [
+                'code' => 200,
+                'message' => 'Loan request created successfully',
+                'data' => [
+                    'AcctNo' => $loanData['AcctNo'],
+                    'AcctName' => $loanData['AcctName'],
+                    'LoanAmt' => $loanData['LoanAmt'],
+                    'LoanPurpose' => $loanData['LoanPurpose'],
+                    'ReqDate' => $loanData['ReqDate'],
+                    'TransID' => $loanData['TransID'],
+                ],
+            ];
+        } else {
+            return [
+                'code' => ErrorCodes::$FAIL_ACCOUNT_HOLDER_FOUND[0],
+                'message' => ErrorCodes::$FAIL_ACCOUNT_HOLDER_FOUND[1],
+                'data' => '',
+            ];
+        }
+    }
 }

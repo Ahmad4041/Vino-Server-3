@@ -1804,64 +1804,86 @@ class AppApiController
 
 
 
-    // public function requestLoan($user, $bankid, $request)
-    // {
-    //     try {
-    //         $dataRequest = [
-    //             'accountNo' => $request['accountNo'] ?? null,
-    //             'amount' => $request['amount'] ?? null,
-    //             'cardNo' => $request['cardNo'] ?? null,
-    //         ];
+    public function requestLoan($user, $bankid, $request)
+    {
+        try {
+            $dataRequest = [
+                'accountNo' => $request['accountNo'] ?? null,
+                'duration' => $request['duration'] ?? null,
+                'loanAmount' => $request['loanAmount'] ?? null,
+                'purpose' => $request['purpose'] ?? null,
+                'durationType' => $request['durationType'] ?? null,
+                'userPhoto' => $request['userPhoto'] ?? null,
+                'nicPhoto' => $request['nicPhoto'] ?? null,
+                'Guarantor1Name' => $request['Guarantor1Name'] ?? null,
+                'Guarantor1Add' => $request['Guarantor1Add'] ?? null,
+                'Guarantor1TelNo' => $request['Guarantor1TelNo'] ?? null,
+                'Guarantor2Name' => $request['Guarantor2Name'] ?? null,
+                'Guarantor2Add' => $request['Guarantor2Add'] ?? null,
+                'Guarantor2TelNo' => $request['Guarantor2TelNo'] ?? null,
+                'Cola1File' => $request['Cola1File'] ?? null,
+                'Cola2File' => $request['Cola2File'] ?? null,
+                'Cola3File' => $request['Cola3File'] ?? null,
+            ];
 
-    //         $rules = [
-    //             'accountNo' => 'required',
-    //             'amount' => 'required',
-    //             'cardNo' => 'required',
-    //         ];
-    //         $validator = new Validator();
-    //         $validation = $validator->make($dataRequest, $rules);
+            $rules = [
+                'accountNo' => 'required',
+                'duration' => 'required',
+                'loanAmount' => 'required',
+                'purpose' => 'required',
+                'durationType' => 'required',
+                'userPhoto' => 'required',
+                'nicPhoto' => 'required',
+                'Guarantor1Name' => 'required',
+                'Guarantor1Add' => 'required',
+                'Guarantor1TelNo' => 'required',
+                'Guarantor2Name' => 'required',
+                'Guarantor2Add' => 'required',
+                'Guarantor2TelNo' => 'required',
+                'Cola1File' => 'required',
+                'Cola2File' => 'required',
+                'Cola3File' => 'required',
+            ];
 
-    //         $validation->validate();
+            $validator = new Validator();
+            $validation = $validator->make($dataRequest, $rules);
 
-    //         if ($validation->fails()) {
-    //             return [
-    //                 'message' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[1],
-    //                 'data' => $validation->errors()->toArray(),
-    //                 'dcode' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[0],
-    //                 'code' => 422,
-    //             ];
-    //         };
+            $validation->validate();
 
-    //         $bankDbConnection = new BankDbController(Database::getConnection($bankid));
-    //         $data = $bankDbConnection->cardWalletAddFunds($user['username'], $request, $bankid);
+            if ($validation->fails()) {
+                return [
+                    'message' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[1],
+                    'data' => $validation->errors()->toArray(),
+                    'dcode' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[0],
+                    'code' => 422,
+                ];
+            };
 
-    //         if ($data['code'] == 200) {
-    //             return [
-    //                 'message' => ErrorCodes::$SUCCESS_TRANSACTION[1],
-    //                 'dcode' => ErrorCodes::$SUCCESS_TRANSACTION[0],
-    //                 'data' => $data['data'],
-    //                 'code' => 200,
-    //             ];
-    //         } else {
-    //             return [
-    //                 'message' => ErrorCodes::$FAIL_TRANSACTION[1],
-    //                 'dcode' => ErrorCodes::$FAIL_TRANSACTION[0],
-    //                 'data' => [],
-    //                 'code' => 400,
-    //             ];
-    //         }
-    //     } catch (Exception $e) {
-    //         return [
-    //             'dcode' => 500,
-    //             'code' => 500,
-    //             'message' => $e->getMessage(),
-    //             'data' => null,
-    //         ];
-    //     }
-    // }
+            $bankDbConnection = new BankDbController(Database::getConnection($bankid));
+            $data = $bankDbConnection->requestLoan($request);
 
-
-
-
-
+            if ($data['code'] == 200) {
+                return [
+                    'message' => ErrorCodes::$SUCCESS_LOAN_REQUEST[1],
+                    'dcode' => ErrorCodes::$SUCCESS_LOAN_REQUEST[0],
+                    'data' => $data['data'],
+                    'code' => 200,
+                ];
+            } else {
+                return [
+                    'message' => ErrorCodes::$FAIL_LOAN_REQUEST_CREATED[1],
+                    'dcode' => ErrorCodes::$FAIL_LOAN_REQUEST_CREATED[0],
+                    'data' => [],
+                    'code' => 400,
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'dcode' => 500,
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null,
+            ];
+        }
+    }
 }
