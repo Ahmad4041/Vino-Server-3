@@ -2003,4 +2003,72 @@ class AppApiController
             ];
         }
     }
+
+
+
+    public function piggyWithdraw($user, $bankid, $request)
+    {
+        try {
+            $dataRequest = [
+                'account_no' => $request['account_no'] ?? null,
+            ];
+
+            $rules = [
+                'account_no' => 'required',
+            ];
+
+            $validator = new Validator();
+            $validation = $validator->make($dataRequest, $rules);
+
+            $validation->validate();
+
+            if ($validation->fails()) {
+                return [
+                    'message' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[1],
+                    'data' => $validation->errors()->toArray(),
+                    'dcode' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[0],
+                    'code' => 422,
+                ];
+            };
+
+            $bankDbConnection = new BankDbController(Database::getConnection($bankid));
+            $withdraw = $bankDbConnection->createPiggyEntity($user, $request);
+
+            if ($withdraw['code'] == 200) {
+                $data = [
+                    'total_savings' => '',
+                    'savings' => [
+                        'Id' => $withdraw['data']['Id'],
+                        'PiggyId' => $withdraw['data']['PiggyId'],
+                        'ExecutionAmount' => $withdraw['data']['ExecutionAmount'],
+                        'ExecutionDate' => $withdraw['data']['ExecutionDate'],
+                        'DeductAmountOnCard' => $withdraw['data']['DeductAmountOnCard'],
+                        'ExecutedCycle' => $withdraw['data']['ExecutedCycle'],
+                        'MerchantFee' => $withdraw['data']['MerchantFee'],
+                        'BankFee' => $withdraw['data']['BankFee'],
+                    ]
+                ];
+                return [
+                    'message' => ErrorCodes::$SUCCESS_PIGGY_ACCOUNT_WITHDRAWAL[1],
+                    'dcode' => ErrorCodes::$SUCCESS_PIGGY_ACCOUNT_WITHDRAWAL[0],
+                    'data' => $data,
+                    'code' => 200,
+                ];
+            } else {
+                return [
+                    'message' => ErrorCodes::$FAIL_PIGGY_ACCOUNT_WITHDRAWAL[1],
+                    'dcode' => ErrorCodes::$FAIL_PIGGY_ACCOUNT_WITHDRAWAL[0],
+                    'data' => [],
+                    'code' => 400,
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'dcode' => 500,
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null,
+            ];
+        }
+    }
 }

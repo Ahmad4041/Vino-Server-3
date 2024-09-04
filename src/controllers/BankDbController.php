@@ -1875,7 +1875,6 @@ class BankDbController
         $title = $request['title'];
 
         try {
-            // Fetch customer and existing piggy entity data using JOIN query
             $query = "SELECT c.Accountid, c.Surname, p.id as piggy_id 
                   FROM tblcustomers c
                   LEFT JOIN tblMobilePiggySavingsMaster p 
@@ -1891,7 +1890,6 @@ class BankDbController
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($result && is_null($result['piggy_id'])) {
-                // Prepare data for insertion
                 $now = date('Y-m-d H:i:s');
                 $params = [
                     ':accountNo' => $result['Accountid'],
@@ -1913,7 +1911,6 @@ class BankDbController
                     ':nextCycleDate' => $now,
                 ];
 
-                // Insert new piggy savings record
                 $insertQuery = "INSERT INTO tblMobilePiggySavingsMaster 
                             (AccountNo, FundingSource, TotalAmount, CurrentBalance, Cycle, ExecutedCycle, 
                              ChargesEarlyWithdrawal, Terms, MaturityDate, Title, AmountPerCycle, 
@@ -1926,7 +1923,6 @@ class BankDbController
                 $insertStmt = $this->dbConnection->prepare($insertQuery);
                 $insertStmt->execute($params);
 
-                // Return success response
                 return [
                     'code' => 200,
                     'message' => 'Piggy created successfully',
@@ -1944,7 +1940,6 @@ class BankDbController
                     ],
                 ];
             } else {
-                // Return error response if piggy entity exists
                 return [
                     'code' => 403,
                     'message' => 'Use a different name to create piggy savings.',
@@ -1952,11 +1947,54 @@ class BankDbController
                 ];
             }
         } catch (PDOException $e) {
-            // Handle any database errors
             return [
                 'code' => 500,
                 'message' => 'An error occurred while creating piggy savings: ' . $e->getMessage(),
                 'data' => '',
+            ];
+        }
+    }
+
+    function withdrawPiggy($accountId)
+    {
+        try {
+            $currentYear = date('Y');
+
+            $query = "SELECT TOP 180 
+             MONTH(trnDate) as month, 
+             YEAR(trnDate) as year,
+             SUM(tblCustomerLedger.debit) as withdraw, 
+             SUM(tblCustomerLedger.credit) as deposit
+            FROM tblCustomerLedger
+            WHERE Acctno = :accountId
+            GROUP BY YEAR(trnDate), MONTH(trnDate)
+            ORDER BY year DESC, month DESC";
+
+            $stmt = $this->dbConnection->prepare($query);
+            $stmt->bindParam(':accountId', $accountId);
+            $stmt->execute();
+            $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $data = [];
+            foreach ($results as $row) {
+                if ((int)$row['year'] === (int)$currentYear) {
+                    $data[] = [
+                        'month' => (int)$row['month'],
+                        'withdraw' => (float)$row['withdraw'],
+                        'deposit' => (float)$row['deposit'],
+                    ];
+                }
+            }
+            return [
+                'code' => 200,
+                'message' => 'Statement Summary',
+                'data' => $data,
+            ];
+        } catch (PDOException $e) {
+            return [
+                'code' => 500,
+                'message' => 'An error occurred while fetching statement summary: ' . $e->getMessage(),
+                'data' => [],
             ];
         }
     }
