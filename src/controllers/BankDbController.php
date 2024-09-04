@@ -1998,4 +1998,74 @@ class BankDbController
             ];
         }
     }
+
+
+    function fecthMessagesList($username, $page)
+    {
+
+        $limit = 20;
+        $offset = $page * $limit;
+
+        $query = "
+       SELECT 'Message' AS type, Sno, MType, Message AS title, Message AS content, Ddate 
+        FROM tblMobileMSG
+        WHERE Username = ?
+        UNION ALL
+        SELECT 'Question' AS type, Sno, MType, Question AS title, Answer AS content, Ddate 
+        FROM tblMobileQuest
+        WHERE Username = ?
+        ORDER BY Ddate DESC 
+        OFFSET ? ROWS FETCH NEXT ? ROWS ONLY;
+    ";
+
+        $stmt = $this->dbConnection->prepare($query);
+        $stmt->bindParam(':username', $username);
+        $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
+        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $transactionHistory = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $transactionHistory[] = [
+                'reference' => $row['Sno'],
+                'type' => !empty($row['MType']) ? $row['MType'] : "Suggestion",
+                'title' => $row['title'],
+                'content' => $row['content'],
+                'date' => date('Y-m-d', strtotime($row['Ddate'])),
+                'time' => date('H:i:s', strtotime($row['Ddate'])),
+            ];
+        }
+
+        $totalQuery = "
+        SELECT COUNT(*) AS total 
+        FROM tblMobileMSG 
+        WHERE Username = :username
+
+        UNION ALL
+
+        SELECT COUNT(*) AS total 
+        FROM tblMobileQuest 
+        WHERE Username = :username
+    ";
+        $totalStmt = $this->dbConnection->prepare($totalQuery);
+        $totalStmt->bindParam(':username', $username);
+        $totalStmt->execute();
+
+        $totalRow = 0;
+        while ($row = $totalStmt->fetch(PDO::FETCH_ASSOC)) {
+            $totalRow += $row['total'];
+        }
+
+        if (empty($transactionHistory)) {
+            return [
+                'code' => 404,
+                'message' => 'No transactions found.',
+            ];
+        }
+
+        return [
+            'transactionHistory' => $transactionHistory,
+            'totalRow' => $totalRow,
+        ];
+    }
 }

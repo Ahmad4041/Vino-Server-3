@@ -622,6 +622,24 @@ $app->put('/api/v2/{bankId}/app/piggy/withdraw', function (Request $request, Res
 });
 
 
+// ********************************************************************************************
+// **************************************************************************************
+// ********************************************************************************
+// ******************************************** Others endpoimts START ************************************************
+
+
+$app->get('/api/v2/{bankId}/app/messages', function (Request $request, Response $response, array $args) use ($appController) {
+    $user = userAuthVerify();
+    $requestData = requestParse($request);
+
+    $result = $appController->getMessagesList($user, (int)$args['bankId'], $requestData);
+
+    return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+});
+
+
+
+
 
 
 

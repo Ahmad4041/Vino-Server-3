@@ -2071,4 +2071,75 @@ class AppApiController
             ];
         }
     }
+
+
+    public function getMessagesList($user, $bankid, $request)
+    {
+        try {
+
+            $bankDbConnection = new BankDbController(Database::getConnection($bankid));
+            $messageList = $bankDbConnection->fecthMessagesList($user['username'], $request['page']);
+
+            if ($messageList['code'] == 200) {
+                $transactionHistory = $messageList['transactionHistory'];
+                $totalRow = $messageList['totalRow'];
+
+                $limit = 20;
+                $page = $request['page'];
+                $offset = $page;
+                $content = $transactionHistory;
+                $data = [
+                    'content' => $content,
+                    'pageable' => [
+                        'sort' => [
+                            'empty' => true,
+                            'unsorted' => true,
+                            'sorted' => false
+                        ],
+                        // sort: {empty: true, unsorted: true, sorted: false},
+                        'offset' => $page * $limit,
+                        'pageNumber' => (int)$page,
+                        'pageSize' => $limit,
+                        'paged' => true,
+                        'unpaged' => false
+                    ],
+                    'totalPages' => floor($totalRow / $limit) + 1,
+                    'totalElements' => (int)$totalRow,
+                    'last' => (($limit * $page) > $totalRow) ? true : false,
+                    'size' => $limit,
+                    'number' => (int)$page,
+                    'sort' => [
+                        'empty' => true,
+                        'unsorted' => true,
+                        'sorted' => false
+                    ],
+                    'numberOfElements' => 20,
+                    'first' => ($page == 0) ? true : false,
+                    'empty' => (($limit * $page) >= $totalRow) ? true : false
+                ];
+
+
+                return [
+                    'message' => ErrorCodes::$SUCCESS_MESSAGES_FETCH[1],
+                    'dcode' => ErrorCodes::$SUCCESS_MESSAGES_FETCH[0],
+                    'data' => $data,
+                    'code' => 200,
+                ];
+            } else {
+                return [
+                    'message' => ErrorCodes::$FAIL_MESSAGES_FETCH[1],
+                    'dcode' => ErrorCodes::$FAIL_MESSAGES_FETCH[0],
+                    'data' => [],
+                    'code' => 404,
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'dcode' => 500,
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null,
+            ];
+        }
+    }
 }
