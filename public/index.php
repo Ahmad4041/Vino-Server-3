@@ -587,6 +587,42 @@ $app->post('/api/v2/{bankId}/app/extra/request-loan', function (Request $request
 });
 
 
+// ********************************************************************************************
+// **************************************************************************************
+// ********************************************************************************
+// ******************************************** Piggy endpoimts START ************************************************
+
+
+$app->get('/api/v2/{bankId}/app/piggy', function (Request $request, Response $response, array $args) use ($appController) {
+    $user = userAuthVerify();
+
+    $result = $appController->getPiggyList($user, (int)$args['bankId']);
+
+    return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+});
+
+
+// $app->post('/api/v2/{bankId}/app/piggy', function (Request $request, Response $response, array $args) use ($appController) {
+//     $user = userAuthVerify();
+//     $requestData = requestParse($request);
+
+//     $result = $appController->createPiggy($user, (int)$args['bankId'], $requestData);
+
+//     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+// });
+
+
+// $app->put('/api/v2/{bankId}/app/piggy/withdraw', function (Request $request, Response $response, array $args) use ($appController) {
+//     $user = userAuthVerify();
+//     $requestData = requestParse($request);
+
+//     $result = $appController->piggyWithdraw($user, (int)$args['bankId'], $requestData);
+
+//     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+// });
+
+
+
 
 
 

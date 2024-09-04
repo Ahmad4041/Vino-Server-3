@@ -1886,4 +1886,46 @@ class AppApiController
             ];
         }
     }
+
+
+
+    public function getPiggyList($user, $bankid)
+    {
+        try {
+
+            $bankDbConnection = new BankDbController(Database::getConnection($bankid));
+            $piggyData = $bankDbConnection->fetchPiggyAccounts($user['username']);
+
+            if ($piggyData['code'] == 200) {
+                $data = [
+                    'total_savings' => $piggyData['data']['total_savings'],
+                    'savings' => $piggyData['data']['savings']
+                ];
+                return [
+                    'message' => ErrorCodes::$SUCCESS_TRANSACTION[1],
+                    'dcode' => ErrorCodes::$SUCCESS_TRANSACTION[0],
+                    'data' => $data,
+                    'code' => 200,
+                ];
+            } else {
+                $data = [
+                    'total_savings' => $piggyData['data']['total_savings'],
+                    'savings' => []
+                ];
+                return [
+                    'message' => ErrorCodes::$SUCCESS_TRANSACTION[1],
+                    'dcode' => ErrorCodes::$SUCCESS_TRANSACTION[0],
+                    'data' => $data,
+                    'code' => 200,
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'dcode' => 500,
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null,
+            ];
+        }
+    }
 }

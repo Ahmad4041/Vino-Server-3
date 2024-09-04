@@ -1806,4 +1806,63 @@ class BankDbController
             ];
         }
     }
+
+
+    function fetchPiggyAccounts($username)
+    {
+        $sql = "SELECT id, FundingSource, AccountNo, TotalAmount, CurrentBalance, Cycle, ExecutedCycle, 
+                   ChargesEarlyWithdrawal, Terms, MaturityDate, Title, CreatedAt, AmountPerCycle, 
+                   WithdrawalDate, WithdrawalAmount, WithdrawalStatus 
+            FROM tblMobilePiggySavingsMaster 
+            WHERE Username = :username";
+
+        $stmt = $this->dbConnection->prepare($sql);
+        $stmt->bindParam(':username', $username);
+        $stmt->execute();
+        $piggyAccounts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        if (!empty($piggyAccounts)) {
+            $totalSavings = 0;
+            $list = [];
+            foreach ($piggyAccounts as $account) {
+                $totalSavings += $account['CurrentBalance'];
+                $list[] = [
+                    'id' => $account['id'],
+                    'funding_source' => $account['FundingSource'],
+                    'source_account' => $account['AccountNo'],
+                    'total_amount' => $account['TotalAmount'],
+                    'current_balance' => $account['CurrentBalance'],
+                    'cycle' => $account['Cycle'],
+                    'executed_cycle' => $account['ExecutedCycle'],
+                    'charges_early_withdrawal' => $account['ChargesEarlyWithdrawal'],
+                    'terms' => $account['Terms'],
+                    'maturity_date' => $account['MaturityDate'],
+                    'title' => $account['Title'],
+                    'created_at' => $account['CreatedAt'],
+                    'amount_per_cycle' => $account['AmountPerCycle'],
+                    'withdrawal_date' => $account['WithdrawalDate'],
+                    'withdrawal_amount' => $account['WithdrawalAmount'],
+                    'withdrawal_status' => $account['WithdrawalStatus'],
+                ];
+            }
+
+            return [
+                'code' => 200,
+                'message' => 'Piggy Account Fetch Successfully',
+                'data' => [
+                    'total_savings' => $totalSavings,
+                    'savings' => $list,
+                ],
+            ];
+        } else {
+            return [
+                'code' => 404,
+                'message' => 'No Piggy Account Found!!',
+                'data' => [
+                    'total_savings' => 0.0,
+                    'savings' => null,
+                ],
+            ];
+        }
+    }
 }
