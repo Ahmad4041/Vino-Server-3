@@ -105,7 +105,8 @@ class UtilityController
                 if ($debitRequest['status'] == 200) {
                     $totalCost = $serviceFee['priceCost'] + $request['price'];
                     $this->bankDbConnection->balanceCheck($totalCost, 'VINO');
-                    $description = 'Client Debit has been done Successfully of amount ' . $totalSellCost . ' from ' . $request['srcAccount'] . '|' . $purcahse_code;
+                    // $description = 'Client Debit has been done Successfully of amount ' . $totalSellCost . ' from ' . $request['srcAccount'] . '|' . $purcahse_code;
+                    $description = " Bills payment - " . $request['categoryCode'] . ' Bills | ' . $purcahse_code;
                     $this->localDbConnection->debitDataInsert($requestId, $request['srcAccount'], $bankid,  $request['price'], number_format((float)$serviceFee['priceSell'], 2, '.', ''), $description, $status, $note);
                     return [
                         'code' => 200,
@@ -130,10 +131,10 @@ class UtilityController
                 //     ? $vtPassResponse["response_description"]
                 //     : '';
 
-                    // var_dump($desc);
-                    // var_dump($vtPassResponse['response_description']);
+                // var_dump($desc);
+                // var_dump($vtPassResponse['response_description']);
                 // Adjust the $description line to include the extracted 'desc' value
-                $description = 'VTpass transaction error of amount ' . $totalSellCost . ' from ' . $request['srcAccount'] . ', VTPass API Issue !! ' ;
+                $description = 'VTpass transaction error of amount ' . $totalSellCost . ' from ' . $request['srcAccount'] . ', VTPass API Issue !! ';
 
                 // $description = 'VTpass transaction error of amount ' . $totalSellCost . ' from ' . $request['srcAccount'] . ', VTPass API Issue !!' . $vtPassResponse["response_description"];
                 $this->localDbConnection->debitDataInsert('', $request['srcAccount'], $bankid, $request['price'], $serviceFee['priceSell'], $description, 'Error', $note = '');
@@ -169,7 +170,7 @@ class UtilityController
             },
             'electricity' => function () use ($vtPassConnection, $requestData) {
                 $verifyMeterNo = $vtPassConnection->verifyMeterNumber($requestData);
-                
+
                 if ($verifyMeterNo['code'] === '000') {
                     if (isset($verifyMeterNo['content']['WrongBillersCode']) && $verifyMeterNo['content']['WrongBillersCode'] === true) {
                         return [
@@ -179,7 +180,7 @@ class UtilityController
                             'data' => $verifyMeterNo
                         ];
                     }
-                    
+
                     if (isset($verifyMeterNo['content']['Can_Vend']) && $verifyMeterNo['content']['Can_Vend'] === 'yes') {
                         return $vtPassConnection->buyElectricity($requestData);
                     } else {

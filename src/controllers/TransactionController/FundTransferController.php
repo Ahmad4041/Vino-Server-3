@@ -110,7 +110,8 @@ class FundTransferController
             ];
         }
 
-        $narration = "Transfer for " . $beneficiaryName . " (" . $beneficiaryAccountNo . "), " . $note;
+        // $narration = "Transfer for " . $beneficiaryName . " (" . $beneficiaryAccountNo . "), " . $note;
+        $narration = $note . ' - Transfer for ' . $beneficiaryName . ' (' . $beneficiaryAccountNo . ')';
 
         // CoreBankController equivalent
         $corebanking = new CoreBankController();
@@ -131,7 +132,6 @@ class FundTransferController
             }
 
             $fee = $chargesIFT['SellPrice'];
-
             $res = $corebanking->fundsTransferInternal($sourceAccount, $bankId, $beneficiaryAccountNo, $beneficiaryBankCode, number_format((float)$amount, 2, '.', ''), number_format((float)$fee, 2, '.', ''), $narration);
 
             if ($res['status'] == 200) {
@@ -224,11 +224,13 @@ class FundTransferController
                     $bankid = ['bankCode' => $bankId];
                     $bankdebitinfo = $this->localDbConnection->bankCodeCheck($bankid);
 
+                    $charmsNarration = $note . '/' . $customer['Customername'];
+
                     $status = $externaltransfer->doFundsTransfer(
                         $account['data']['responseData']['destinationinstitutioncode'],
                         $account['data']['responseData']['accountnumber'],
                         $account['data']['responseData']['accountname'],
-                        $narration,
+                        $charmsNarration,
                         $amount,
                         $requestId,
                         $account['data']['responseData']['hashvalue'],
