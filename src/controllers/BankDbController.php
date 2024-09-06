@@ -10,7 +10,10 @@ class BankDbController
         // $this->dbname = $dbConnection->getDatabaseName();
     }
 
-
+    private function round_to_2dp($number)
+    {
+        return number_format((float)$number, 2, '.', '');
+    }
     private function checkUserExists($username)
     {
         $sql = "SELECT * FROM tblMobileUsers WHERE Username = :username AND Active = 'N' AND AType = 'Default'";
@@ -833,7 +836,20 @@ class BankDbController
             'accountdata' => $data
         ];
     }
+    public function getCustomerAccounts($username)
+    { 
+        $accounts = $this->getAccountByUsername($username, ['AccountID', 'AType']);
+        $data = [];
+        $act = [];
 
+        foreach ($accounts as $acct) {
+            // $customerdata = $this->getUserAccountInfo($acct['AccountID'], $acct['AType']);
+            array_push($act, $acct['AccountID']);
+            // array_push($data, $customerdata);
+        }
+
+        return $act;
+    }
     public function accountEnquiry($accountid)
     {
         $userdetail = $this->getUserByAccountID($accountid);
@@ -1027,7 +1043,7 @@ class BankDbController
         $query = "SELECT Id, Name, AccountNo, BankCode, Username
                   FROM tblMobileBeneficiaries
                   WHERE Username = ?
-                  ORDER BY Id DESC";
+                  ORDER BY Name ASC";
 
         $stmt = $this->dbConnection->prepare($query);
         $stmt->execute([$username]);
@@ -1582,7 +1598,7 @@ class BankDbController
             VALUES (:acctName, :cardNo, :vinoTransCode, :amt, :bankId, :charges, :merchantFee, :appFee, :clientResponse, :status, :transDate, :acctNo, :username)
         ");
 
-        return $stmt->execute([
+         return $stmt->execute([
             ':acctName' => $customerDetails['Surname'],
             ':cardNo' => $request['cardNo'],
             ':vinoTransCode' => json_encode($chargeResult),
@@ -1597,6 +1613,7 @@ class BankDbController
             ':acctNo' => $request['accountNo'],
             ':username' => $username
         ]);
+    
     }
 
 
@@ -1739,7 +1756,7 @@ class BankDbController
     function requestLoan($request)
     {
         $sql = "SELECT TOP 1 c.Customername, c.Telephone 
-        FROM tblcustomer AS c 
+        FROM tblcustomers AS c 
         WHERE c.Accountid = :accountid";
         $stmt = $this->dbConnection->prepare($sql);
         $stmt->bindParam(':accountid', $request['accountNo']);
@@ -1755,8 +1772,8 @@ class BankDbController
                 'LoanPurpose' => $request['purpose'],
                 'LoanDurationType' => $request['durationType'],
                 'LoanDuration' => $request['duration'],
-                'userPhoto' => $request['userPhoto'],
-                'nicPhoto' => $request['nicPhoto'],
+                'PhotoImage' => $request['userPhoto'],
+                // 'nicPhoto' => $request['nicPhoto'],
                 'Guarantor1Name' => $request['Guarantor1Name'],
                 'Guarantor1Add' => $request['Guarantor1Add'],
                 'Guarantor1TelNo' => $request['Guarantor1TelNo'],
@@ -1774,12 +1791,12 @@ class BankDbController
             ];
 
             $insertSql = "INSERT INTO tblMobileLoanNew 
-                      (AcctNo, AcctName, Telephone, LoanAmt, LoanPurpose, LoanDurationType, LoanDuration, userPhoto, 
-                       nicPhoto, Guarantor1Name, Guarantor1Add, Guarantor1TelNo, Guarantor2Name, Guarantor2Add, 
+                      (AcctNo, AcctName, Telephone, LoanAmt, LoanPurpose, LoanDurationType, LoanDuration, PhotoImage, 
+                        Guarantor1Name, Guarantor1Add, Guarantor1TelNo, Guarantor2Name, Guarantor2Add, 
                        Guarantor2TelNo, Cola1File, Cola2File, Cola3File, IDFile, ReqDate, TransID, Cuser, Ddate)
                       VALUES 
                       (:AcctNo, :AcctName, :Telephone, :LoanAmt, :LoanPurpose, :LoanDurationType, :LoanDuration, 
-                       :userPhoto, :nicPhoto, :Guarantor1Name, :Guarantor1Add, :Guarantor1TelNo, :Guarantor2Name, 
+                       :PhotoImage, :Guarantor1Name, :Guarantor1Add, :Guarantor1TelNo, :Guarantor2Name, 
                        :Guarantor2Add, :Guarantor2TelNo, :Cola1File, :Cola2File, :Cola3File, :IDFile, :ReqDate, 
                        :TransID, :Cuser, :Ddate)";
 
@@ -1795,7 +1812,7 @@ class BankDbController
                     'LoanAmt' => $loanData['LoanAmt'],
                     'LoanPurpose' => $loanData['LoanPurpose'],
                     'ReqDate' => $loanData['ReqDate'],
-                    'TransID' => $loanData['TransID'],
+                    'TransID' => (string) $loanData['TransID'],
                 ],
             ];
         } else {
@@ -1808,16 +1825,17 @@ class BankDbController
     }
 
 
-    function fetchPiggyAccounts($username)
+    function fetchPiggyAccounts($accountno)
     {
-        $sql = "SELECT id, FundingSource, AccountNo, TotalAmount, CurrentBalance, Cycle, ExecutedCycle, 
-                   ChargesEarlyWithdrawal, Terms, MaturityDate, Title, CreatedAt, AmountPerCycle, 
-                   WithdrawalDate, WithdrawalAmount, WithdrawalStatus 
+        // $acc=implode(',',$accountno);
+        // $acc = '4041000016';
+        // Query Should be run on Account Numbers not on Username optimize Query by Updating where in and accounts array
+        $sql = "SELECT *
             FROM tblMobilePiggySavingsMaster 
-            WHERE Username = :username";
+            WHERE AccountNo = :accountno";
 
         $stmt = $this->dbConnection->prepare($sql);
-        $stmt->bindParam(':username', $username);
+        $stmt->bindParam(':accountno', $accountno);
         $stmt->execute();
         $piggyAccounts = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -1827,22 +1845,22 @@ class BankDbController
             foreach ($piggyAccounts as $account) {
                 $totalSavings += $account['CurrentBalance'];
                 $list[] = [
-                    'id' => $account['id'],
+                    'id' => (int)$account['Id'],
                     'funding_source' => $account['FundingSource'],
                     'source_account' => $account['AccountNo'],
-                    'total_amount' => $account['TotalAmount'],
-                    'current_balance' => $account['CurrentBalance'],
-                    'cycle' => $account['Cycle'],
-                    'executed_cycle' => $account['ExecutedCycle'],
-                    'charges_early_withdrawal' => $account['ChargesEarlyWithdrawal'],
+                    'total_amount' => $this->round_to_2dp($account['TotalAmount']),
+                    'current_balance' => $this->round_to_2dp($account['CurrentBalance']),
+                    'cycle' => (int)$account['Cycle'],
+                    'executed_cycle' => (int)$account['ExecutedCycle'],
+                    'charges_early_withdrawal' => $this->round_to_2dp($account['ChargesEarlyWithdrawal']),
                     'terms' => $account['Terms'],
                     'maturity_date' => $account['MaturityDate'],
                     'title' => $account['Title'],
                     'created_at' => $account['CreatedAt'],
                     'amount_per_cycle' => $account['AmountPerCycle'],
                     'withdrawal_date' => $account['WithdrawalDate'],
-                    'withdrawal_amount' => $account['WithdrawalAmount'],
-                    'withdrawal_status' => $account['WithdrawalStatus'],
+                    'withdrawal_amount' => $this->round_to_2dp($account['WithdrawalAmount']),
+                    'withdrawal_status' => (int)$account['WithdrawalStatus'],
                 ];
             }
 
@@ -1851,6 +1869,7 @@ class BankDbController
                 'message' => 'Piggy Account Fetch Successfully',
                 'data' => [
                     'total_savings' => $totalSavings,
+                    // 'query'=>$piggyAccounts,
                     'savings' => $list,
                 ],
             ];
@@ -1860,6 +1879,7 @@ class BankDbController
                 'message' => 'No Piggy Account Found!!',
                 'data' => [
                     'total_savings' => 0.0,
+                    // 'query'=>$sql,
                     'savings' => null,
                 ],
             ];
@@ -1906,7 +1926,7 @@ class BankDbController
                     ':withdrawalDate' => $now,
                     ':withdrawalAmount' => $request['amount'],
                     ':withdrawalStatus' => 0,
-                    ':createdAt' => time(),
+                    ':createdAt' => date('Y-m-d H:i:s'),
                     ':username' => $result['Surname'],
                     ':nextCycleDate' => $now,
                 ];
@@ -1932,6 +1952,7 @@ class BankDbController
                         'TotalAmount' => $request['amount'],
                         'CurrentBalance' => $request['amount'],
                         'Cycle' => $request['cycle'],
+                        'AmountPerCycle'=> $request['amount'],
                         'ExecutedCycle' => $request['cycle'],
                         'Terms' => $request['terms'],
                         'MaturityDate' => $request['maturity_date'],
@@ -2000,72 +2021,190 @@ class BankDbController
     }
 
 
-    function fecthMessagesList($username, $page)
-    {
+    // function fecthMessagesList($username, $page)
+    // {
+    //     $limit = 20;
+    //     $offset = $page * $limit;
+    
+    //     // Using ROW_NUMBER() for pagination
+    //     $query = "
+    //         SELECT * FROM (
+    //             SELECT 
+    //                 'Message' AS type, 
+    //                 Sno, 
+    //                 MType, 
+    //                 Message AS title, 
+    //                 Message AS content, 
+    //                 Ddate,
+    //                 ROW_NUMBER() OVER (ORDER BY Ddate DESC) AS row_num
+    //             FROM tblMobileMSG
+    //             WHERE Username = ?
+    
+    //             UNION ALL
+    
+    //             SELECT 
+    //                 'Question' AS type, 
+    //                 Sno, 
+    //                 MType, 
+    //                 Question AS title, 
+    //                 Answer AS content, 
+    //                 Ddate,
+    //                 ROW_NUMBER() OVER (ORDER BY Ddate DESC) AS row_num
+    //             FROM tblMobileQuest
+    //             WHERE Username = ?
+    //         ) AS combined
+    //         WHERE combined.row_num BETWEEN ? AND ?;
+    //     ";
+    
+    //     // Calculating the row range for the current page
+    //     $startRow = $offset + 1;
+    //     $endRow = $offset + $limit;
+    
+    //     $stmt = $this->dbConnection->prepare($query);
+    //     $stmt->execute([$username, $username, $startRow, $endRow]);
+    
+    //     $transactionHistory = [];
+    //     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    //         $transactionHistory[] = [
+    //             'reference' => $row['Sno'],
+    //             'type' => !empty($row['MType']) ? $row['MType'] : "Suggestion",
+    //             'title' => $row['title'],
+    //             'content' => $row['content'],
+    //             'date' => date('Y-m-d', strtotime($row['Ddate'])),
+    //             'time' => date('H:i:s', strtotime($row['Ddate'])),
+    //         ];
+    //     }
+    
+    //     // Total rows calculation
+    //     $totalQuery = "
+    //         SELECT COUNT(*) AS total 
+    //         FROM tblMobileMSG 
+    //         WHERE Username = ?
+    
+    //         UNION ALL
+    
+    //         SELECT COUNT(*) AS total 
+    //         FROM tblMobileQuest 
+    //         WHERE Username = ?
+    //     ";
+    //     $totalStmt = $this->dbConnection->prepare($totalQuery);
+    //     $totalStmt->execute([$username, $username]);
+    
+    //     $totalRow = 0;
+    //     while ($row = $totalStmt->fetch(PDO::FETCH_ASSOC)) {
+    //         $totalRow += $row['total'];
+    //     }
+    
+    //     if (empty($transactionHistory)) {
+    //         return [
+    //             'code' => 404,
+    //             'message' => 'No transactions found.',
+    //         ];
+    //     }
+    
+    //     return [
+    //         'transactionHistory' => $transactionHistory,
+    //         'totalRow' => $totalRow,
+    //     ];
+    // }
+    
+    
 
+    function fetchMessagesList($username, $page)
+    {
+        $dbConnection = $this->dbConnection; // Use your actual PDO connection instance
         $limit = 20;
         $offset = $page * $limit;
-
-        $query = "
-       SELECT 'Message' AS type, Sno, MType, Message AS title, Message AS content, Ddate 
-        FROM tblMobileMSG
-        WHERE Username = ?
-        UNION ALL
-        SELECT 'Question' AS type, Sno, MType, Question AS title, Answer AS content, Ddate 
-        FROM tblMobileQuest
-        WHERE Username = ?
-        ORDER BY Ddate DESC 
-        OFFSET ? ROWS FETCH NEXT ? ROWS ONLY;
-    ";
-
-        $stmt = $this->dbConnection->prepare($query);
-        $stmt->bindParam(':username', $username);
-        $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
-        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
-        $stmt->execute();
-
-        $transactionHistory = [];
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $transactionHistory[] = [
-                'reference' => $row['Sno'],
+    
+        // Fetch messages from tblMobileMSG with pagination using ROW_NUMBER()
+        $query1 = "
+            SELECT Sno, MType, Message, Ddate
+            FROM (
+                SELECT *, ROW_NUMBER() OVER (ORDER BY Sno DESC) AS RowNum
+                FROM tblMobileMSG
+                WHERE Username = :username
+            ) AS Sub
+            WHERE Sub.RowNum BETWEEN :startRow AND :endRow";
+        $stmt1 = $dbConnection->prepare($query1);
+        $stmt1->bindValue(':username', $username);
+        $stmt1->bindValue(':startRow', $offset + 1, PDO::PARAM_INT);
+        $stmt1->bindValue(':endRow', $offset + $limit, PDO::PARAM_INT);
+        $stmt1->execute();
+        $messageQuestions = $stmt1->fetchAll(PDO::FETCH_ASSOC);
+    
+        // Fetch messages from tblMobileQuest with pagination using ROW_NUMBER()
+        $query2 = "
+            SELECT Sno, Question, Answer, Ddate
+            FROM (
+                SELECT *, ROW_NUMBER() OVER (ORDER BY Sno DESC) AS RowNum
+                FROM tblMobileQuest
+                WHERE Username = :username
+            ) AS Sub
+            WHERE Sub.RowNum BETWEEN :startRow AND :endRow";
+        $stmt2 = $dbConnection->prepare($query2);
+        $stmt2->bindValue(':username', $username);
+        $stmt2->bindValue(':startRow', $offset + 1, PDO::PARAM_INT);
+        $stmt2->bindValue(':endRow', $offset + $limit, PDO::PARAM_INT);
+        $stmt2->execute();
+        $messageQuestions2 = $stmt2->fetchAll(PDO::FETCH_ASSOC);
+    
+        // Count total rows in tblMobileMSG
+        $countQuery1 = "SELECT COUNT(*) as total FROM tblMobileMSG WHERE Username = :username";
+        $countStmt1 = $dbConnection->prepare($countQuery1);
+        $countStmt1->bindValue(':username', $username);
+        $countStmt1->execute();
+        $totalRow = $countStmt1->fetch(PDO::FETCH_ASSOC)['total'];
+    
+        // Count total rows in tblMobileQuest
+        $countQuery2 = "SELECT COUNT(*) as total FROM tblMobileQuest WHERE Username = :username";
+        $countStmt2 = $dbConnection->prepare($countQuery2);
+        $countStmt2->bindValue(':username', $username);
+        $countStmt2->execute();
+        $totalRow2 = $countStmt2->fetch(PDO::FETCH_ASSOC)['total'];
+    
+        // Process messages from tblMobileMSG
+        $transactionHistory = array_map(function ($row) {
+            return [
+                'reference' => (int)$row['Sno'],
                 'type' => !empty($row['MType']) ? $row['MType'] : "Suggestion",
-                'title' => $row['title'],
-                'content' => $row['content'],
+                'title' => $row['Message'],
+                'content' => $row['Message'],
                 'date' => date('Y-m-d', strtotime($row['Ddate'])),
                 'time' => date('H:i:s', strtotime($row['Ddate'])),
             ];
-        }
-
-        $totalQuery = "
-        SELECT COUNT(*) AS total 
-        FROM tblMobileMSG 
-        WHERE Username = :username
-
-        UNION ALL
-
-        SELECT COUNT(*) AS total 
-        FROM tblMobileQuest 
-        WHERE Username = :username
-    ";
-        $totalStmt = $this->dbConnection->prepare($totalQuery);
-        $totalStmt->bindParam(':username', $username);
-        $totalStmt->execute();
-
-        $totalRow = 0;
-        while ($row = $totalStmt->fetch(PDO::FETCH_ASSOC)) {
-            $totalRow += $row['total'];
-        }
-
-        if (empty($transactionHistory)) {
+        }, $messageQuestions);
+    
+        // Process messages from tblMobileQuest (without MType)
+        $transactionHistory2 = array_map(function ($row) {
             return [
-                'code' => 404,
-                'message' => 'No transactions found.',
+                'reference' => (int)$row['Sno'],
+                'type' => "Suggestion", // Default to "Suggestion" since MType does not exist
+                'title' => $row['Question'],
+                'content' => $row['Answer'],
+                'date' => date('Y-m-d', strtotime($row['Ddate'])),
+                'time' => date('H:i:s', strtotime($row['Ddate'])),
+            ];
+        }, $messageQuestions2);
+    
+        // var_dump($transactionHistory2);
+        // Merge both transaction histories
+        $mergedTransactionHistory = array_merge($transactionHistory, $transactionHistory2);
+    
+        if (empty($mergedTransactionHistory)) {
+            return [
+                'code' => ErrorCodes::$FAIL_ACCOUNT_TRANSACTION_FOUND[0],
+                'data' => ErrorCodes::$FAIL_ACCOUNT_TRANSACTION_FOUND[1],
             ];
         }
+    
+        $data = [
+            'transactionHistory' => $mergedTransactionHistory,
+            'totalRow' => $totalRow + $totalRow2,
+        ];
 
         return [
-            'transactionHistory' => $transactionHistory,
-            'totalRow' => $totalRow,
+            'code' => 200,
+            'data' => $data,
         ];
     }
 }

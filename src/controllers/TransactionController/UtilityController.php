@@ -51,7 +51,7 @@ class UtilityController
                 }
 
                 $response = [
-                    'code' => 403,
+                    'code' => 200,
                     'dcode' => $postUtility['code'],
                     'message' => $responseMessage,
                     'data' => $postUtility['data'],

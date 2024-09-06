@@ -1114,23 +1114,23 @@ class AppApiController
             ];
 
             $utilityController = new UtilityController($bankid);
-            $regExistCustomer = $utilityController->purchaseUtilityServices($user, $bankid, $request, $logData);
+            return $regExistCustomer = $utilityController->purchaseUtilityServices($user, $bankid, $request, $logData);
 
-            if ($regExistCustomer['code'] == 200) {
-                return [
-                    'dcode' => ErrorCodes::$SUCCESS_USER_CREATED[0],
-                    'code' => 200,
-                    'message' => ErrorCodes::$SUCCESS_USER_CREATED[1],
-                    'data' => null
-                ];
-            } else {
-                return [
-                    'dcode' => $regExistCustomer['code'],
-                    'code' => 203,
-                    'message' => $regExistCustomer['message'],
-                    'data' => null
-                ];
-            }
+            // if ($regExistCustomer['code'] == 200) {
+            //     return [
+            //         'dcode' => ErrorCodes::$SUCCESS_TRANSACTION[0],
+            //         'code' => 200,
+            //         'message' => ErrorCodes::$SUCCESS_TRANSACTION[1],
+            //         'data' => $data['data']
+            //     ];
+            // } else {
+            //     return [
+            //         'dcode' => $regExistCustomer['code'],
+            //         'code' => 200,
+            //         'message' => $regExistCustomer['message'],
+            //         'data' => $data['data']
+            //     ];
+            // }
         } catch (Exception $e) {
             return [
                 'dcode' => 500,
@@ -1175,7 +1175,7 @@ class AppApiController
                 $response = [];
                 foreach ($benes as $bene) {
                     $response[] = [
-                        'id' => $bene['Id'],
+                        'id' => (int) $bene['Id'],
                         'name' => $bene['Name'],
                         'accountNo' => $bene['AccountNo'],
                         'bankCode' => $bene['BankCode'],
@@ -1615,7 +1615,8 @@ class AppApiController
                 return [
                     'message' => ErrorCodes::$SUCCESS_TRANSACTION[1],
                     'dcode' => ErrorCodes::$SUCCESS_TRANSACTION[0],
-                    'data' => $data['data'],
+                    'data' => [],
+                    // 'data' => $data['data'],
                     'code' => 200,
                 ];
             } else {
@@ -1671,15 +1672,16 @@ class AppApiController
                 return [
                     'message' => ErrorCodes::$SUCCESS_CUSTOMER_FAQ_REQUEST[1],
                     'dcode' => ErrorCodes::$SUCCESS_CUSTOMER_FAQ_REQUEST[0],
-                    'data' => $data['data'],
+                    'data' => null,
+                    // 'data' => $data['data'],
                     'code' => 200,
                 ];
             } else {
                 return [
                     'message' => ErrorCodes::$FAIL_CUSTOMER_FAQ_REQUEST[1],
                     'dcode' => ErrorCodes::$FAIL_CUSTOMER_FAQ_REQUEST[0],
-                    'data' => [],
-                    'code' => 400,
+                    'data' => null,
+                    'code' => 404,
                 ];
             }
         } catch (Exception $e) {
@@ -1781,15 +1783,16 @@ class AppApiController
                 return [
                     'message' => ErrorCodes::$SUCCESS_CUSTOMER_QUERY_REQUEST[1],
                     'dcode' => ErrorCodes::$SUCCESS_CUSTOMER_QUERY_REQUEST[0],
-                    'data' => $data,
+                    'data' => null,
+                    // 'data' => $data,
                     'code' => 200,
                 ];
             } else {
                 return [
                     'message' => ErrorCodes::$FAIL_CUSTOMER_QUERY_REQUEST[1],
                     'dcode' => ErrorCodes::$FAIL_CUSTOMER_QUERY_REQUEST[0],
-                    'data' => [],
-                    'code' => 400,
+                    'data' => null,
+                    'code' => 404,
                 ];
             }
         } catch (Exception $e) {
@@ -1829,7 +1832,7 @@ class AppApiController
             $rules = [
                 'accountNo' => 'required',
                 'duration' => 'required',
-                'loanAmount' => 'required',
+                'loanAmount' => 'required|integer|regex:/^\d+$/',
                 'purpose' => 'required',
                 'durationType' => 'required',
                 'userPhoto' => 'required',
@@ -1871,10 +1874,10 @@ class AppApiController
                 ];
             } else {
                 return [
-                    'message' => ErrorCodes::$FAIL_LOAN_REQUEST_CREATED[1],
+                    'message' => $data['message'],
                     'dcode' => ErrorCodes::$FAIL_LOAN_REQUEST_CREATED[0],
                     'data' => [],
-                    'code' => 400,
+                    'code' => 404,
                 ];
             }
         } catch (Exception $e) {
@@ -1894,7 +1897,7 @@ class AppApiController
         try {
 
             $bankDbConnection = new BankDbController(Database::getConnection($bankid));
-            $piggyData = $bankDbConnection->fetchPiggyAccounts($user['username']);
+            $piggyData = $bankDbConnection->fetchPiggyAccounts($bankDbConnection->getCustomerAccounts($user['username'])[0]);
 
             if ($piggyData['code'] == 200) {
                 $data = [
@@ -1910,6 +1913,7 @@ class AppApiController
             } else {
                 $data = [
                     'total_savings' => $piggyData['data']['total_savings'],
+                    'query' => $piggyData['data']['query'],
                     'savings' => []
                 ];
                 return [
@@ -1972,13 +1976,14 @@ class AppApiController
             if ($createPiggy['code'] == 200) {
                 $data = [
                     'AccountNo' => $createPiggy['data']['AccountNo'],
-                    'TotalAmount' => $createPiggy['data']['TotalAmount'],
-                    'Title' => $createPiggy['data']['Title'],
-                    'Username' => $createPiggy['data']['Username'],
-                    'Terms' => $createPiggy['data']['Terms'],
-                    'MaturityDate' => $createPiggy['data']['MaturityDate'],
-                    'Ddate' => $createPiggy['data']['Ddate'],
-                    'CreatedAt' => $createPiggy['data']['CreatedAt'],
+                    'totalAmount' => $createPiggy['data']['TotalAmount'],
+                    'title' => $createPiggy['data']['Title'],
+                    'Username' => $user['username'],
+                    'terms' => $createPiggy['data']['Terms'],
+                    'amountPerCycle' => $createPiggy['data']['AmountPerCycle'],
+                    'maturityDate' => $createPiggy['data']['MaturityDate'],
+                    'Ddate' => $createPiggy['data']['CreatedAt'],
+                    'createdAt' => $createPiggy['data']['CreatedAt'],
                 ];
                 return [
                     'message' => ErrorCodes::$SUCCESS_PIGGY_ACCOUNT_CREATED[1],
@@ -1990,7 +1995,7 @@ class AppApiController
                 return [
                     'message' => ErrorCodes::$FAIL_PIGGY_ACCOUNT_CREATED[1],
                     'dcode' => ErrorCodes::$FAIL_PIGGY_ACCOUNT_CREATED[0],
-                    'data' => [],
+                    'data' => $createPiggy['message'],
                     'code' => 400,
                 ];
             }
@@ -2032,26 +2037,26 @@ class AppApiController
             };
 
             $bankDbConnection = new BankDbController(Database::getConnection($bankid));
-            $withdraw = $bankDbConnection->createPiggyEntity($user, $request);
+            $withdraw = $bankDbConnection->withdrawPiggy($request['account_no']);
 
             if ($withdraw['code'] == 200) {
-                $data = [
-                    'total_savings' => '',
-                    'savings' => [
-                        'Id' => $withdraw['data']['Id'],
-                        'PiggyId' => $withdraw['data']['PiggyId'],
-                        'ExecutionAmount' => $withdraw['data']['ExecutionAmount'],
-                        'ExecutionDate' => $withdraw['data']['ExecutionDate'],
-                        'DeductAmountOnCard' => $withdraw['data']['DeductAmountOnCard'],
-                        'ExecutedCycle' => $withdraw['data']['ExecutedCycle'],
-                        'MerchantFee' => $withdraw['data']['MerchantFee'],
-                        'BankFee' => $withdraw['data']['BankFee'],
-                    ]
-                ];
+                // $data = [
+                //     'total_savings' => '',
+                //     'savings' => [
+                //         'Id' => $withdraw['data']['Id'],
+                //         'PiggyId' => $withdraw['data']['PiggyId'],
+                //         'ExecutionAmount' => $withdraw['data']['ExecutionAmount'],
+                //         'ExecutionDate' => $withdraw['data']['ExecutionDate'],
+                //         'DeductAmountOnCard' => $withdraw['data']['DeductAmountOnCard'],
+                //         'ExecutedCycle' => $withdraw['data']['ExecutedCycle'],
+                //         'MerchantFee' => $withdraw['data']['MerchantFee'],
+                //         'BankFee' => $withdraw['data']['BankFee'],
+                //     ]
+                // ];
                 return [
                     'message' => ErrorCodes::$SUCCESS_PIGGY_ACCOUNT_WITHDRAWAL[1],
                     'dcode' => ErrorCodes::$SUCCESS_PIGGY_ACCOUNT_WITHDRAWAL[0],
-                    'data' => $data,
+                    'data' => $withdraw,
                     'code' => 200,
                 ];
             } else {
@@ -2078,17 +2083,18 @@ class AppApiController
         try {
 
             $bankDbConnection = new BankDbController(Database::getConnection($bankid));
-            $messageList = $bankDbConnection->fecthMessagesList($user['username'], $request['page']);
+            $messageList = $bankDbConnection->fetchMessagesList($user['username'], $request['page']);
 
             if ($messageList['code'] == 200) {
-                $transactionHistory = $messageList['transactionHistory'];
-                $totalRow = $messageList['totalRow'];
+                $transactionHistory = $messageList['data']['transactionHistory'];
+                $totalRow = $messageList['data']['totalRow'];
 
                 $limit = 20;
-                $page = $request['page'];
-                $offset = $page;
+                $page = (int)$request['page'];
+                $offset = $page * $limit;
+
                 $content = $transactionHistory;
-                $data = [
+                $res = [
                     'content' => $content,
                     'pageable' => [
                         'sort' => [
@@ -2096,9 +2102,8 @@ class AppApiController
                             'unsorted' => true,
                             'sorted' => false
                         ],
-                        // sort: {empty: true, unsorted: true, sorted: false},
-                        'offset' => $page * $limit,
-                        'pageNumber' => (int)$page,
+                        'offset' => $offset,
+                        'pageNumber' => $page,
                         'pageSize' => $limit,
                         'paged' => true,
                         'unpaged' => false
@@ -2107,13 +2112,13 @@ class AppApiController
                     'totalElements' => (int)$totalRow,
                     'last' => (($limit * $page) > $totalRow) ? true : false,
                     'size' => $limit,
-                    'number' => (int)$page,
+                    'number' => $page,
                     'sort' => [
                         'empty' => true,
                         'unsorted' => true,
                         'sorted' => false
                     ],
-                    'numberOfElements' => 20,
+                    'numberOfElements' => $limit,
                     'first' => ($page == 0) ? true : false,
                     'empty' => (($limit * $page) >= $totalRow) ? true : false
                 ];
@@ -2122,7 +2127,7 @@ class AppApiController
                 return [
                     'message' => ErrorCodes::$SUCCESS_MESSAGES_FETCH[1],
                     'dcode' => ErrorCodes::$SUCCESS_MESSAGES_FETCH[0],
-                    'data' => $data,
+                    'data' => $res,
                     'code' => 200,
                 ];
             } else {
@@ -2134,6 +2139,7 @@ class AppApiController
                 ];
             }
         } catch (Exception $e) {
+            // var_dump($e);
             return [
                 'dcode' => 500,
                 'code' => 500,

@@ -438,7 +438,7 @@ $app->post('/api/v2/{bankId}/app/transaction/fund-transfer', function (Request $
     }
 });
 
-$app->get('/api/v2/{bankId}/app/transaction/beneficiaries', function (Request $request, Response $response, array $args) use ($appController) {
+$app->get('/api/v2/{bankId}/app/beneficiaries', function (Request $request, Response $response, array $args) use ($appController) {
     $user = userAuthVerify();
 
     $result = $appController->getBeneficiariesList($user, (int)$args['bankId']);
@@ -446,7 +446,7 @@ $app->get('/api/v2/{bankId}/app/transaction/beneficiaries', function (Request $r
     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
 });
 
-$app->delete('/api/v2/{bankId}/app/transaction/beneficiaries', function (Request $request, Response $response, array $args) use ($appController) {
+$app->delete('/api/v2/{bankId}/app/beneficiaries', function (Request $request, Response $response, array $args) use ($appController) {
     $user = userAuthVerify();
     $requestData = requestParse($request);
 
@@ -626,7 +626,7 @@ $app->put('/api/v2/{bankId}/app/piggy/withdraw', function (Request $request, Res
 // **************************************************************************************
 // ********************************************************************************
 // ******************************************** Others endpoimts START ************************************************
-
+// http://vino.viralcomputers.com:9000/api/v2/101/app/messages?size=100&page=0
 
 $app->get('/api/v2/{bankId}/app/messages', function (Request $request, Response $response, array $args) use ($appController) {
     $user = userAuthVerify();

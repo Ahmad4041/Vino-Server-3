@@ -32,6 +32,7 @@ class AddFundsCardWalletController
 
         $chargeResult = $this->chargeFromCard($request, $username, $customerDetails, $bankCode, $bankName);
 
+        // var_dump($chargeResult);
         if ($chargeResult['status'] === 'ACCEPTED') {
             $cardVault = $this->bankDbConnection->createAddMoneyRecord($customerDetails, $request, $chargeResult, $bankCode, $username);
             return $this->createResponse(200, 'Successful', $cardVault);
@@ -44,7 +45,11 @@ class AddFundsCardWalletController
     {
         $cardVault = $this->bankDbConnection->getCardVault($request['cardNo'], $username);
         if (!$cardVault) {
-            return 'Card does not exist';
+            // return 'Card does not exist';
+        //    return  array_merge(['status' => 'FAILED'], 'CARD NOT EXIST');
+        return [
+            'status'=> 'FAILED',
+        ];
         }
 
         $amounts = $this->calculateAmounts($request['amount']);
