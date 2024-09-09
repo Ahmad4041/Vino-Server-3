@@ -2085,9 +2085,9 @@ class BankDbController
         }, $messageQuestions);
 
         // Process messages from tblMobileQuest (without MType)
-        $transactionHistory2 = array_map(function ($row) {
+        $transactionHistory2 = array_map(function ($row) use ($totalRow) {
             return [
-                'reference' => (int)$row['Sno'],
+                'reference' => (int)$row['Sno'] + $totalRow, // Offset the reference by the total rows in tblMobileMSG
                 'type' => "Suggestion", // Default to "Suggestion" since MType does not exist
                 'title' => $row['Question'],
                 'content' => $row['Answer'],
@@ -2096,9 +2096,13 @@ class BankDbController
             ];
         }, $messageQuestions2);
 
-        // var_dump($transactionHistory2);
         // Merge both transaction histories
         $mergedTransactionHistory = array_merge($transactionHistory, $transactionHistory2);
+        usort($mergedTransactionHistory, function ($a, $b) {
+            $dateTimeA = strtotime($a['date'] . ' ' . $a['time']);
+            $dateTimeB = strtotime($b['date'] . ' ' . $b['time']);
+            return $dateTimeB - $dateTimeA;
+        });
 
         if (empty($mergedTransactionHistory)) {
             return [
