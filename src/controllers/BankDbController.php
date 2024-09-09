@@ -837,7 +837,7 @@ class BankDbController
         ];
     }
     public function getCustomerAccounts($username)
-    { 
+    {
         $accounts = $this->getAccountByUsername($username, ['AccountID', 'AType']);
         $data = [];
         $act = [];
@@ -1598,7 +1598,7 @@ class BankDbController
             VALUES (:acctName, :cardNo, :vinoTransCode, :amt, :bankId, :charges, :merchantFee, :appFee, :clientResponse, :status, :transDate, :acctNo, :username)
         ");
 
-         return $stmt->execute([
+        return $stmt->execute([
             ':acctName' => $customerDetails['Surname'],
             ':cardNo' => $request['cardNo'],
             ':vinoTransCode' => json_encode($chargeResult),
@@ -1613,7 +1613,6 @@ class BankDbController
             ':acctNo' => $request['accountNo'],
             ':username' => $username
         ]);
-    
     }
 
 
@@ -1952,7 +1951,7 @@ class BankDbController
                         'TotalAmount' => $request['amount'],
                         'CurrentBalance' => $request['amount'],
                         'Cycle' => $request['cycle'],
-                        'AmountPerCycle'=> $request['amount'],
+                        'AmountPerCycle' => $request['amount'],
                         'ExecutedCycle' => $request['cycle'],
                         'Terms' => $request['terms'],
                         'MaturityDate' => $request['maturity_date'],
@@ -2021,101 +2020,12 @@ class BankDbController
     }
 
 
-    // function fecthMessagesList($username, $page)
-    // {
-    //     $limit = 20;
-    //     $offset = $page * $limit;
-    
-    //     // Using ROW_NUMBER() for pagination
-    //     $query = "
-    //         SELECT * FROM (
-    //             SELECT 
-    //                 'Message' AS type, 
-    //                 Sno, 
-    //                 MType, 
-    //                 Message AS title, 
-    //                 Message AS content, 
-    //                 Ddate,
-    //                 ROW_NUMBER() OVER (ORDER BY Ddate DESC) AS row_num
-    //             FROM tblMobileMSG
-    //             WHERE Username = ?
-    
-    //             UNION ALL
-    
-    //             SELECT 
-    //                 'Question' AS type, 
-    //                 Sno, 
-    //                 MType, 
-    //                 Question AS title, 
-    //                 Answer AS content, 
-    //                 Ddate,
-    //                 ROW_NUMBER() OVER (ORDER BY Ddate DESC) AS row_num
-    //             FROM tblMobileQuest
-    //             WHERE Username = ?
-    //         ) AS combined
-    //         WHERE combined.row_num BETWEEN ? AND ?;
-    //     ";
-    
-    //     // Calculating the row range for the current page
-    //     $startRow = $offset + 1;
-    //     $endRow = $offset + $limit;
-    
-    //     $stmt = $this->dbConnection->prepare($query);
-    //     $stmt->execute([$username, $username, $startRow, $endRow]);
-    
-    //     $transactionHistory = [];
-    //     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-    //         $transactionHistory[] = [
-    //             'reference' => $row['Sno'],
-    //             'type' => !empty($row['MType']) ? $row['MType'] : "Suggestion",
-    //             'title' => $row['title'],
-    //             'content' => $row['content'],
-    //             'date' => date('Y-m-d', strtotime($row['Ddate'])),
-    //             'time' => date('H:i:s', strtotime($row['Ddate'])),
-    //         ];
-    //     }
-    
-    //     // Total rows calculation
-    //     $totalQuery = "
-    //         SELECT COUNT(*) AS total 
-    //         FROM tblMobileMSG 
-    //         WHERE Username = ?
-    
-    //         UNION ALL
-    
-    //         SELECT COUNT(*) AS total 
-    //         FROM tblMobileQuest 
-    //         WHERE Username = ?
-    //     ";
-    //     $totalStmt = $this->dbConnection->prepare($totalQuery);
-    //     $totalStmt->execute([$username, $username]);
-    
-    //     $totalRow = 0;
-    //     while ($row = $totalStmt->fetch(PDO::FETCH_ASSOC)) {
-    //         $totalRow += $row['total'];
-    //     }
-    
-    //     if (empty($transactionHistory)) {
-    //         return [
-    //             'code' => 404,
-    //             'message' => 'No transactions found.',
-    //         ];
-    //     }
-    
-    //     return [
-    //         'transactionHistory' => $transactionHistory,
-    //         'totalRow' => $totalRow,
-    //     ];
-    // }
-    
-    
-
     function fetchMessagesList($username, $page)
     {
         $dbConnection = $this->dbConnection; // Use your actual PDO connection instance
         $limit = 20;
         $offset = $page * $limit;
-    
+
         // Fetch messages from tblMobileMSG with pagination using ROW_NUMBER()
         $query1 = "
             SELECT Sno, MType, Message, Ddate
@@ -2131,7 +2041,7 @@ class BankDbController
         $stmt1->bindValue(':endRow', $offset + $limit, PDO::PARAM_INT);
         $stmt1->execute();
         $messageQuestions = $stmt1->fetchAll(PDO::FETCH_ASSOC);
-    
+
         // Fetch messages from tblMobileQuest with pagination using ROW_NUMBER()
         $query2 = "
             SELECT Sno, Question, Answer, Ddate
@@ -2147,21 +2057,21 @@ class BankDbController
         $stmt2->bindValue(':endRow', $offset + $limit, PDO::PARAM_INT);
         $stmt2->execute();
         $messageQuestions2 = $stmt2->fetchAll(PDO::FETCH_ASSOC);
-    
+
         // Count total rows in tblMobileMSG
         $countQuery1 = "SELECT COUNT(*) as total FROM tblMobileMSG WHERE Username = :username";
         $countStmt1 = $dbConnection->prepare($countQuery1);
         $countStmt1->bindValue(':username', $username);
         $countStmt1->execute();
         $totalRow = $countStmt1->fetch(PDO::FETCH_ASSOC)['total'];
-    
+
         // Count total rows in tblMobileQuest
         $countQuery2 = "SELECT COUNT(*) as total FROM tblMobileQuest WHERE Username = :username";
         $countStmt2 = $dbConnection->prepare($countQuery2);
         $countStmt2->bindValue(':username', $username);
         $countStmt2->execute();
         $totalRow2 = $countStmt2->fetch(PDO::FETCH_ASSOC)['total'];
-    
+
         // Process messages from tblMobileMSG
         $transactionHistory = array_map(function ($row) {
             return [
@@ -2173,7 +2083,7 @@ class BankDbController
                 'time' => date('H:i:s', strtotime($row['Ddate'])),
             ];
         }, $messageQuestions);
-    
+
         // Process messages from tblMobileQuest (without MType)
         $transactionHistory2 = array_map(function ($row) {
             return [
@@ -2185,18 +2095,18 @@ class BankDbController
                 'time' => date('H:i:s', strtotime($row['Ddate'])),
             ];
         }, $messageQuestions2);
-    
+
         // var_dump($transactionHistory2);
         // Merge both transaction histories
         $mergedTransactionHistory = array_merge($transactionHistory, $transactionHistory2);
-    
+
         if (empty($mergedTransactionHistory)) {
             return [
                 'code' => ErrorCodes::$FAIL_ACCOUNT_TRANSACTION_FOUND[0],
                 'data' => ErrorCodes::$FAIL_ACCOUNT_TRANSACTION_FOUND[1],
             ];
         }
-    
+
         $data = [
             'transactionHistory' => $mergedTransactionHistory,
             'totalRow' => $totalRow + $totalRow2,

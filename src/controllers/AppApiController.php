@@ -562,9 +562,9 @@ class AppApiController
 
             if ($validation->fails()) {
                 return [
-                    'message' => ErrorCodes::$FAIL_PIN_FORMAT_INVALID[1],
+                    'message' => ErrorCodes::$FAIL_CONTACT_NUMBER[1],
                     'data' => $validation->errors()->toArray(),
-                    'dcode' => ErrorCodes::$FAIL_PIN_FORMAT_INVALID[0],
+                    'dcode' => ErrorCodes::$FAIL_CONTACT_NUMBER[0],
                     'code' => 422,
                 ];
             }
@@ -581,9 +581,9 @@ class AppApiController
             } else {
                 return [
                     'dcode' => $passwordReset['code'],
-                    'code' => 201,
+                    'code' => 404,
                     'message' => $passwordReset['message'],
-                    'data' => null
+                    'data' => $passwordReset['message']
                 ];
             }
         } catch (Exception $e) {
