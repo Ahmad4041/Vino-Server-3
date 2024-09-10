@@ -10,14 +10,14 @@ use Rakit\Validation\Validator;
 class AuthController
 {
 
-    private function checkUserRegisterUpdatedLogic($data, $bankId)
+    private function checkUserRegisterUpdatedLogic($data, $bankId, $deviceId)
     {
-        $username = $data['Username'];
+        $username = $data['Username'] . '-NewApp';
         $accountId = $data['AccountID'];
         $password = password_hash($username . ':' . $bankId, PASSWORD_BCRYPT);
 
         $LocalDbConnection = new LocalDbController(Database::getConnection('mysql'));
-        $LocalDbConnection->checkAppUserExistUpdatedLogic($username, $accountId, $bankId, $password);
+        $LocalDbConnection->checkAppUserExistUpdatedLogic($username, $accountId, $bankId, $password, $deviceId);
     }
 
     private function generateToken($username, $bankId, $accountId)
@@ -71,8 +71,8 @@ class AuthController
             $BankDbConnection = new BankDbController(Database::getConnection($bankId));
             $loginCheck = $BankDbConnection->authUser($request);
             if ($loginCheck['code'] == 200) {
-                $this->checkUserRegisterUpdatedLogic($loginCheck['data'], $bankId);
-                $request['bankId'] = $bankId;
+                $this->checkUserRegisterUpdatedLogic($loginCheck['data'], $bankId, $request['deviceId'] ?? null);
+                // $request['bankId'] = $bankId;
 
                 $credentials = [
                     'username' => $request['username'],
@@ -88,7 +88,7 @@ class AuthController
                 }
 
                 $LocalDbConnection = new LocalDbController(Database::getConnection('mysql'));
-                $LocalDbConnection->insertToken($loginCheck['data'], $bankId, $token);
+                $LocalDbConnection->insertToken($loginCheck['data'], $bankId, $token, $request['deviceId'] ?? null);
 
                 $userData = [
                     'Username' => $loginCheck['data']['Username'],

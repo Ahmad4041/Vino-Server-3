@@ -9,21 +9,21 @@ class LocalDbController
         $this->dbConnection = $dbConnection;
     }
 
-    public function checkAppUserExistUpdatedLogic($username, $accountId, $bankId, $password)
+    public function checkAppUserExistUpdatedLogic($username, $accountId, $bankId, $password, $deviceId)
     {
         $stmt = $this->dbConnection->prepare("SELECT * FROM appUsers WHERE username = ? AND bankId = ? AND accountId = ?");
         $stmt->execute([$username, $bankId, $accountId]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$user) {
-            $stmt = $this->dbConnection->prepare("INSERT INTO appUsers (username, bankId, accountId, password, created_at, updated_at) VALUES (?, ?, ?, ?, NOW(), NOW())");
-            $stmt->execute([$username, $bankId, $accountId, $password]);
+            $stmt = $this->dbConnection->prepare("INSERT INTO appUsers (username, bankId, accountId, password, created_at, updated_at, deviceId) VALUES (?, ?, ?, ?, NOW(), NOW(), ?)");
+            $stmt->execute([$username, $bankId, $accountId, $password, $deviceId]);
         }
     }
 
-    public function insertToken($data, $bankId, string $token)
+    public function insertToken($data, $bankId, string $token, $deviceId)
     {
-        $username = $data['Username'];
+        $username = $data['Username'] . '-NewApp';
         $accountId = $data['AccountID'];
 
         try {
@@ -44,15 +44,17 @@ class LocalDbController
                 $stmt->bindParam(':username', $username);
                 $stmt->bindParam(':bankId', $bankId);
                 $stmt->bindParam(':accountId', $accountId);
+                $stmt->bindParam(':deviceId', $deviceId);
                 $stmt->execute();
             } else {
                 // Insert new record if user does not exist
-                $sql = "INSERT INTO appUser (username, bankId, accountId, token) VALUES (:username, :bankId, :accountId, :token)";
+                $sql = "INSERT INTO appUser (username, bankId, accountId, token, deviceId) VALUES (:username, :bankId, :accountId, :token, :deviceId)";
                 $stmt = $this->dbConnection->prepare($sql);
                 $stmt->bindParam(':username', $username);
                 $stmt->bindParam(':bankId', $bankId);
                 $stmt->bindParam(':accountId', $accountId);
                 $stmt->bindParam(':token', $token);
+                $stmt->bindParam(':deviceId', $deviceId);
                 $stmt->execute();
             }
 
