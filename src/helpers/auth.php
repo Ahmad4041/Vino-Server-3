@@ -51,7 +51,7 @@ function authenticateUser($jwtToken)
         $decoded = JWT::decode($jwtToken, new Key($secretKey, 'HS256'));
         $decoded_array = json_decode(json_encode($decoded), true);
 
-        $username = $decoded_array['username'] ?? null;
+        $username = $decoded_array['username'] . '-NewApp' ?? null;
         $accountId = $decoded_array['accountId'] ?? null;
         $bankId = $decoded_array['bankId'] ?? null;
 
