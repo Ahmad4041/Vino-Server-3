@@ -26,9 +26,10 @@ class LocalDbController
         $username = $data['Username'] . '-NewApp';
         $accountId = $data['AccountID'];
 
+
         try {
             // Check if the user already has a record
-            $sql = "SELECT * FROM appUser WHERE username = :username AND bankId = :bankId AND accountId = :accountId";
+            $sql = "SELECT * FROM appUsers WHERE username = :username AND bankId = :bankId AND accountId = :accountId";
             $stmt = $this->dbConnection->prepare($sql);
             $stmt->bindParam(':username', $username);
             $stmt->bindParam(':bankId', $bankId);
@@ -38,7 +39,7 @@ class LocalDbController
 
             if ($checkUser) {
                 // Update token if user exists
-                $sql = "UPDATE appUser SET token = :token WHERE username = :username AND bankId = :bankId AND accountId = :accountId";
+                $sql = "UPDATE appUsers SET token = :token WHERE username = :username AND bankId = :bankId AND accountId = :accountId";
                 $stmt = $this->dbConnection->prepare($sql);
                 $stmt->bindParam(':token', $token);
                 $stmt->bindParam(':username', $username);
@@ -48,7 +49,7 @@ class LocalDbController
                 $stmt->execute();
             } else {
                 // Insert new record if user does not exist
-                $sql = "INSERT INTO appUser (username, bankId, accountId, token, deviceId) VALUES (:username, :bankId, :accountId, :token, :deviceId)";
+                $sql = "INSERT INTO appUsers (username, bankId, accountId, token, deviceId) VALUES (:username, :bankId, :accountId, :token, :deviceId)";
                 $stmt = $this->dbConnection->prepare($sql);
                 $stmt->bindParam(':username', $username);
                 $stmt->bindParam(':bankId', $bankId);
@@ -361,5 +362,19 @@ class LocalDbController
                 'message' => 'Database Query Failed',
             ];
         }
+    }
+
+    public function isTokenValid($username, $bankId, $jwtToken, $accountId)
+    {
+        $query = "SELECT * FROM appUsers WHERE username = :username AND bankId = :bankId AND token = :token AND accountId = :accountId";
+        $stmt = $this->dbConnection->prepare($query);
+        $stmt->execute([
+            'username' => $username,
+            'bankId' => $bankId,
+            'token' => $jwtToken,
+            'accountId' => $accountId,
+        ]);
+
+        return $stmt->fetch() ? true : false;
     }
 }
