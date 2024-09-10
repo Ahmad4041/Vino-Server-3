@@ -39,7 +39,7 @@ class LocalDbController
 
             if ($checkUser) {
                 // Update token if user exists
-                $sql = "UPDATE appUsers SET token = :token WHERE username = :username AND bankId = :bankId AND accountId = :accountId";
+                $sql = "UPDATE appUsers SET token = :token WHERE username = :username AND bankId = :bankId AND accountId = :accountId AND deviceId :deviceId";
                 $stmt = $this->dbConnection->prepare($sql);
                 $stmt->bindParam(':token', $token);
                 $stmt->bindParam(':username', $username);
