@@ -52,15 +52,15 @@ function authenticateUser($jwtToken)
         $decoded_array = json_decode(json_encode($decoded), true);
 
         $username = $decoded_array['username'] . '-NewApp' ?? null;
-        $accountId = $decoded_array['accountId'] ?? null;
-        $bankId = $decoded_array['bankId'] ?? null;
+        // $accountId = $decoded_array['accountId'] ?? null;
+        // $bankId = $decoded_array['bankId'] ?? null;
 
-        if (!$username || !$accountId || !$bankId) {
-            return sendCustomResponse('Invalid token structure.', null, 401, 401);
-        }
+        // if (!$username || !$accountId || !$bankId) {
+        //     return sendCustomResponse('Invalid token structure.', null, 401, 401);
+        // }
 
         $LocalDbConnection = new LocalDbController(Database::getConnection('mysql'));
-        $isValidToken = $LocalDbConnection->isTokenValid($username, $bankId, $jwtToken, $accountId);
+        $isValidToken = $LocalDbConnection->isTokenValid($username, $jwtToken);
 
         if (!$isValidToken) {
             return sendCustomResponse('Invalid or expired token. Please log in again.', null, 401, 401);
