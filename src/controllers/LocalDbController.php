@@ -66,10 +66,10 @@ class LocalDbController
     }
 
 
-    public function insertToken($data, $bankId, string $token, $deviceId)
+    public function insertToken($username, $bankId, string $token, $deviceId, $accountId)
     {
-        $username = $data['Username'] . '-NewApp';
-        $accountId = $data['AccountID'];
+        // $username = $data['Username'] . '-NewApp';
+        // $accountId = $data['AccountID'];
 
         try {
             // Start a transaction

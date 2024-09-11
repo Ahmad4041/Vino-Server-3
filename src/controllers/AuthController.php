@@ -39,7 +39,7 @@ class AuthController
 
         // Store the new token
         $LocalDbConnection = new LocalDbController(Database::getConnection('mysql'));
-        $LocalDbConnection->insertToken($username, $bankId, $token, $payload['exp']);
+        $LocalDbConnection->insertToken($username, $bankId, $token, $payload['exp'], $accountId);
 
         return $token;
     }
