@@ -21,7 +21,7 @@ class LocalDbController
         }
     }
 
-    public function insertToken($data, $bankId, string $token, $deviceId)
+    public function insertTokenOld($data, $bankId, string $token, $deviceId)
     {
         $username = $data['Username'] . '-NewApp';
         $accountId = $data['AccountID'];
@@ -62,6 +62,53 @@ class LocalDbController
             return true;
         } catch (Exception $e) {
             return $e->getMessage();
+        }
+    }
+
+
+    public function insertToken($data, $bankId, string $token, $deviceId)
+    {
+        $username = $data['Username'] . '-NewApp';
+        $accountId = $data['AccountID'];
+
+        try {
+            // Start a transaction
+            $this->dbConnection->beginTransaction();
+
+            // Prepare the UPSERT query with JOIN
+            $sql = "INSERT INTO appUsers (username, bankId, accountId, token, deviceId, is_active, created_at, updated_at)
+                VALUES (:username, :bankId, :accountId, :token, :deviceId, 1, NOW(), NOW())
+                ON DUPLICATE KEY UPDATE
+                    token = VALUES(token),
+                    is_active = 1,
+                    updated_at = NOW();
+                
+                UPDATE appUsers AS a
+                JOIN (
+                    SELECT id FROM appUsers 
+                    WHERE username = :username AND bankId = :bankId AND accountId = :accountId AND deviceId != :deviceId
+                ) AS b ON a.id = b.id
+                SET a.is_active = 0, a.updated_at = NOW()
+                WHERE a.is_active = 1;";
+
+            $stmt = $this->dbConnection->prepare($sql);
+            $stmt->bindParam(':username', $username);
+            $stmt->bindParam(':bankId', $bankId);
+            $stmt->bindParam(':accountId', $accountId);
+            $stmt->bindParam(':token', $token);
+            $stmt->bindParam(':deviceId', $deviceId);
+
+            $stmt->execute();
+
+            // Commit the transaction
+            $this->dbConnection->commit();
+
+            return true;
+        } catch (Exception $e) {
+            // Rollback the transaction in case of error
+            $this->dbConnection->rollBack();
+            error_log("Error in insertToken: " . $e->getMessage());
+            return false;
         }
     }
 

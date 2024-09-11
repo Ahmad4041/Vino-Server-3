@@ -1,14 +1,13 @@
 <?php
 
-// require __DIR__ . '/../models/UtilityDemo.php';
 require 'LocalDbController.php';
-// require 'BankDbController.php';
+
 use Firebase\JWT\JWT;
-// use Firebase\JWT\Key;
 use Rakit\Validation\Validator;
 
 class AuthController
 {
+    private $key = '00112233445566778899';
 
     private function checkUserRegisterUpdatedLogic($data, $bankId, $deviceId)
     {
@@ -22,24 +21,39 @@ class AuthController
 
     private function generateToken($username, $bankId, $accountId)
     {
-        $key = '00112233445566778899';
+        $tokenId = bin2hex(random_bytes(16));
         $payload = [
             'iss' => 'vino.viralcomputers.com:9000',
             'iat' => time(),
             'exp' => time() + (50 * 60),
+            'jti' => $tokenId,
             'username' => $username,
             'bankId' => $bankId,
             'accountId' => $accountId,
         ];
 
-        return JWT::encode($payload, $key, 'HS256');
+        $token = JWT::encode($payload, $this->key, 'HS256');
+
+        // Revoke all previous tokens for this user
+        // $this->revokeAllTokens($username, $bankId);
+
+        // Store the new token
+        $LocalDbConnection = new LocalDbController(Database::getConnection('mysql'));
+        $LocalDbConnection->insertToken($username, $bankId, $token, $payload['exp']);
+
+        return $token;
     }
+
+    // private function revokeAllTokens($username, $bankId)
+    // {
+    //     $LocalDbConnection = new LocalDbController(Database::getConnection('mysql'));
+    //     $LocalDbConnection->revokeAllTokens($username, $bankId);
+    // }
 
     private function generateRequestID()
     {
-        return bin2hex(random_bytes(12));  // Generates a random request ID
+        return bin2hex(random_bytes(12));
     }
-
 
     public function mobileLoginNewLogic($bankId, $request)
     {
@@ -49,13 +63,11 @@ class AuthController
                 'password' => $request['password'] ?? null,
             ];
 
-            $rules = [
+            $validator = new Validator();
+            $validation = $validator->make($data, [
                 'username' => 'required',
                 'password' => 'required'
-            ];
-
-            $validator = new Validator();
-            $validation = $validator->make($data, $rules);
+            ]);
 
             $validation->validate();
 
@@ -70,25 +82,15 @@ class AuthController
 
             $BankDbConnection = new BankDbController(Database::getConnection($bankId));
             $loginCheck = $BankDbConnection->authUser($request);
+
             if ($loginCheck['code'] == 200) {
                 $this->checkUserRegisterUpdatedLogic($loginCheck['data'], $bankId, $request['deviceId'] ?? null);
-                // $request['bankId'] = $bankId;
-
-                $credentials = [
-                    'username' => $request['username'],
-                    'bankId' => $bankId
-                ];
-
-                $combinedString = $loginCheck['data']['Username'] . ':' . $credentials['bankId'];
-                $credentials['password'] = $combinedString;
 
                 $token = $this->generateToken($loginCheck['data']['Username'], $bankId, $loginCheck['data']['AccountID']);
+
                 if (!$token) {
                     return sendCustomResponse('Login failed', null, 401, 404);
                 }
-
-                $LocalDbConnection = new LocalDbController(Database::getConnection('mysql'));
-                $LocalDbConnection->insertToken($loginCheck['data'], $bankId, $token, $request['deviceId'] ?? null);
 
                 $userData = [
                     'Username' => $loginCheck['data']['Username'],
