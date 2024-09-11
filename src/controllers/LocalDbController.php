@@ -377,27 +377,29 @@ class LocalDbController
 
     //     return $stmt->fetch() ? true : false;
     // }
-    public function isTokenValid($username, $jwtToken)
-{
-    // Optimized query using EXISTS to quickly check for token validity
-    $query = "
+    public function isTokenValid($username, $jwtToken, $accountId, $bankid)
+    {
+        // Optimized query using EXISTS to quickly check for token validity
+        $query = "
         SELECT EXISTS (
             SELECT 1 
             FROM appUsers 
             WHERE username = :username
               AND token = :token
+              AND accountId = :accountId
+              AND bankId = :bankId
         );
     ";
 
-    $stmt = $this->dbConnection->prepare($query);
-    $stmt->execute([
-        'username' => $username,
-        'token' => $jwtToken,
-    ]);
+        $stmt = $this->dbConnection->prepare($query);
+        $stmt->execute([
+            'username' => $username,
+            'token' => $jwtToken,
+            'accountId' => $accountId,
+            'bankId' => $bankid,
+        ]);
 
-    // Directly return the existence check result as boolean
-    return (bool) $stmt->fetchColumn();
-}
-
-
+        // Directly return the existence check result as boolean
+        return (bool) $stmt->fetchColumn();
+    }
 }
