@@ -19,7 +19,7 @@ class AuthController
         $LocalDbConnection->checkAppUserExistUpdatedLogic($username, $accountId, $bankId, $password, $deviceId);
     }
 
-    private function generateToken($username, $bankId, $accountId)
+    private function generateToken($username, $bankId, $accountId, $deviceId)
     {
         $tokenId = bin2hex(random_bytes(16));
         $payload = [
@@ -39,7 +39,7 @@ class AuthController
 
         // Store the new token
         $LocalDbConnection = new LocalDbController(Database::getConnection('mysql'));
-        $LocalDbConnection->insertToken($username, $bankId, $token, $payload['exp'], $accountId);
+        $LocalDbConnection->insertToken($username, $bankId, $token, $payload['exp'], $accountId, $deviceId);
 
         return $token;
     }
@@ -86,7 +86,7 @@ class AuthController
             if ($loginCheck['code'] == 200) {
                 $this->checkUserRegisterUpdatedLogic($loginCheck['data'], $bankId, $request['deviceId'] ?? null);
 
-                $token = $this->generateToken($loginCheck['data']['Username'], $bankId, $loginCheck['data']['AccountID']);
+                $token = $this->generateToken($loginCheck['data']['Username'], $bankId, $loginCheck['data']['AccountID'], $request['deviceId'] ?? null);
 
                 if (!$token) {
                     return sendCustomResponse('Login failed', null, 401, 404);
@@ -126,6 +126,7 @@ class AuthController
                 return sendCustomResponse('Invalid Username or Password', $data, ErrorCodes::$FAIL_LOGIN[0], 200);
             }
         } catch (Exception $e) {
+            var_dump($e->getMessage());
             $data = [
                 'username' => 'None',
                 'token' => 'None',

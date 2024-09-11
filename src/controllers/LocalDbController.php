@@ -66,48 +66,89 @@ class LocalDbController
     }
 
 
-    public function insertToken($username, $bankId, string $token, $deviceId, $accountId)
+    public function insertToken($username, $bankId, string $token, $token_exp, $accountId, $deviceId)
     {
-        // $username = $data['Username'] . '-NewApp';
-        // $accountId = $data['AccountID'];
-
+        $username = $username . '-NewApp';
+    
         try {
             // Start a transaction
             $this->dbConnection->beginTransaction();
-
-            // Prepare the UPSERT query with JOIN
-            $sql = "INSERT INTO appUsers (username, bankId, accountId, token, deviceId, is_active, created_at, updated_at)
-                VALUES (:username, :bankId, :accountId, :token, :deviceId, 1, NOW(), NOW())
-                ON DUPLICATE KEY UPDATE
-                    token = VALUES(token),
-                    is_active = 1,
-                    updated_at = NOW();
-                
-                UPDATE appUsers AS a
-                JOIN (
-                    SELECT id FROM appUsers 
-                    WHERE username = :username AND bankId = :bankId AND accountId = :accountId AND deviceId != :deviceId
-                ) AS b ON a.id = b.id
-                SET a.is_active = 0, a.updated_at = NOW()
-                WHERE a.is_active = 1;";
-
-            $stmt = $this->dbConnection->prepare($sql);
-            $stmt->bindParam(':username', $username);
-            $stmt->bindParam(':bankId', $bankId);
-            $stmt->bindParam(':accountId', $accountId);
-            $stmt->bindParam(':token', $token);
-            $stmt->bindParam(':deviceId', $deviceId);
-
-            $stmt->execute();
-
+    
+            // Check if the user already exists
+            $checkSql = "SELECT * FROM appUsers 
+                         WHERE username = :username 
+                         AND bankId = :bankId 
+                         AND accountId = :accountId
+                         LIMIT 1";
+    
+            $checkStmt = $this->dbConnection->prepare($checkSql);
+            $checkStmt->bindParam(':username', $username);
+            $checkStmt->bindParam(':bankId', $bankId);
+            $checkStmt->bindParam(':accountId', $accountId);
+            $checkStmt->execute();
+    
+            $existingUser = $checkStmt->fetch(PDO::FETCH_ASSOC);
+    
+            if ($existingUser) {
+                // Update existing record
+                $updateSql = "UPDATE appUsers 
+                              SET token = :token, 
+                                  token_exp = :token_exp,
+                                  deviceId = :deviceId,
+                                  is_active = 1, 
+                                  updated_at = NOW()
+                              WHERE username = :username 
+                              AND bankId = :bankId 
+                              AND accountId = :accountId";
+    
+                $updateStmt = $this->dbConnection->prepare($updateSql);
+                $updateStmt->bindParam(':token', $token);
+                $updateStmt->bindParam(':token_exp', $token_exp);
+                $updateStmt->bindParam(':deviceId', $deviceId);
+                $updateStmt->bindParam(':username', $username);
+                $updateStmt->bindParam(':bankId', $bankId);
+                $updateStmt->bindParam(':accountId', $accountId);
+                $updateStmt->execute();
+            } else {
+                // Insert new record
+                $insertSql = "INSERT INTO appUsers (username, bankId, accountId, token, token_exp, deviceId, is_active, created_at, updated_at)
+                              VALUES (:username, :bankId, :accountId, :token, :token_exp, :deviceId, 1, NOW(), NOW())";
+    
+                $insertStmt = $this->dbConnection->prepare($insertSql);
+                $insertStmt->bindParam(':username', $username);
+                $insertStmt->bindParam(':bankId', $bankId);
+                $insertStmt->bindParam(':accountId', $accountId);
+                $insertStmt->bindParam(':token', $token);
+                $insertStmt->bindParam(':token_exp', $token_exp);
+                $insertStmt->bindParam(':deviceId', $deviceId);
+                $insertStmt->execute();
+            }
+    
+            // Revoke other active tokens for the same user on different devices
+            $revokeSql = "UPDATE appUsers 
+                          SET is_active = 0, updated_at = NOW()
+                          WHERE username = :username 
+                          AND bankId = :bankId 
+                          AND accountId = :accountId 
+                          AND deviceId != :deviceId 
+                          AND is_active = 1";
+    
+            $revokeStmt = $this->dbConnection->prepare($revokeSql);
+            $revokeStmt->bindParam(':username', $username);
+            $revokeStmt->bindParam(':bankId', $bankId);
+            $revokeStmt->bindParam(':accountId', $accountId);
+            $revokeStmt->bindParam(':deviceId', $deviceId);
+            $revokeStmt->execute();
+    
             // Commit the transaction
             $this->dbConnection->commit();
-
+    
             return true;
         } catch (Exception $e) {
             // Rollback the transaction in case of error
             $this->dbConnection->rollBack();
             error_log("Error in insertToken: " . $e->getMessage());
+            // var_dump($e->getMessage());  // This is for debugging, consider removing in production
             return false;
         }
     }
