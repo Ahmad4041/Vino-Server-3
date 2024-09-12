@@ -1445,35 +1445,72 @@ class BankDbController
             ];
         }
     }
-
     function deleteCardWallet($username, $cardId)
     {
-        $deleteQuery = "
-            DELETE cv 
-            FROM tblMobileCardVault cv
-            JOIN (SELECT Sno FROM tblMobileCardVault WHERE Username = ? AND Sno = ?) as sub
-            ON cv.Sno = sub.Sno
-            WHERE cv.Username = ?;
-        ";
-
+        $this->dbConnection->beginTransaction();
+    
         try {
+            $selectQuery = "
+                SELECT *
+                FROM tblMobileCardVault
+                WHERE Username = ? AND Sno = ?
+            ";
+            $selectStmt = $this->dbConnection->prepare($selectQuery);
+            $selectStmt->execute([$username, $cardId]);
+            $row = $selectStmt->fetch(PDO::FETCH_ASSOC);
+    
+            if (!$row) {
+                $this->dbConnection->rollBack();
+                return [
+                    'code' => 404,
+                    'message' => 'Card wallet not found',
+                    'data' => '',
+                ];
+            }
+    
+            $rowData = [
+                'Username' => (string)$row['Username'],
+                'CardNo' => (string)$row['CardNo'],
+                'CardName' => (string)$row['CardName'],
+                'CardExpMonth' => (string)$row['CardExpMonth'],
+                'CardExpYear' => (int)$row['CardExpYear'],
+                'CardCVV' => (int)$row['CardCVV'],
+                'AuthCode' => (int)$row['AuthCode'],
+                'CardType' => (string)$row['CardType'],
+                'CardBank' => (string)$row['CardBank'],
+                'CardChannel' => (string)$row['CardChannel'],
+                'CardSignature' => (string)$row['CardSignature'],
+                'CountryCode' => (string)$row['CountryCode'],
+                'TransID' => (int)$row['TransID'],
+                'Ddate' => $row['Ddate'] ,
+                'Active' => (bool)$row['Active'],
+                'Sno' => (int)$row['Sno']
+            ];
+    
+            $deleteQuery = "
+                DELETE FROM tblMobileCardVault
+                WHERE Username = ? AND Sno = ?
+            ";
             $deleteStmt = $this->dbConnection->prepare($deleteQuery);
-            $deleteStmt->execute([$username, $cardId, $username]);
-
+            $deleteStmt->execute([$username, $cardId]);
+    
             if ($deleteStmt->rowCount() > 0) {
+                $this->dbConnection->commit();
                 return [
                     'code' => 200,
                     'message' => 'Deleted Successfully',
-                    'data' => ['Sno' => $cardId, 'Username' => $username],
+                    'data' => $rowData,
                 ];
             } else {
+                $this->dbConnection->rollBack();
                 return [
                     'code' => 404,
-                    'message' => 'Card wallet not found or not deleted',
+                    'message' => 'Card wallet not deleted',
                     'data' => '',
                 ];
             }
         } catch (Exception $e) {
+            $this->dbConnection->rollBack();
             return [
                 'code' => 500,
                 'message' => 'An error occurred while deleting the card wallet: ' . $e->getMessage(),
@@ -1481,7 +1518,6 @@ class BankDbController
             ];
         }
     }
-
 
 
     function createCardWallet($username, $request)

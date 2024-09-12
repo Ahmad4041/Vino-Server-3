@@ -1478,6 +1478,7 @@ class AppApiController
                 return [
                     'message' => ErrorCodes::$SUCCESS_CARD_WALLET_DELETED[1],
                     'dcode' => ErrorCodes::$SUCCESS_CARD_WALLET_DELETED[0],
+                    // 'data' => [],
                     'data' => $data['data'],
                     'code' => 200,
                 ];
