@@ -78,19 +78,19 @@ class LocalDbController
 
         if (!$user) {
             // Username doesn't exist, insert new record
-            $stmt = $this->dbConnection->prepare("INSERT INTO users_device_verify (username, bankid, deviceId) VALUES (?, ?, ?)");
+            $stmt = $this->dbConnection->prepare("INSERT INTO users_device_verify (username, bankid, deviceid) VALUES (?, ?, ?)");
             $stmt->execute([$username, $bankId, $deviceId]);
             return ["code" => 200, "message" => "New device registered successfully."];
         } else {
             // Username exists, check phone ID
-            if ($user['deviceId'] == "-") {
+            if ($user['deviceid'] == "-") {
                 // Phone ID has been reset, update with new phone ID
-                $stmt = $this->dbConnection->prepare("UPDATE users_device_verify SET deviceId = ? WHERE username = ? AND bankid = ?");
+                $stmt = $this->dbConnection->prepare("UPDATE users_device_verify SET deviceid = ? WHERE username = ? AND bankid = ?");
                 $stmt->execute([$deviceId, $username, $bankId]);
                 return ["code" => 200, "message" => "Device registered successfully."];
             } else {
                 // Check if phone ID matches
-                if ($user['deviceId'] == $deviceId) {
+                if ($user['deviceid'] == $deviceId) {
                     return ["code" => 200, "message" => "Login successful."];
                 } else {
                     return ["code" => 203, "message" => "This Device Has Not Been Registered."];
