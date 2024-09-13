@@ -9,15 +9,15 @@ class AuthController
 {
     private $key = '00112233445566778899';
 
-    private function checkUserRegisterUpdatedLogic($data, $bankId, $deviceId)
-    {
-        $username = $data['Username'] . '-NewApp';
-        $accountId = $data['AccountID'];
-        $password = password_hash($username . ':' . $bankId, PASSWORD_BCRYPT);
+    // private function checkUserRegisterUpdatedLogic($data, $bankId, $deviceId)
+    // {
+    //     $username = $data['Username'] . '-NewApp';
+    //     $accountId = $data['AccountID'];
+    //     $password = password_hash($username . ':' . $bankId, PASSWORD_BCRYPT);
 
-        $LocalDbConnection = new LocalDbController(Database::getConnection('mysql'));
-        $LocalDbConnection->checkAppUserExistUpdatedLogic($username, $accountId, $bankId, $password, $deviceId);
-    }
+    //     $LocalDbConnection = new LocalDbController(Database::getConnection('mysql'));
+    //     $LocalDbConnection->checkAppUserExistUpdatedLogic($username, $accountId, $bankId, $password, $deviceId);
+    // }
 
     private function generateToken($username, $bankId, $accountId, $deviceId)
     {
@@ -34,21 +34,12 @@ class AuthController
 
         $token = JWT::encode($payload, $this->key, 'HS256');
 
-        // Revoke all previous tokens for this user
-        // $this->revokeAllTokens($username, $bankId);
-
-        // Store the new token
         $LocalDbConnection = new LocalDbController(Database::getConnection('mysql'));
         $LocalDbConnection->insertToken($username, $bankId, $token, $payload['exp'], $accountId, $deviceId);
 
         return $token;
     }
 
-    // private function revokeAllTokens($username, $bankId)
-    // {
-    //     $LocalDbConnection = new LocalDbController(Database::getConnection('mysql'));
-    //     $LocalDbConnection->revokeAllTokens($username, $bankId);
-    // }
 
     private function generateRequestID()
     {
@@ -84,7 +75,20 @@ class AuthController
             $loginCheck = $BankDbConnection->authUser($request);
 
             if ($loginCheck['code'] == 200) {
-                $this->checkUserRegisterUpdatedLogic($loginCheck['data'], $bankId, $request['deviceId'] ?? null);
+
+                $LocalDbConnection = new LocalDbController(Database::getConnection('mysql'));
+                $verifyDevice = $LocalDbConnection->authenticateUserDevice($loginCheck['data']['Username'], $bankId,  $request['deviceId']);
+
+                $data = [
+                    'username' => 'None',
+                    'token' => 'None',
+                    'type' => 'None',
+                    'pin' => 'none'
+                ];
+
+                if (!$verifyDevice['code'] == 200) {
+                    return sendCustomResponse($verifyDevice['message'], $data, ErrorCodes::$FAIL_LOGIN[0], 200);
+                }
 
                 $token = $this->generateToken($loginCheck['data']['Username'], $bankId, $loginCheck['data']['AccountID'], $request['deviceId'] ?? null);
 

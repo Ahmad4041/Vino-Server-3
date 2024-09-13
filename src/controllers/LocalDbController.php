@@ -66,29 +66,65 @@ class LocalDbController
     }
 
 
+
+    function authenticateUserDevice($username, $bankId, $deviceId)
+    {
+        $username = $username . '-NewApp';
+
+        // Check if the username exists for the client
+        $stmt = $this->dbConnection->prepare("SELECT * FROM users_device_verify WHERE username = ? AND bank_id = ?");
+        $stmt->execute([$username, $bankId]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$user) {
+            // Username doesn't exist, insert new record
+            $stmt = $this->dbConnection->prepare("INSERT INTO users_device_verify (username, bank_id, deviceId) VALUES (?, ?, ?)");
+            $stmt->execute([$username, $bankId, $deviceId]);
+            return ["code" => 200, "message" => "New device registered successfully."];
+        } else {
+            // Username exists, check phone ID
+            if ($user['deviceId'] == "-") {
+                // Phone ID has been reset, update with new phone ID
+                $stmt = $this->dbConnection->prepare("UPDATE users_device_verify SET deviceId = ? WHERE username = ? AND bank_id = ?");
+                $stmt->execute([$deviceId, $username, $bankId]);
+                return ["code" => 200, "message" => "Device registered successfully."];
+            } else {
+                // Check if phone ID matches
+                if ($user['deviceId'] == $deviceId) {
+                    return ["code" => 200, "message" => "Login successful."];
+                } else {
+                    return ["code" => 203, "message" => "This Device Has Not Been Registered."];
+                }
+            }
+        }
+    }
+
+
+
+
     public function insertToken($username, $bankId, string $token, $token_exp, $accountId, $deviceId)
     {
         $username = $username . '-NewApp';
-    
+
         try {
             // Start a transaction
             $this->dbConnection->beginTransaction();
-    
+
             // Check if the user already exists
             $checkSql = "SELECT * FROM appUsers 
                          WHERE username = :username 
                          AND bankId = :bankId 
                          AND accountId = :accountId
                          LIMIT 1";
-    
+
             $checkStmt = $this->dbConnection->prepare($checkSql);
             $checkStmt->bindParam(':username', $username);
             $checkStmt->bindParam(':bankId', $bankId);
             $checkStmt->bindParam(':accountId', $accountId);
             $checkStmt->execute();
-    
+
             $existingUser = $checkStmt->fetch(PDO::FETCH_ASSOC);
-    
+
             if ($existingUser) {
                 // Update existing record
                 $updateSql = "UPDATE appUsers 
@@ -100,7 +136,7 @@ class LocalDbController
                               WHERE username = :username 
                               AND bankId = :bankId 
                               AND accountId = :accountId";
-    
+
                 $updateStmt = $this->dbConnection->prepare($updateSql);
                 $updateStmt->bindParam(':token', $token);
                 $updateStmt->bindParam(':token_exp', $token_exp);
@@ -113,7 +149,7 @@ class LocalDbController
                 // Insert new record
                 $insertSql = "INSERT INTO appUsers (username, bankId, accountId, token, token_exp, deviceId, is_active, created_at, updated_at)
                               VALUES (:username, :bankId, :accountId, :token, :token_exp, :deviceId, 1, NOW(), NOW())";
-    
+
                 $insertStmt = $this->dbConnection->prepare($insertSql);
                 $insertStmt->bindParam(':username', $username);
                 $insertStmt->bindParam(':bankId', $bankId);
@@ -123,7 +159,7 @@ class LocalDbController
                 $insertStmt->bindParam(':deviceId', $deviceId);
                 $insertStmt->execute();
             }
-    
+
             // Revoke other active tokens for the same user on different devices
             $revokeSql = "UPDATE appUsers 
                           SET is_active = 0, updated_at = NOW()
@@ -132,17 +168,17 @@ class LocalDbController
                           AND accountId = :accountId 
                           AND deviceId != :deviceId 
                           AND is_active = 1";
-    
+
             $revokeStmt = $this->dbConnection->prepare($revokeSql);
             $revokeStmt->bindParam(':username', $username);
             $revokeStmt->bindParam(':bankId', $bankId);
             $revokeStmt->bindParam(':accountId', $accountId);
             $revokeStmt->bindParam(':deviceId', $deviceId);
             $revokeStmt->execute();
-    
+
             // Commit the transaction
             $this->dbConnection->commit();
-    
+
             return true;
         } catch (Exception $e) {
             // Rollback the transaction in case of error
