@@ -595,7 +595,7 @@ $app->post('/api/v2/{bankId}/app/piggy', function (Request $request, Response $r
 });
 
 
-$app->put('/api/v2/{bankId}/app/piggy/withdraw', function (Request $request, Response $response, array $args) use ($appController) {
+$app->put('/api/v2/{bankId}/app/piggy/withdrawal', function (Request $request, Response $response, array $args) use ($appController) {
     $user = userAuthVerify();
     $requestData = requestParse($request);
 
