@@ -72,20 +72,20 @@ class LocalDbController
         $username = $username . '-NewApp';
 
         // Check if the username exists for the client
-        $stmt = $this->dbConnection->prepare("SELECT * FROM users_device_verify WHERE username = ? AND bank_id = ?");
+        $stmt = $this->dbConnection->prepare("SELECT * FROM users_device_verify WHERE username = ? AND bankid = ?");
         $stmt->execute([$username, $bankId]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$user) {
             // Username doesn't exist, insert new record
-            $stmt = $this->dbConnection->prepare("INSERT INTO users_device_verify (username, bank_id, deviceId) VALUES (?, ?, ?)");
+            $stmt = $this->dbConnection->prepare("INSERT INTO users_device_verify (username, bankid, deviceId) VALUES (?, ?, ?)");
             $stmt->execute([$username, $bankId, $deviceId]);
             return ["code" => 200, "message" => "New device registered successfully."];
         } else {
             // Username exists, check phone ID
             if ($user['deviceId'] == "-") {
                 // Phone ID has been reset, update with new phone ID
-                $stmt = $this->dbConnection->prepare("UPDATE users_device_verify SET deviceId = ? WHERE username = ? AND bank_id = ?");
+                $stmt = $this->dbConnection->prepare("UPDATE users_device_verify SET deviceId = ? WHERE username = ? AND bankid = ?");
                 $stmt->execute([$deviceId, $username, $bankId]);
                 return ["code" => 200, "message" => "Device registered successfully."];
             } else {
