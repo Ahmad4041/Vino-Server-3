@@ -86,7 +86,7 @@ class AuthController
                     'pin' => 'none'
                 ];
 
-                if (!$verifyDevice['code'] == 200) {
+                if ($verifyDevice['code'] != 200) {
                     return sendCustomResponse($verifyDevice['message'], $data, ErrorCodes::$FAIL_LOGIN[0], 200);
                 }
 
