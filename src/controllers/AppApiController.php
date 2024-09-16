@@ -1367,7 +1367,7 @@ class AppApiController
                 'chequeNo' => $request['chequeNo'] ?? null,
             ];
             $rules = [
-                'chequeNo' => 'required',
+                'chequeNo' => 'required|regex:/^\d{6}$/'
             ];
 
             $validator = new Validator();
@@ -1391,8 +1391,8 @@ class AppApiController
                 return [
                     'message' => ErrorCodes::$SUCCESS_REQUESTING_CHEQUE_STOP_PAYMENT[1],
                     'dcode' => ErrorCodes::$SUCCESS_REQUESTING_CHEQUE_STOP_PAYMENT[0],
-                    // 'data' => [],
-                    'data' => $verifyCheque['data'],
+                    'data' => [],
+                    // 'data' => $verifyCheque['data'],
                     'code' => 200,
                 ];
             } else {
