@@ -1362,8 +1362,8 @@ class BankDbController
                 'code' => 2022,
                 'message' => 'The cheque stop payment request succeeded',
                 'data' => [
-                    'AccountID' => $result['Accountid'],
-                    'AccountName' => $result['Customername'],
+                    'AccountID' => $result['AccountID'],
+                    'AccountName' => $result['AccountName'],
                     'ChequeNo' => (int) $chequeNo,
                     'Ddate' => date('Y-m-d H:i:s'),
                     'Cuser' => $username,
@@ -1448,7 +1448,7 @@ class BankDbController
     function deleteCardWallet($username, $cardId)
     {
         $this->dbConnection->beginTransaction();
-    
+
         try {
             $selectQuery = "
                 SELECT *
@@ -1458,7 +1458,7 @@ class BankDbController
             $selectStmt = $this->dbConnection->prepare($selectQuery);
             $selectStmt->execute([$username, $cardId]);
             $row = $selectStmt->fetch(PDO::FETCH_ASSOC);
-    
+
             if (!$row) {
                 $this->dbConnection->rollBack();
                 return [
@@ -1467,7 +1467,7 @@ class BankDbController
                     'data' => '',
                 ];
             }
-    
+
             $rowData = [
                 'Username' => (string)$row['Username'],
                 'CardNo' => (string)$row['CardNo'],
@@ -1482,18 +1482,18 @@ class BankDbController
                 'CardSignature' => (string)$row['CardSignature'],
                 'CountryCode' => (string)$row['CountryCode'],
                 'TransID' => (int)$row['TransID'],
-                'Ddate' => $row['Ddate'] ,
+                'Ddate' => $row['Ddate'],
                 'Active' => (bool)$row['Active'],
                 'Sno' => (int)$row['Sno']
             ];
-    
+
             $deleteQuery = "
                 DELETE FROM tblMobileCardVault
                 WHERE Username = ? AND Sno = ?
             ";
             $deleteStmt = $this->dbConnection->prepare($deleteQuery);
             $deleteStmt->execute([$username, $cardId]);
-    
+
             if ($deleteStmt->rowCount() > 0) {
                 $this->dbConnection->commit();
                 return [
@@ -2010,7 +2010,7 @@ class BankDbController
             ];
         }
     }
-// Incorrect Function
+    // Incorrect Function
     function withdrawPiggy($accountId)
     {
         try {

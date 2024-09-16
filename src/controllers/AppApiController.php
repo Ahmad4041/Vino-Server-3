@@ -1391,7 +1391,8 @@ class AppApiController
                 return [
                     'message' => ErrorCodes::$SUCCESS_REQUESTING_CHEQUE_STOP_PAYMENT[1],
                     'dcode' => ErrorCodes::$SUCCESS_REQUESTING_CHEQUE_STOP_PAYMENT[0],
-                    'data' => [],
+                    // 'data' => [],
+                    'data' => $verifyCheque['data'],
                     'code' => 200,
                 ];
             } else {
@@ -1444,7 +1445,7 @@ class AppApiController
             ];
         }
     }
-// Delete might change to POST method 
+    // Delete might change to POST method 
     public function deleteCardWallet($user, $bankid, $request)
     {
         try {
