@@ -8,6 +8,7 @@ use Rakit\Validation\Validator;
 class AuthController
 {
     private $key = '00112233445566778899';
+    private $debug = true;
 
     // private function checkUserRegisterUpdatedLogic($data, $bankId, $deviceId)
     // {
@@ -76,19 +77,23 @@ class AuthController
 
             if ($loginCheck['code'] == 200) {
 
-                $LocalDbConnection = new LocalDbController(Database::getConnection('mysql'));
-                $verifyDevice = $LocalDbConnection->authenticateUserDevice($loginCheck['data']['Username'], $bankId,  $request['deviceId']);
 
-                $data = [
-                    'username' => 'None',
-                    'token' => 'None',
-                    'type' => 'None',
-                    'pin' => 'none'
-                ];
+                if (!$this->debug) {
+                    $LocalDbConnection = new LocalDbController(Database::getConnection('mysql'));
+                    $verifyDevice = $LocalDbConnection->authenticateUserDevice($loginCheck['data']['Username'], $bankId,  $request['deviceId']);
 
-                if ($verifyDevice['code'] != 200) {
-                    return sendCustomResponse($verifyDevice['message'], $data, ErrorCodes::$FAIL_LOGIN[0], 200);
+                    $data = [
+                        'username' => 'None',
+                        'token' => 'None',
+                        'type' => 'None',
+                        'pin' => 'none'
+                    ];
+
+                    if ($verifyDevice['code'] != 200) {
+                        return sendCustomResponse($verifyDevice['message'], $data, ErrorCodes::$FAIL_LOGIN[0], 200);
+                    }
                 }
+
 
                 $token = $this->generateToken($loginCheck['data']['Username'], $bankId, $loginCheck['data']['AccountID'], $request['deviceId'] ?? null);
 
@@ -121,22 +126,22 @@ class AuthController
                 ];
                 return sendCustomResponse('Login Successful', $data, ErrorCodes::$SUCCESS_LOGIN[0], 200);
             } else {
-                $data = [
-                    'username' => 'None',
-                    'token' => 'None',
-                    'type' => 'None',
-                    'pin' => 'none'
-                ];
+                // $data = [
+                //     'username' => 'None',
+                //     'token' => 'None',
+                //     'type' => 'None',
+                //     'pin' => 'none'
+                // ];
                 return sendCustomResponse('Invalid Username or Password', $data, ErrorCodes::$FAIL_LOGIN[0], 200);
             }
         } catch (Exception $e) {
             var_dump($e->getMessage());
-            $data = [
-                'username' => 'None',
-                'token' => 'None',
-                'type' => 'None',
-                'pin' => 'none'
-            ];
+            // $data = [
+            //     'username' => 'None',
+            //     'token' => 'None',
+            //     'type' => 'None',
+            //     'pin' => 'none'
+            // ];
             return sendCustomResponse('Database Connection Unreachable', $data, ErrorCodes::$FAIL_LOGIN[0], 200);
         }
     }
