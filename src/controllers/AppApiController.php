@@ -55,7 +55,7 @@ class AppApiController
                 'surname' => 'required',
                 'otherName' => 'nullable',
                 'gender' => 'required',
-                'dob' => 'required|date:d/m/Y|before:18 years ago',
+                'dob' => 'required|date:Y-m-d|before:18 years ago',
                 'nationality' => 'required',
                 'residentialAddress' => 'required',
                 'contact' => 'required',
