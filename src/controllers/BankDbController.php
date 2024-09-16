@@ -1408,7 +1408,7 @@ class BankDbController
             if ($data) {
                 $res = array_map(function ($row) {
                     return [
-                        'Sno' => (int) $row['Sno'],
+                        'id' => (int) $row['Sno'],
                         'authorization_code' => $row['authorization_code'],
                         'card_no' => $row['card_no'],
                         'account_name' => $row['account_name'],
@@ -2010,7 +2010,7 @@ class BankDbController
             ];
         }
     }
-
+// Incorrect Function
     function withdrawPiggy($accountId)
     {
         try {

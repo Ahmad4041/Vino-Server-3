@@ -1444,13 +1444,13 @@ class AppApiController
             ];
         }
     }
-
+// Delete might change to POST method 
     public function deleteCardWallet($user, $bankid, $request)
     {
         try {
 
             $dataRequest = [
-                'Sno' => $request['Sno'] ?? null,
+                'Sno' => $request['id'] ?? null,
             ];
             $rules = [
                 'Sno' => 'required',
