@@ -18,7 +18,7 @@ require 'TransactionController/AddFundsCardWalletController.php';
 
 
 // require '../models/UtilityDemo.php';
-require __DIR__ . '/../models/UtilityDemo.php';
+// require __DIR__ . '../models/UtilityDemo.php';
 
 
 
@@ -55,7 +55,7 @@ class AppApiController
                 'surname' => 'required',
                 'otherName' => 'nullable',
                 'gender' => 'required',
-                'dob' => 'required|date:Y-m-d|before:18 years ago',
+                'dob' => 'before:18 years ago',
                 'nationality' => 'required',
                 'residentialAddress' => 'required',
                 'contact' => 'required',
@@ -730,8 +730,8 @@ class AppApiController
                 throw new Exception('File is not a valid image');
             }
 
-            if ($file['size'] > 2048000) { // 2MB limit
-                throw new Exception('File size exceeds limit');
+            if ($file['size'] > 15728640) { // 15 MB limit
+                throw new Exception('File size exceeds limit: Max size 15 MB');
             }
 
             // Generate unique filename
@@ -1232,14 +1232,14 @@ class AppApiController
                 return [
                     'message' => 'Beneficiary Account Removed Successfully',
                     'dcode' => ErrorCodes::$SUCCESS_TRANSACTION[0],
-                    'data' => $beneficiaries['data'],
+                    'data' => null,
                     'code' => 200,
                 ];
             } else {
                 return [
                     'message' => $beneficiaries['message'],
                     'dcode' => $beneficiaries['data'],
-                    'data' => $beneficiaries['code'],
+                    'data' => null,
                     'code' => 404,
                 ];
             }
@@ -1338,14 +1338,14 @@ class AppApiController
                 return [
                     'message' => ErrorCodes::$SUCCESS_REQUESTING_CHEQUE_BOOK[1],
                     'dcode' => ErrorCodes::$SUCCESS_REQUESTING_CHEQUE_BOOK[0],
-                    'data' => [],
+                    'data' => null,
                     'code' => 200,
                 ];
             } else {
                 return [
                     'message' => $requestChequeBook['message'],
                     'dcode' => $requestChequeBook['code'],
-                    'data' => [],
+                    'data' => null,
                     'code' => 404,
                 ];
             }
@@ -1362,6 +1362,7 @@ class AppApiController
 
     public function requestChequeStopPayment($user, $bankid, $request)
     {
+        
         try {
             $dataRequest = [
                 'chequeNo' => $request['chequeNo'] ?? null,
@@ -1386,12 +1387,14 @@ class AppApiController
 
             $bankDbConnection = new BankDbController(Database::getConnection($bankid));
             $verifyCheque = $bankDbConnection->verifyCheque($user['username'], $request['chequeNo']);
-
+            // $istesting=false;
+            // (UtilityDemo::$debug && $istesting)?var_dump($verifyCheque):'';
+            
             if ($verifyCheque['code'] == 2022) {
                 return [
                     'message' => ErrorCodes::$SUCCESS_REQUESTING_CHEQUE_STOP_PAYMENT[1],
                     'dcode' => ErrorCodes::$SUCCESS_REQUESTING_CHEQUE_STOP_PAYMENT[0],
-                    'data' => [],
+                    'data' => null,
                     // 'data' => $verifyCheque['data'],
                     'code' => 200,
                 ];
@@ -1399,7 +1402,7 @@ class AppApiController
                 return [
                     'message' => $verifyCheque['message'],
                     'dcode' => $verifyCheque['code'],
-                    'data' => [],
+                    'data' => null,
                     'code' => 400,
                 ];
             }

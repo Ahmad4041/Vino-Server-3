@@ -1071,7 +1071,7 @@ class BankDbController
             return [
                 'code' => 200,
                 'message' => 'Beneficiary deleted',
-                'data' => ['id' => $id, 'username' => $username]
+                'data' => null
             ];
         } else {
             return [
@@ -1361,13 +1361,14 @@ class BankDbController
             return [
                 'code' => 2022,
                 'message' => 'The cheque stop payment request succeeded',
-                'data' => [
-                    'AccountID' => $result['AccountID'],
-                    'AccountName' => $result['AccountName'],
-                    'ChequeNo' => (int) $chequeNo,
-                    'Ddate' => date('Y-m-d H:i:s'),
-                    'Cuser' => $username,
-                ],
+                'data' => []
+                // 'data' => [
+                //     'AccountID' => $result['AccountID'],
+                //     'AccountName' => $result['AccountName'],
+                //     'ChequeNo' => (int) $chequeNo,
+                //     'Ddate' => date('Y-m-d H:i:s'),
+                //     'Cuser' => $username,
+                // ],
             ];
         } catch (Exception $e) {
             return [

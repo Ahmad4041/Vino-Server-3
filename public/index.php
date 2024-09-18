@@ -8,6 +8,7 @@ require_once '../src/helpers/auth.php';
 require_once '../src/helpers/requestParse.php';
 require_once '../src/helpers/userAuthCheck.php';
 require_once '../src/helpers/generateRequestID.php';
+require '../src/models/UtilityDemo.php';
 
 require '../src/controllers/AppApiController.php';
 require '../src/controllers/AuthController.php';
@@ -634,7 +635,7 @@ $app->delete('/api/v2/{bankId}/app/beneficiaries', function (Request $request, R
     $requestData = requestParse($request);
 
     $result = $appController->deleteBeneficiaries($user, (int)$args['bankId'], $requestData);
-
+    $result['data']['body']=$appController->getBeneficiariesList($user, (int)$args['bankId'])['data'];
     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
 });
 
