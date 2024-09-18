@@ -1526,6 +1526,7 @@ class BankDbController
         $authcode = $request['authorizationCode'];
         $cardno = $request['last4'];
 
+        // First, check if the card already exists for the customer
         $query = "
             SELECT TOP 1 c.Accountid, c.Customername, v.Sno 
             FROM tblcustomers c
@@ -1537,10 +1538,12 @@ class BankDbController
         ";
 
         try {
+            // Prepare and execute the select query
             $stmt = $this->dbConnection->prepare($query);
             $stmt->execute([$authcode, $cardno, $username]);
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
+            // Check if the customer exists
             if (!$result || !$result['Accountid']) {
                 return [
                     'code' => 1038,
@@ -1549,6 +1552,7 @@ class BankDbController
                 ];
             }
 
+            // Check if the card is already added
             if ($result['Sno']) {
                 return [
                     'code' => 1038,
@@ -1557,9 +1561,11 @@ class BankDbController
                 ];
             }
 
+            // Insert the new card into the tblMobileCardVault
             $insertQuery = "
                 INSERT INTO tblMobileCardVault 
-                    (Username, CardNo, CardExpMonth, CardExpYear, CardCVV, CardBank, CardChannel, CardSignature, CountryCode, CardName, TransID, Ddate, Active, AuthCode, CardType) 
+                    (Username, CardNo, CardExpMonth, CardExpYear, CardCVV, CardBank, CardChannel, 
+                    CardSignature, CountryCode, CardName, TransID, Ddate, Active, AuthCode, CardType) 
                 VALUES 
                     (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE(), 'ACTIVE', ?, ?);
             ";
@@ -1581,25 +1587,51 @@ class BankDbController
                 $request['cardType'],
             ]);
 
-            return [
-                'code' => 200,
-                'message' => 'The Card successfully Added!',
-                'data' => [
-                    'Username' => $username,
-                    'CardNo' => $cardno,
-                    'CardExpMonth' => $request['expMonth'],
-                    'CardExpYear' => $request['expYear'],
-                    'CardCVV' => $request['cvv'],
-                    'CardBank' => $request['bank'],
-                    'CardChannel' => $request['channel'],
-                    'CardSignature' => $request['signature'],
-                    'CountryCode' => $request['countryCode'],
-                    'CardName' => $result['Customername'],
-                    'TransID' => $request['reference'],
-                    'Ddate' => date('Y-m-d H:i:s'),
-                    'Active' => 'ACTIVE',
-                ],
-            ];
+            // Fetch the latest inserted card data
+            $fetchQuery = "
+                SELECT TOP 1 v.Sno, v.Username, v.CardNo, v.CardExpMonth, v.CardExpYear, 
+                             v.CardCVV, v.CardBank, v.CardChannel, v.CardSignature, 
+                             v.CountryCode, v.CardName, v.TransID, v.Ddate, v.Active, c.Customername
+                FROM tblMobileCardVault v
+                LEFT JOIN tblcustomers c
+                ON c.Surname = v.Username
+                WHERE v.Username = ? AND v.CardNo = ?
+                ORDER BY v.Ddate DESC;
+            ";
+
+            $fetchStmt = $this->dbConnection->prepare($fetchQuery);
+            $fetchStmt->execute([$username, $cardno]);
+            $latestRecord = $fetchStmt->fetch(PDO::FETCH_ASSOC);
+
+            // Return the latest inserted data
+            if ($latestRecord) {
+                return [
+                    'code' => 200,
+                    'message' => 'The Card successfully Added!',
+                    'data' => [
+                        'id' => (int) $latestRecord['Sno'],
+                        'account_name' => $latestRecord['Username'],
+                        'card_no' => $latestRecord['CardNo'],
+                        'exp_month' => (int) $latestRecord['CardExpMonth'],
+                        'exp_year' => (int) $latestRecord['CardExpYear'],
+                        'cvv' => $latestRecord['CardCVV'],
+                        'bank' => $latestRecord['CardBank'],
+                        'channel' => $latestRecord['CardChannel'],
+                        'signature' => $latestRecord['CardSignature'],
+                        'country_code' => $latestRecord['CountryCode'],
+                        'card_name' => $latestRecord['CardName'],
+                        'trans_id' => $latestRecord['TransID'],
+                        'ddate' => $latestRecord['Ddate'],
+                        'active' => $latestRecord['Active'],
+                    ],
+                ];
+            } else {
+                return [
+                    'code' => 500,
+                    'message' => 'Failed to retrieve the latest card data.',
+                    'data' => '',
+                ];
+            }
         } catch (Exception $e) {
             return [
                 'code' => 500,
@@ -1608,6 +1640,7 @@ class BankDbController
             ];
         }
     }
+
 
     public function getCustomerDetails($username, $accountNo)
     {

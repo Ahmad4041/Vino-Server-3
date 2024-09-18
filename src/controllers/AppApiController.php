@@ -1362,7 +1362,7 @@ class AppApiController
 
     public function requestChequeStopPayment($user, $bankid, $request)
     {
-        
+
         try {
             $dataRequest = [
                 'chequeNo' => $request['chequeNo'] ?? null,
@@ -1389,7 +1389,7 @@ class AppApiController
             $verifyCheque = $bankDbConnection->verifyCheque($user['username'], $request['chequeNo']);
             // $istesting=false;
             // (UtilityDemo::$debug && $istesting)?var_dump($verifyCheque):'';
-            
+
             if ($verifyCheque['code'] == 2022) {
                 return [
                     'message' => ErrorCodes::$SUCCESS_REQUESTING_CHEQUE_STOP_PAYMENT[1],
@@ -1509,17 +1509,17 @@ class AppApiController
     {
         try {
             $dataRequest = [
-                'authorizationCode' => $request['authorizationCode'] ?? null,
-                'cardType' => $request['cardType'] ?? null,
-                'last4' => $request['last4'] ?? null,
-                'expMonth' => $request['expMonth'] ?? null,
-                'expYear' => $request['expYear'] ?? null,
+                'authorizationCode' => $request['authorization_code'] ?? null,
+                'cardType' => $request['card_type'] ?? null,
+                'last4' => $request['card_no'] ?? null,
+                'expMonth' => $request['exp_month'] ?? null,
+                'expYear' => $request['exp_year'] ?? null,
                 'bin' => $request['bin'] ?? null,
                 'bank' => $request['bank'] ?? null,
                 'channel' => $request['channel'] ?? null,
                 'signature' => $request['signature'] ?? null,
                 'reusable' => $request['reusable'] ?? null,
-                'countryCode' => $request['countryCode'] ?? null,
+                'countryCode' => $request['country_code'] ?? null,
                 'accountName' => $request['accountName'] ?? null,
                 'cvv' => $request['cvv'] ?? null,
                 'reference' => $request['reference'] ?? null,
@@ -1557,7 +1557,7 @@ class AppApiController
 
 
             $bankDbConnection = new BankDbController(Database::getConnection($bankid));
-            $data = $bankDbConnection->createCardWallet($user['username'], $request);
+            $data = $bankDbConnection->createCardWallet($user['username'], $dataRequest);
 
             if ($data['code'] == 200) {
                 return [
