@@ -507,7 +507,8 @@ class AppApiController
             'force_update' => $configConnection->getConfigKeyValue($bankid, 'force_update'),
             'config_update' => $config['value'],
             'config_timestamp' => $config['updated_at'],
-            'features' => UtilityDemo::$appFeature,
+            'features' => json_decode($configConnection->getConfigKeyValue(null, 'features')),
+            // 'features' => UtilityDemo::$appFeature,
         ];
 
         if ($isAll) {
@@ -631,8 +632,7 @@ class AppApiController
             if ($bankid == $request['bankCode']) {
                 if ($bankCodeExist['code'] == 200) {
                     $accountinfo = $bankDbConnection->getCustomerByAccountNo2($request['accountNo']);
-                    if($accountinfo!=false)
-                    {
+                    if ($accountinfo != false) {
                         $response = [
                             'destinationinstitutioncode' => $request['bankCode'],
                             'accountnumber' => $accountinfo['Accountid'],
@@ -653,7 +653,6 @@ class AppApiController
                         'dcode' => ErrorCodes::$FAIL_ACCOUNT_HOLDER_FOUND[0],
                         'code' => 400
                     ];
-                   
                 } else {
                     $accountinfo = $bankDbConnection->accountInfo($request);
                     if ($accountinfo['code'] == 200) {
@@ -682,9 +681,8 @@ class AppApiController
             } else {
                 $charms = new CharmsAPI();
                 $accountinfo2 = $charms->findAccount($request['accountNo'], $request['bankCode']);
-                try{
-                    if($accountinfo2['responseCode']!=400)
-                    {
+                try {
+                    if ($accountinfo2['responseCode'] != 400) {
                         if ($accountinfo2['data']['requestSuccessful']) {
                             return [
                                 'message' => $accountinfo2['message'],
@@ -708,18 +706,15 @@ class AppApiController
                         'dcode' => ErrorCodes::$FAIL_ACCOUNT_HOLDER_FOUND[0],
                         'code' => 400
                     ];
-                   
-                 }
-                 catch(Exception $e)
-                 {
+                } catch (Exception $e) {
                     return [
                         'message' => ErrorCodes::$FAIL_ACCOUNT_HOLDER_FOUND[1],
                         'data' =>  'Unable to Find Account.Please Check Account Details.',
-                        'request'=>$accountinfo2,
+                        'request' => $accountinfo2,
                         'dcode' => ErrorCodes::$FAIL_ACCOUNT_HOLDER_FOUND[0],
                         'code' => 400
                     ];
-                 }
+                }
             }
         } catch (Exception $e) {
             return [
@@ -2017,7 +2012,7 @@ class AppApiController
                     'AccountNo' => $createPiggy['data']['AccountNo'],
                     'totalAmount' => $createPiggy['data']['TotalAmount'],
                     'title' => $createPiggy['data']['Title'],
-                    'fundingSource'=>$createPiggy['data']['FundingSource'],
+                    'fundingSource' => $createPiggy['data']['FundingSource'],
                     'Username' => $user['username'],
                     'terms' => $createPiggy['data']['Terms'],
                     'amountPerCycle' => $createPiggy['data']['AmountPerCycle'],
@@ -2037,6 +2032,77 @@ class AppApiController
                     'dcode' => ErrorCodes::$FAIL_PIGGY_ACCOUNT_CREATED[0],
                     'data' => $createPiggy['message'],
                     'code' => 400,
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'dcode' => 500,
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null,
+            ];
+        }
+    }
+
+    public function updateLiveAppFeatures($bankid, $request)
+    {
+        try {
+            $dataRequest = [
+                'add_funds' => $request['add_funds'] ?? null,
+                'send_money' => $request['send_money'] ?? null,
+                'peer_pay' => $request['peer_pay'] ?? null,
+                'scan_pay' => $request['scan_pay'] ?? null,
+                'topup_mobile' => $request['topup_mobile'] ?? null,
+                'bill_payment' => $request['bill_payment'] ?? null,
+                'quick_loan' => $request['quick_loan'] ?? null,
+                'others' => $request['others'] ?? null,
+                'piggy' => $request['piggy'] ?? null,
+                'mycards' => $request['mycards'] ?? null,
+            ];
+
+            $rules = [
+                'add_funds' => 'required|boolean',
+                'send_money' => 'required|boolean',
+                'peer_pay' => 'required|boolean',
+                'scan_pay' => 'required|boolean',
+                'topup_mobile' => 'required|boolean',
+                'bill_payment' => 'required|boolean',
+                'quick_loan' => 'required|boolean',
+                'others' => 'required|boolean',
+                'piggy' => 'required|boolean',
+                'mycards' => 'required|boolean',
+            ];
+
+            $validator = new Validator();
+            $validation = $validator->make($dataRequest, $rules);
+
+            $validation->validate();
+
+            if ($validation->fails()) {
+                return [
+                    'message' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[1],
+                    'data' => $validation->errors()->toArray(),
+                    'dcode' => ErrorCodes::$FAIL_REQUIRED_FIELDS_VALIDATION[0],
+                    'code' => 422,
+                ];
+            };
+
+            $localDbConnection = new LocalDbController(Database::getConnection('mysql'));
+            $updateFeatureList = $localDbConnection->updateAppFeatures($dataRequest);
+
+            if ($updateFeatureList['code'] == 200) {
+                return [
+                    'message' => 'Features settings list updated Success',
+                    'dcode' => 200,
+                    'data' => null,
+                    'code' => 200,
+                ];
+            } else {
+                return [
+                    'message' => 'Error Features list update',
+                    'dcode' => 403,
+                    'data' => null,
+                    'code' => 403,
                 ];
             }
         } catch (Exception $e) {

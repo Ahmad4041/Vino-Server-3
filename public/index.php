@@ -296,6 +296,17 @@ $app->get('/api/v2/{bankId}/app/common/update/config', function (Request $reques
     }
 });
 
+$app->post('/api/v2/{bankId}/app/common/update/config/features', function (Request $request, Response $response, array $args) use ($appController) {
+    $requestData = requestParse($request);
+
+    $result = $appController->updateLiveAppFeatures((int)$args['bankId'], $requestData);
+    if ($result['code'] == 200) {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    } else {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    }
+});
+
 
 
 $app->post('/api/v2/{bankId}/app/common/password-reset', function (Request $request, Response $response, array $args) use ($appController) {
@@ -635,7 +646,7 @@ $app->delete('/api/v2/{bankId}/app/beneficiaries', function (Request $request, R
     $requestData = requestParse($request);
 
     $result = $appController->deleteBeneficiaries($user, (int)$args['bankId'], $requestData);
-    $result['data']['body']=$appController->getBeneficiariesList($user, (int)$args['bankId'])['data'];
+    $result['data']['body'] = $appController->getBeneficiariesList($user, (int)$args['bankId'])['data'];
     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
 });
 

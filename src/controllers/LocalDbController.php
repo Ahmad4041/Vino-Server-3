@@ -526,4 +526,45 @@ class LocalDbController
         // Directly return the existence check result as boolean
         return (bool) $stmt->fetchColumn();
     }
+
+    public function updateAppFeatures($dataRequest)
+    {
+        $module = 'AppFeatures';
+        $key = 'features';
+        $value = json_encode($dataRequest);
+        $currentTimestamp = date('Y-m-d H:i:s');
+
+        try {
+            $this->dbConnection->beginTransaction();
+
+            $query = "
+                INSERT INTO banksettings (module, `key`, value, status, created_at, updated_at)
+                VALUES (:module, :key, :value, 1, :timestamp, :timestamp)
+                ON DUPLICATE KEY UPDATE 
+                    value = VALUES(value),
+                    updated_at = VALUES(updated_at)
+            ";
+
+            $stmt = $this->dbConnection->prepare($query);
+            $stmt->execute([
+                ':module' => $module,
+                ':key' => $key,
+                ':value' => $value,
+                ':timestamp' => $currentTimestamp
+            ]);
+
+            $this->dbConnection->commit();
+            return [
+                'code' => 200,
+                'message' => "Success List Update",
+            ];
+        } catch (PDOException $e) {
+            $this->dbConnection->rollBack();
+            error_log("Error updating AppFeatures: " . $e->getMessage());
+            return [
+                'code' => 500,
+                'message' => "Error updating AppFeatures: " . $e->getMessage(),
+            ];
+        }
+    }
 }
