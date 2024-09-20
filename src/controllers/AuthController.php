@@ -116,7 +116,7 @@ class AuthController
                 ];
                 return sendCustomResponse('Login Successful', $dataSuccess, ErrorCodes::$SUCCESS_LOGIN[0], 200);
             } else if ($loginCheck['code'] == 201) {
-                return sendCustomResponse('Account not Active', $data, ErrorCodes::$FAIL_LOGIN[0], 200);
+                return sendCustomResponse('Your Account Is Pending Approval', $data, ErrorCodes::$FAIL_LOGIN[0], 200);
             } else {
                 return sendCustomResponse('Invalid Username or Password', $data, ErrorCodes::$FAIL_LOGIN[0], 200);
             }
