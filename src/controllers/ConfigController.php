@@ -55,6 +55,17 @@ class ConfigController
         $stmt = $this->dbConnection->prepare($sql);
         $stmt->execute([$key, $bankid]);
         $value = $stmt->fetchColumn();
+
+        return $value !== false ? $value : '';
+    }
+
+    public function getConfigFeatureKey( $key)
+    {
+        $sql = "SELECT value FROM banksettings WHERE `key` = ? LIMIT 1";
+        $stmt = $this->dbConnection->prepare($sql);
+        $stmt->execute([$key]);
+        $value = $stmt->fetchColumn();
+
         return $value !== false ? $value : '';
     }
 
