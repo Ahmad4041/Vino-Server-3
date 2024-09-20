@@ -1024,6 +1024,13 @@ class BankDbController
 
         $user = $this->checkUserAuthCreds($username, $password);
         if ($user) {
+            if ($user['Active'] === 'N') {
+                return [
+                    'data' => null,
+                    'message' => 'Account not active yet',
+                    'code' => 201
+                ];
+            }
             return [
                 'code' => 200,
                 'message' => 'Login Successful',
@@ -1033,6 +1040,7 @@ class BankDbController
             return [
                 'code' => 403,
                 'message' => 'Invalid Username or Password',
+                'data' => null,
             ];
         }
     }

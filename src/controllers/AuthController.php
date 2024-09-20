@@ -10,16 +10,6 @@ class AuthController
     private $key = '00112233445566778899';
     private $debug = true;
 
-    // private function checkUserRegisterUpdatedLogic($data, $bankId, $deviceId)
-    // {
-    //     $username = $data['Username'] . '-NewApp';
-    //     $accountId = $data['AccountID'];
-    //     $password = password_hash($username . ':' . $bankId, PASSWORD_BCRYPT);
-
-    //     $LocalDbConnection = new LocalDbController(Database::getConnection('mysql'));
-    //     $LocalDbConnection->checkAppUserExistUpdatedLogic($username, $accountId, $bankId, $password, $deviceId);
-    // }
-
     private function generateToken($username, $bankId, $accountId, $deviceId)
     {
         $tokenId = bin2hex(random_bytes(16));
@@ -50,13 +40,13 @@ class AuthController
     public function mobileLoginNewLogic($bankId, $request)
     {
         try {
-            $data = [
+            $dataRequest = [
                 'username' => $request['username'] ?? null,
                 'password' => $request['password'] ?? null,
             ];
 
             $validator = new Validator();
-            $validation = $validator->make($data, [
+            $validation = $validator->make($dataRequest, [
                 'username' => 'required',
                 'password' => 'required'
             ]);
@@ -75,19 +65,19 @@ class AuthController
             $BankDbConnection = new BankDbController(Database::getConnection($bankId));
             $loginCheck = $BankDbConnection->authUser($request);
 
+            $data = [
+                'username' => 'None',
+                'token' => 'None',
+                'type' => 'None',
+                'pin' => 'none'
+            ];
+
             if ($loginCheck['code'] == 200) {
 
 
                 if (!$this->debug) {
                     $LocalDbConnection = new LocalDbController(Database::getConnection('mysql'));
                     $verifyDevice = $LocalDbConnection->authenticateUserDevice($loginCheck['data']['Username'], $bankId,  $request['deviceId']);
-
-                    $data = [
-                        'username' => 'None',
-                        'token' => 'None',
-                        'type' => 'None',
-                        'pin' => 'none'
-                    ];
 
                     if ($verifyDevice['code'] != 200) {
                         return sendCustomResponse($verifyDevice['message'], $data, ErrorCodes::$FAIL_LOGIN[0], 200);
@@ -98,7 +88,7 @@ class AuthController
                 $token = $this->generateToken($loginCheck['data']['Username'], $bankId, $loginCheck['data']['AccountID'], $request['deviceId'] ?? null);
 
                 if (!$token) {
-                    return sendCustomResponse('Login failed', null, 401, 404);
+                    return sendCustomResponse('Login failed', $data, 401, 404);
                 }
 
                 $userData = [
@@ -117,31 +107,21 @@ class AuthController
                 $mobileLogDbConnection->logMobileLogin($mobileLogData);
                 $BankDbConnection->logDbLogin($mobileLogData, $loginCheck['data']['AccountID']);
 
-                $data = [
+                $dataSuccess = [
                     'username' => $userData['Username'],
                     'token' => $token,
                     'type' => $userData['AType'],
                     'requestId' => $requestId,
                     'pin' => $userData['PIN']
                 ];
-                return sendCustomResponse('Login Successful', $data, ErrorCodes::$SUCCESS_LOGIN[0], 200);
+                return sendCustomResponse('Login Successful', $dataSuccess, ErrorCodes::$SUCCESS_LOGIN[0], 200);
+            } else if ($loginCheck['code'] == 201) {
+                return sendCustomResponse('Account not Active', $data, ErrorCodes::$FAIL_LOGIN[0], 200);
             } else {
-                // $data = [
-                //     'username' => 'None',
-                //     'token' => 'None',
-                //     'type' => 'None',
-                //     'pin' => 'none'
-                // ];
                 return sendCustomResponse('Invalid Username or Password', $data, ErrorCodes::$FAIL_LOGIN[0], 200);
             }
         } catch (Exception $e) {
-            var_dump($e->getMessage());
-            // $data = [
-            //     'username' => 'None',
-            //     'token' => 'None',
-            //     'type' => 'None',
-            //     'pin' => 'none'
-            // ];
+            // var_dump($e->getMessage());
             return sendCustomResponse('Database Connection Unreachable', $data, ErrorCodes::$FAIL_LOGIN[0], 200);
         }
     }
