@@ -55,7 +55,7 @@ class AppApiController
                 'surname' => 'required',
                 'otherName' => 'nullable',
                 'gender' => 'required',
-                'dob' => 'before:18 years ago',
+                // 'dob' => 'before:18 years ago',
                 'nationality' => 'required',
                 'residentialAddress' => 'required',
                 'contact' => 'required',
@@ -506,7 +506,8 @@ class AppApiController
             'app_url' => $configConnection->getConfigKeyValue($bankid, 'app_url'),
             'force_update' => $configConnection->getConfigKeyValue($bankid, 'force_update'),
             'config_update' => $config['value'],
-            'config_timestamp' => $config['updated_at']
+            'config_timestamp' => $config['updated_at'],
+            'features' => UtilityDemo::$appFeature,
         ];
 
         if ($isAll) {
@@ -520,7 +521,6 @@ class AppApiController
             $configData = $localDbConnection->fetchResponseData();
             $data['networks'] = $configData['networks'];
             $data['utilites'] = $configData['utilities'];
-
             $bankListData = $localDbConnection->fetchBankListData();
             $data['bank_list'] = $bankListData;
         }
@@ -631,18 +631,29 @@ class AppApiController
             if ($bankid == $request['bankCode']) {
                 if ($bankCodeExist['code'] == 200) {
                     $accountinfo = $bankDbConnection->getCustomerByAccountNo2($request['accountNo']);
-                    $response = [
-                        'destinationinstitutioncode' => $request['bankCode'],
-                        'accountnumber' => $accountinfo['Accountid'],
-                        'accountname' => $accountinfo['customerName'],
-                        'bvn' => $accountinfo['bvn'],
-                    ];
+                    if($accountinfo!=false)
+                    {
+                        $response = [
+                            'destinationinstitutioncode' => $request['bankCode'],
+                            'accountnumber' => $accountinfo['Accountid'],
+                            'accountname' => $accountinfo['customerName'],
+                            'bvn' => $accountinfo['bvn'],
+                            // 'acc' => $accountinfo
+                        ];
+                        return [
+                            'message' => ErrorCodes::$SUCCESS_FETCH_ACCOUNT_INFO[1],
+                            'data' =>  $response,
+                            'dcode' => ErrorCodes::$SUCCESS_FETCH_ACCOUNT_INFO[0],
+                            'code' => 200
+                        ];
+                    }
                     return [
-                        'message' => ErrorCodes::$SUCCESS_FETCH_ACCOUNT_INFO[1],
-                        'data' =>  $response,
-                        'dcode' => ErrorCodes::$SUCCESS_FETCH_ACCOUNT_INFO[0],
-                        'code' => 200
+                        'message' => ErrorCodes::$FAIL_ACCOUNT_HOLDER_FOUND[1],
+                        'data' =>  'Unable to Find Account.Please Check Account Details.',
+                        'dcode' => ErrorCodes::$FAIL_ACCOUNT_HOLDER_FOUND[0],
+                        'code' => 400
                     ];
+                   
                 } else {
                     $accountinfo = $bankDbConnection->accountInfo($request);
                     if ($accountinfo['code'] == 200) {
@@ -671,21 +682,44 @@ class AppApiController
             } else {
                 $charms = new CharmsAPI();
                 $accountinfo2 = $charms->findAccount($request['accountNo'], $request['bankCode']);
-                if ($accountinfo2['data']['requestSuccessful']) {
-                    return [
-                        'message' => $accountinfo2['message'],
-                        'data' =>  $accountinfo2['data']['responseData'],
-                        'dcode' => ErrorCodes::$SUCCESS_FETCH_ACCOUNT_INFO[0],
-                        'code' => 200
-                    ];
-                } else {
+                try{
+                    if($accountinfo2['responseCode']!=400)
+                    {
+                        if ($accountinfo2['data']['requestSuccessful']) {
+                            return [
+                                'message' => $accountinfo2['message'],
+                                'data' =>  $accountinfo2['data']['responseData'],
+                                'dcode' => ErrorCodes::$SUCCESS_FETCH_ACCOUNT_INFO[0],
+                                'code' => 200
+                            ];
+                        } else {
+                            return [
+                                'message' => ErrorCodes::$FAIL_ACCOUNT_HOLDER_FOUND[1],
+                                'data' =>  'Unable to Find Account.Please Check Account Details.',
+                                'dcode' => ErrorCodes::$FAIL_ACCOUNT_HOLDER_FOUND[0],
+                                'code' => 400
+                            ];
+                        }
+                    }
                     return [
                         'message' => ErrorCodes::$FAIL_ACCOUNT_HOLDER_FOUND[1],
-                        'data' =>  $accountinfo2['data']['message'],
+                        'data' =>  'Unable to Find Account.Please Check Account Details.',
+                        // 'data'=> $accountinfo2,
                         'dcode' => ErrorCodes::$FAIL_ACCOUNT_HOLDER_FOUND[0],
                         'code' => 400
                     ];
-                }
+                   
+                 }
+                 catch(Exception $e)
+                 {
+                    return [
+                        'message' => ErrorCodes::$FAIL_ACCOUNT_HOLDER_FOUND[1],
+                        'data' =>  'Unable to Find Account.Please Check Account Details.',
+                        'request'=>$accountinfo2,
+                        'dcode' => ErrorCodes::$FAIL_ACCOUNT_HOLDER_FOUND[0],
+                        'code' => 400
+                    ];
+                 }
             }
         } catch (Exception $e) {
             return [
@@ -1983,6 +2017,7 @@ class AppApiController
                     'AccountNo' => $createPiggy['data']['AccountNo'],
                     'totalAmount' => $createPiggy['data']['TotalAmount'],
                     'title' => $createPiggy['data']['Title'],
+                    'fundingSource'=>$createPiggy['data']['FundingSource'],
                     'Username' => $user['username'],
                     'terms' => $createPiggy['data']['Terms'],
                     'amountPerCycle' => $createPiggy['data']['AmountPerCycle'],
