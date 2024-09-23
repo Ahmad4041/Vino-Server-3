@@ -312,7 +312,7 @@ class AppApiController
 
             if ($validation->fails()) {
                 return [
-                    'message' => ErrorCodes::$FAIL_PIN_FORMAT_INVALID[1],
+                    'message' => $validation->errors()->toArray(),
                     'data' => $validation->errors()->toArray(),
                     'dcode' => ErrorCodes::$FAIL_PIN_FORMAT_INVALID[0],
                     'code' => 422,
@@ -331,7 +331,7 @@ class AppApiController
             } else {
                 return [
                     'dcode' => $createUserPin['code'],
-                    'code' => 201,
+                    'code' => 404,
                     'message' => $createUserPin['message'],
                     'data' => null
                 ];
