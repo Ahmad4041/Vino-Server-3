@@ -507,8 +507,7 @@ class AppApiController
             'force_update' => $configConnection->getConfigKeyValue($bankid, 'force_update'),
             'config_update' => $config['value'],
             'config_timestamp' => $config['updated_at'],
-            'features' => json_decode($configConnection->getConfigKeyValue(null, 'features')),
-            // 'features' => UtilityDemo::$appFeature,
+            'features' => json_decode($configConnection->getConfigFeatureKey( 'features')),
         ];
 
         if ($isAll) {

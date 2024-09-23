@@ -533,26 +533,51 @@ class LocalDbController
         $key = 'features';
         $value = json_encode($dataRequest);
         $currentTimestamp = date('Y-m-d H:i:s');
-
+    
         try {
             $this->dbConnection->beginTransaction();
-
-            $query = "
-                INSERT INTO banksettings (module, `key`, value, status, created_at, updated_at)
-                VALUES (:module, :key, :value, 1, :timestamp, :timestamp)
-                ON DUPLICATE KEY UPDATE 
-                    value = VALUES(value),
-                    updated_at = VALUES(updated_at)
+    
+            // First, check if the row exists
+            $checkQuery = "
+                SELECT id FROM banksettings 
+                WHERE module = :module AND `key` = :key AND status = 1
+                LIMIT 1
             ";
-
-            $stmt = $this->dbConnection->prepare($query);
-            $stmt->execute([
+            $checkStmt = $this->dbConnection->prepare($checkQuery);
+            $checkStmt->execute([
                 ':module' => $module,
-                ':key' => $key,
-                ':value' => $value,
-                ':timestamp' => $currentTimestamp
+                ':key' => $key
             ]);
-
+            $existingRow = $checkStmt->fetch(PDO::FETCH_ASSOC);
+    
+            if ($existingRow) {
+                // Update existing row
+                $updateQuery = "
+                    UPDATE banksettings 
+                    SET value = :value, updated_at = :timestamp
+                    WHERE id = :id
+                ";
+                $stmt = $this->dbConnection->prepare($updateQuery);
+                $stmt->execute([
+                    ':value' => $value,
+                    ':timestamp' => $currentTimestamp,
+                    ':id' => $existingRow['id']
+                ]);
+            } else {
+                // Insert new row
+                $insertQuery = "
+                    INSERT INTO banksettings (module, `key`, value, status, created_at, updated_at)
+                    VALUES (:module, :key, :value, 1, :timestamp, :timestamp)
+                ";
+                $stmt = $this->dbConnection->prepare($insertQuery);
+                $stmt->execute([
+                    ':module' => $module,
+                    ':key' => $key,
+                    ':value' => $value,
+                    ':timestamp' => $currentTimestamp
+                ]);
+            }
+    
             $this->dbConnection->commit();
             return [
                 'code' => 200,
