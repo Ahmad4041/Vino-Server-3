@@ -1535,6 +1535,33 @@ class AppApiController
 
     public function postCardWallet($user, $bankid, $request)
     {
+                // *****************************************************************************
+        // ////////////////////////// Add Card Feature \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ 
+        // This endpoint Validate the card with the help of Paystack API and after the validation it will
+        // Store that validation card details into database with respect to cardwallet 
+        // *****************************************************************************
+        // 1. Validate the Parameter passing by the App to this end point 
+        //  Structure:  
+        // @JsonProperty("id")
+        // @JsonProperty("authorization_code")
+        // @JsonProperty("card_type")
+        // @JsonProperty("card_no")
+        // @JsonProperty("exp_month")
+        // @JsonProperty("exp_year")
+        // @JsonProperty("bin")
+        // @JsonProperty("bank")
+        // @JsonProperty("channel")
+        // @JsonProperty("signature")
+        // @JsonProperty("reusable")
+        // @JsonProperty("country_code")
+        // @JsonProperty("account_name")
+        // @JsonProperty("cvv")
+        // @JsonProperty("reference")
+        // @JsonProperty("status")
+        // @JsonProperty("pin")
+        // @JsonProperty("otp")
+        // @JsonProperty("phone")
+        // @JsonProperty("url")
         try {
             $dataRequest = [
                 'authorizationCode' => $request['authorization_code'] ?? null,
@@ -1582,10 +1609,15 @@ class AppApiController
                     'code' => 422,
                 ];
             };
+            // 2. Fetch All the Cards from Database against Username {Database: tblMobileCardVault => Username} []
+                // 2.1 : Check if Card Exist or not by comparing the All cards 
+                // 2.2 : Get User by Username and validate user is valid or not  {Database: tblMobileUsers => Username}
+            // 3. Call Paystack Gateway for charge the customer based on passing data [name , email , account , bankcode , bankname , card* , ]
 
 
             $bankDbConnection = new BankDbController(Database::getConnection($bankid));
-            $data = $bankDbConnection->createCardWallet($user['username'], $dataRequest);
+            $bankname='Test';// need to fetch bankname based on bankid
+            $data = $bankDbConnection->createCardWallet($user['username'], $dataRequest,$bankid,$bankname);
 
             if ($data['code'] == 200) {
                 return [

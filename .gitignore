@@ -17,6 +17,7 @@ vendor/guzzlehttp/
 
 # Ignore environment file
 .env
-
+.history
+.vscode
 #Images
 src/controllers/images/

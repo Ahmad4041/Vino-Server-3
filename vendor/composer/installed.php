@@ -3,7 +3,7 @@
         'name' => 'stmaan/vino-server-3-new',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '2af994a9dd42394ee1fe0e6a946dc9bc567f2bab',
+        'reference' => '0091f7b6b216b66290eca6b4d3bc85727b56e451',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -226,7 +226,7 @@
         'stmaan/vino-server-3-new' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '2af994a9dd42394ee1fe0e6a946dc9bc567f2bab',
+            'reference' => '0091f7b6b216b66290eca6b4d3bc85727b56e451',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
