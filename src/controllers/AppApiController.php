@@ -389,7 +389,7 @@ class AppApiController
             } else {
                 return [
                     'dcode' => $updateUserPassword['code'],
-                    'code' => 201,
+                    'code' => 404,
                     'message' => $updateUserPassword['message'],
                     'data' => null
                 ];
@@ -424,9 +424,9 @@ class AppApiController
 
             if ($validation->fails()) {
                 return [
-                    'message' => ErrorCodes::$FAIL_PIN_FORMAT_INVALID[1],
+                    'message' => 'VALIDATION_ERROR',
                     'data' => $validation->errors()->toArray(),
-                    'dcode' => ErrorCodes::$FAIL_PIN_FORMAT_INVALID[0],
+                    'dcode' => 403,
                     'code' => 422,
                 ];
             }
@@ -443,7 +443,7 @@ class AppApiController
             } else {
                 return [
                     'dcode' => $verifyUserPin['code'],
-                    'code' => 201,
+                    'code' => 404,
                     'message' => $verifyUserPin['message'],
                     'data' => $verifyUserPin['message']
                 ];
@@ -507,7 +507,7 @@ class AppApiController
             'force_update' => $configConnection->getConfigKeyValue($bankid, 'force_update'),
             'config_update' => $config['value'],
             'config_timestamp' => $config['updated_at'],
-            'features' => json_decode($configConnection->getConfigFeatureKey( 'features')),
+            'features' => json_decode($configConnection->getConfigFeatureKey('features')),
         ];
 
         if ($isAll) {
