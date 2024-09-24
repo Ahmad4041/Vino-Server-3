@@ -497,6 +497,48 @@ class AppApiController
         $localDbConnection = new LocalDbController(Database::getConnection('mysql'));
 
         $isAll = (isset($queryParams['all']) && $queryParams['all'] !== 'false');
+        $keys = ['title', 'version', 'app_name', 'app_logo', 'app_url', 'force_update'];
+        $configValues = $configConnection->getConfigValues($bankid, $keys);
+
+        $data = [
+            'title' => $configValues['title'] ?? '',
+            'version' => $configValues['version'] ?? '',
+            'name' => $configValues['app_name'] ?? '',
+            'app_logo' => $configValues['app_logo'] ?? '',
+            'app_url' => $configValues['app_url'] ?? '',
+            'force_update' => $configValues['force_update'] ?? '',
+            'config_update' => $configValues['value'],
+            'config_timestamp' => $configValues['updated_at'],
+            'features' => json_decode($configConnection->getConfigFeatureKey('features')),
+        ];
+
+        if ($isAll) {
+            // $dataVtPass = $configConnection->getVtPassData()['data'];
+            // $data['networks'] = $dataVtPass['networks'];
+            // $data['utilites'] = $dataVtPass['utilites'];
+            // $data['networks'] = $configConnection->getTelcoNetworks()['data'];
+            // $data['utilites'] = $configConnection->getUtilities($bankid, 'all')['data'];
+            // $data['bank_list'] = $configConnection->getBankListWithoutAuth($bankid)['data'];
+
+            $configData = $localDbConnection->fetchResponseData();
+            $data['networks'] = $configData['networks'];
+            $data['utilites'] = $configData['utilities'];
+            $bankListData = $localDbConnection->fetchBankListData();
+            $data['bank_list'] = $bankListData;
+        }
+
+        $message = ErrorCodes::$SUCCESS_FETCH[1];
+        $dcode = ErrorCodes::$SUCCESS_FETCH[0];
+        return sendCustomResponse($message, $data, $dcode, 200);
+    }
+
+
+    public function getConfigold($bankid, $queryParams)
+    {
+        $configConnection = new ConfigController(Database::getConnection('mysql'));
+        $localDbConnection = new LocalDbController(Database::getConnection('mysql'));
+
+        $isAll = (isset($queryParams['all']) && $queryParams['all'] !== 'false');
         $config = $configConnection->getConfigKeyValueData($bankid, 'config_update');
         $data = [
             'title' => $configConnection->getConfigKeyValue($bankid, 'title'),
@@ -1535,7 +1577,7 @@ class AppApiController
 
     public function postCardWallet($user, $bankid, $request)
     {
-                // *****************************************************************************
+        // *****************************************************************************
         // ////////////////////////// Add Card Feature \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ 
         // This endpoint Validate the card with the help of Paystack API and after the validation it will
         // Store that validation card details into database with respect to cardwallet 
@@ -1610,14 +1652,14 @@ class AppApiController
                 ];
             };
             // 2. Fetch All the Cards from Database against Username {Database: tblMobileCardVault => Username} []
-                // 2.1 : Check if Card Exist or not by comparing the All cards 
-                // 2.2 : Get User by Username and validate user is valid or not  {Database: tblMobileUsers => Username}
+            // 2.1 : Check if Card Exist or not by comparing the All cards 
+            // 2.2 : Get User by Username and validate user is valid or not  {Database: tblMobileUsers => Username}
             // 3. Call Paystack Gateway for charge the customer based on passing data [name , email , account , bankcode , bankname , card* , ]
 
 
             $bankDbConnection = new BankDbController(Database::getConnection($bankid));
-            $bankname='Test';// need to fetch bankname based on bankid
-            $data = $bankDbConnection->createCardWallet($user['username'], $dataRequest,$bankid,$bankname);
+            $bankname = 'Test'; // need to fetch bankname based on bankid
+            $data = $bankDbConnection->createCardWallet($user['username'], $dataRequest, $bankid, $bankname);
 
             if ($data['code'] == 200) {
                 return [
