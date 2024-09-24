@@ -16,7 +16,7 @@ class VTPassController
     public function __construct()
     {
         $this->client = new Client(['verify' => false]);
-        $this->liveUrl = 'https://api-service.vtpass.com/api';
+        $this->liveUrl = 'https://vtpass.com/api';
         $this->sandboxUrl = 'https://sandbox.vtpass.com/api';
         $this->islive = true; // Set this based on your environment
 

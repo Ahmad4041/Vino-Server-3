@@ -59,7 +59,18 @@ class ConfigController
         return $value !== false ? $value : '';
     }
 
-    public function getConfigFeatureKey( $key)
+    public function getConfigValues($bankid, $keys)
+    {
+        $in  = str_repeat('?,', count($keys) - 1) . '?'; // Creates a string like "?, ?, ?, ..."
+        $sql = "SELECT `key`, value FROM banksettings WHERE `key` IN ($in) AND bankname = ?";
+        $stmt = $this->dbConnection->prepare($sql);
+        $stmt->execute(array_merge($keys, [$bankid]));
+        $results = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+
+        return $results;
+    }
+
+    public function getConfigFeatureKey($key)
     {
         $sql = "SELECT value FROM banksettings WHERE `key` = ? LIMIT 1";
         $stmt = $this->dbConnection->prepare($sql);
