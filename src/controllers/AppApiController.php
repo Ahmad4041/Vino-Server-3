@@ -7,7 +7,7 @@ require 'MobileLogController.php';
 // Thrid Party Controllers
 require 'ThirdPartyControllers/CharmsApiController.php';
 require 'ThirdPartyControllers/CoreBankController.php';
-require 'ThirdPartyControllers/PayStackController.php';
+// require 'ThirdPartyControllers/PayStackController.php';
 require 'ThirdPartyControllers/VtPassController.php';
 
 // Transaction Controller
@@ -314,7 +314,7 @@ class AppApiController
                 return [
                     'message' => 'Pin validation Error',
                     'data' => $validation->errors()->toArray(),
-                    'dcode' => ErrorCodes::$FAIL_PIN_FORMAT_INVALID[0],
+                    'dcode' => 403,
                     'code' => 422,
                 ];
             }
@@ -491,49 +491,50 @@ class AppApiController
         }
     }
 
+    // public function getConfig($bankid, $queryParams)
+    // {
+    //     $configConnection = new ConfigController(Database::getConnection('mysql'));
+    //     $localDbConnection = new LocalDbController(Database::getConnection('mysql'));
+
+    //     $isAll = (isset($queryParams['all']) && $queryParams['all'] !== 'false');
+    //     $config = $configConnection->getConfigKeyValueData($bankid, 'config_update');
+    //     $keys = ['title', 'version', 'app_name', 'app_logo', 'app_url', 'force_update'];
+    //     $configValues = $configConnection->getConfigValues($bankid, $keys);
+
+    //     $data = [
+    //         'title' => $configValues['title'] ?? '',
+    //         'version' => $configValues['version'] ?? '',
+    //         'name' => $configValues['app_name'] ?? '',
+    //         'app_logo' => $configValues['app_logo'] ?? '',
+    //         'app_url' => $configValues['app_url'] ?? '',
+    //         'force_update' => $configValues['force_update'] ?? '',
+    //         'config_update' => $config['value'],
+    //         'config_timestamp' => $config['updated_at'],
+    //         'features' => json_decode($configConnection->getConfigFeatureKey('features')),
+    //     ];
+
+    //     if ($isAll) {
+    //         // $dataVtPass = $configConnection->getVtPassData()['data'];
+    //         // $data['networks'] = $dataVtPass['networks'];
+    //         // $data['utilites'] = $dataVtPass['utilites'];
+    //         // $data['networks'] = $configConnection->getTelcoNetworks()['data'];
+    //         // $data['utilites'] = $configConnection->getUtilities($bankid, 'all')['data'];
+    //         // $data['bank_list'] = $configConnection->getBankListWithoutAuth($bankid)['data'];
+
+    //         $configData = $localDbConnection->fetchResponseData();
+    //         $data['networks'] = $configData['networks'];
+    //         $data['utilites'] = $configData['utilities'];
+    //         $bankListData = $localDbConnection->fetchBankListData();
+    //         $data['bank_list'] = $bankListData;
+    //     }
+
+    //     $message = ErrorCodes::$SUCCESS_FETCH[1];
+    //     $dcode = ErrorCodes::$SUCCESS_FETCH[0];
+    //     return sendCustomResponse($message, $data, $dcode, 200);
+    // }
+
+
     public function getConfig($bankid, $queryParams)
-    {
-        $configConnection = new ConfigController(Database::getConnection('mysql'));
-        $localDbConnection = new LocalDbController(Database::getConnection('mysql'));
-
-        $isAll = (isset($queryParams['all']) && $queryParams['all'] !== 'false');
-        $keys = ['title', 'version', 'app_name', 'app_logo', 'app_url', 'force_update'];
-        $configValues = $configConnection->getConfigValues($bankid, $keys);
-
-        $data = [
-            'title' => $configValues['title'] ?? '',
-            'version' => $configValues['version'] ?? '',
-            'name' => $configValues['app_name'] ?? '',
-            'app_logo' => $configValues['app_logo'] ?? '',
-            'app_url' => $configValues['app_url'] ?? '',
-            'force_update' => $configValues['force_update'] ?? '',
-            'config_update' => $configValues['value'],
-            'config_timestamp' => $configValues['updated_at'],
-            'features' => json_decode($configConnection->getConfigFeatureKey('features')),
-        ];
-
-        if ($isAll) {
-            // $dataVtPass = $configConnection->getVtPassData()['data'];
-            // $data['networks'] = $dataVtPass['networks'];
-            // $data['utilites'] = $dataVtPass['utilites'];
-            // $data['networks'] = $configConnection->getTelcoNetworks()['data'];
-            // $data['utilites'] = $configConnection->getUtilities($bankid, 'all')['data'];
-            // $data['bank_list'] = $configConnection->getBankListWithoutAuth($bankid)['data'];
-
-            $configData = $localDbConnection->fetchResponseData();
-            $data['networks'] = $configData['networks'];
-            $data['utilites'] = $configData['utilities'];
-            $bankListData = $localDbConnection->fetchBankListData();
-            $data['bank_list'] = $bankListData;
-        }
-
-        $message = ErrorCodes::$SUCCESS_FETCH[1];
-        $dcode = ErrorCodes::$SUCCESS_FETCH[0];
-        return sendCustomResponse($message, $data, $dcode, 200);
-    }
-
-
-    public function getConfigold($bankid, $queryParams)
     {
         $configConnection = new ConfigController(Database::getConnection('mysql'));
         $localDbConnection = new LocalDbController(Database::getConnection('mysql'));
@@ -541,6 +542,7 @@ class AppApiController
         $isAll = (isset($queryParams['all']) && $queryParams['all'] !== 'false');
         $config = $configConnection->getConfigKeyValueData($bankid, 'config_update');
         $data = [
+            'bankid' => $bankid,
             'title' => $configConnection->getConfigKeyValue($bankid, 'title'),
             'version' => $configConnection->getConfigKeyValue($bankid, 'version'),
             'name' => $configConnection->getConfigKeyValue($bankid, 'app_name'),

@@ -119,7 +119,7 @@ $app->post('/api/v2/{bankId}/auth/register-user-customer-new', function (Request
     $data = requestParse($request);
 
 
-    $result = $appController->registerNewCustomer((int)$args['bankId'], $data);
+    $result = $appController->registerNewCustomer($args['bankId'], $data);
 
     if ($result['code'] == 200) {
         return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
@@ -134,7 +134,7 @@ $app->post('/api/v2/{bankId}/auth/register-user-customer-new', function (Request
 $app->post('/api/v2/{bankId}/auth/register-user-customer-exist', function (Request $request, Response $response, array $args) use ($appController) {
     $data = requestParse($request);
 
-    $result = $appController->registerExistCustomer((int)$args['bankId'], $data);
+    $result = $appController->registerExistCustomer($args['bankId'], $data);
 
     if ($result['code'] == 200) {
         return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
@@ -149,7 +149,7 @@ $app->post('/api/v2/{bankId}/auth/generate-token', function (Request $request, R
     $data = requestParse($request);
 
     $authController = new AuthController();
-    $result = $authController->mobileLoginNewLogic((int)$args['bankId'], $data);
+    $result = $authController->mobileLoginNewLogic($args['bankId'], $data);
 
     if ($result['code'] == 200) {
         return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
@@ -170,7 +170,7 @@ $app->get('/api/v2/{bankId}/app/user/current', function (Request $request, Respo
 
     $user = userAuthVerify();
 
-    $result = $appController->currentUser((int)$args['bankId'], $user);
+    $result = $appController->currentUser($args['bankId'], $user);
 
     if ($result['code'] == 200) {
         return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
@@ -185,7 +185,7 @@ $app->get('/api/v2/{bankId}/app/user/current/accounts', function (Request $reque
     $user = userAuthVerify();
 
 
-    $result = $appController->currentUserAccountBalance((int)$args['bankId'], $user);
+    $result = $appController->currentUserAccountBalance($args['bankId'], $user);
 
     if ($result['code'] == 200) {
         return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
@@ -200,7 +200,7 @@ $app->post('/api/v2/{bankId}/app/user/pin-create', function (Request $request, R
     $user = userAuthVerify();
     $requestData = requestParse($request);
 
-    $result = $appController->userPinCreate((int)$args['bankId'], $requestData, $user);
+    $result = $appController->userPinCreate($args['bankId'], $requestData, $user);
 
     if ($result['code'] == 200) {
         return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
@@ -215,7 +215,7 @@ $app->put('/api/v2/{bankId}/app/user/pin-change', function (Request $request, Re
     $user = userAuthVerify();
     $requestData = requestParse($request);
 
-    $result = $appController->userPinUpdate((int)$args['bankId'], $requestData, $user);
+    $result = $appController->userPinUpdate($args['bankId'], $requestData, $user);
 
     if ($result['code'] == 200) {
         return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
@@ -229,7 +229,7 @@ $app->put('/api/v2/{bankId}/app/user/password-change', function (Request $reques
     // $user = userAuthVerify();
     $requestData = requestParse($request);
 
-    $result = $appController->userPasswordUpdate((int)$args['bankId'], $requestData);
+    $result = $appController->userPasswordUpdate($args['bankId'], $requestData);
 
     if ($result['code'] == 200) {
         return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
@@ -244,7 +244,7 @@ $app->post('/api/v2/{bankId}/app/user/pin-verify', function (Request $request, R
     $user = userAuthVerify();
     $requestData = requestParse($request);
 
-    $result = $appController->userPinVerify((int)$args['bankId'], $requestData, $user);
+    $result = $appController->userPinVerify($args['bankId'], $requestData, $user);
 
     if ($result['code'] == 200) {
         return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
@@ -263,7 +263,7 @@ $app->post('/api/v2/{bankId}/app/user/pin-verify', function (Request $request, R
 
 $app->get('/api/v2/{bankId}/app/common/account-type', function (Request $request, Response $response, array $args) use ($appController) {
 
-    $result = $appController->getAccountType((int)$args['bankId']);
+    $result = $appController->getAccountType($args['bankId']);
 
     if ($result['code'] == 200) {
         return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
@@ -276,7 +276,7 @@ $app->get('/api/v2/{bankId}/app/common/account-type', function (Request $request
 $app->get('/api/v2/{bankId}/app/common/config', function (Request $request, Response $response, array $args) use ($appController) {
     $queryParams = $request->getQueryParams();
 
-    $result = $appController->getConfig((int)$args['bankId'], $queryParams);
+    $result = $appController->getConfig($args['bankId'], $queryParams); //Bankid should be string
 
     if ($result['code'] == 200) {
         return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
@@ -288,7 +288,7 @@ $app->get('/api/v2/{bankId}/app/common/config', function (Request $request, Resp
 
 $app->get('/api/v2/{bankId}/app/common/update/config', function (Request $request, Response $response, array $args) use ($appController) {
 
-    $result = $appController->fetchLiveConfigData((int)$args['bankId']);
+    $result = $appController->fetchLiveConfigData($args['bankId']);
     if ($result['code'] == 200) {
         return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
     } else {
@@ -299,7 +299,7 @@ $app->get('/api/v2/{bankId}/app/common/update/config', function (Request $reques
 $app->post('/api/v2/{bankId}/app/common/update/config/features', function (Request $request, Response $response, array $args) use ($appController) {
     $requestData = requestParse($request);
 
-    $result = $appController->updateLiveAppFeatures((int)$args['bankId'], $requestData);
+    $result = $appController->updateLiveAppFeatures($args['bankId'], $requestData);
     if ($result['code'] == 200) {
         return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
     } else {
@@ -311,7 +311,7 @@ $app->post('/api/v2/{bankId}/app/common/update/config/features', function (Reque
 
 $app->post('/api/v2/{bankId}/app/common/password-reset', function (Request $request, Response $response, array $args) use ($appController) {
     $requestData = requestParse($request);
-    $result = $appController->resetPassword((int)$args['bankId'], $requestData);
+    $result = $appController->resetPassword($args['bankId'], $requestData);
 
     if ($result['code'] == 200) {
         return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
@@ -322,7 +322,7 @@ $app->post('/api/v2/{bankId}/app/common/password-reset', function (Request $requ
 
 $app->post('/api/v2/{bankId}/app/common/file-upload', function (Request $request, Response $response, array $args) use ($appController) {
     $requestData = requestParse($request);
-    $result = $appController->uploadImage((int)$args['bankId'], $requestData);
+    $result = $appController->uploadImage($args['bankId'], $requestData);
 
     if ($result['code'] == 200) {
         return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
@@ -342,7 +342,7 @@ $app->post('/api/v2/{bankId}/app/common/file-upload', function (Request $request
 $app->get('/api/v2/{bankId}/app/transaction', function (Request $request, Response $response, array $args) use ($appController) {
     $user = userAuthVerify();
     $requestData = requestParse($request);
-    $result = $appController->getTransaction((int)$args['bankId'], $requestData);
+    $result = $appController->getTransaction($args['bankId'], $requestData);
 
     if ($result['code'] == 200) {
         return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
@@ -354,7 +354,7 @@ $app->get('/api/v2/{bankId}/app/transaction', function (Request $request, Respon
 $app->get('/api/v2/{bankId}/app/transaction/bank-list', function (Request $request, Response $response, array $args) use ($appController) {
     $user = userAuthVerify();
 
-    $result = $appController->getBankList((int)$args['bankId']);
+    $result = $appController->getBankList($args['bankId']);
 
     if ($result['code'] == 200) {
         return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
@@ -366,7 +366,7 @@ $app->get('/api/v2/{bankId}/app/transaction/bank-list', function (Request $reque
 $app->get('/api/v2/{bankId}/app/transaction/telco-networks', function (Request $request, Response $response, array $args) use ($appController) {
     $user = userAuthVerify();
 
-    $result = $appController->getTelecoNetworks((int)$args['bankId']);
+    $result = $appController->getTelecoNetworks($args['bankId']);
 
     if ($result['code'] == 200) {
         return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
@@ -379,7 +379,7 @@ $app->get('/api/v2/{bankId}/app/transaction/find-account-info', function (Reques
     $user = userAuthVerify();
     $requestData = requestParse($request);
 
-    $result = $appController->getAccountInfo((int)$args['bankId'], $requestData);
+    $result = $appController->getAccountInfo($args['bankId'], $requestData);
 
     if ($result['code'] == 200) {
         return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
@@ -392,7 +392,7 @@ $app->get('/api/v2/{bankId}/app/transaction/customer-verification', function (Re
     $user = userAuthVerify();
     $requestData = requestParse($request);
 
-    $result = $appController->verifyMeterNo((int)$args['bankId'], $requestData);
+    $result = $appController->verifyMeterNo($args['bankId'], $requestData);
 
     if ($result['code'] == 200) {
         return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
@@ -416,7 +416,7 @@ $app->get('/api/v2/{bankId}/app/transaction/utilities', function (Request $reque
 $app->get('/api/v2/{bankId}/app/transaction/customer-debit-cards', function (Request $request, Response $response, array $args) use ($appController) {
     $user = userAuthVerify();
 
-    $result = $appController->getCustomerDebitCards((int)$args['bankId'], $user);
+    $result = $appController->getCustomerDebitCards($args['bankId'], $user);
     if ($result['code'] == 200) {
         return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
     } else {
@@ -429,7 +429,7 @@ $app->post('/api/v2/{bankId}/app/transaction/topup-mobile', function (Request $r
     $user = userAuthVerify();
     $requestData = requestParse($request);
 
-    $result = $appController->requestTopUpMobile((int)$args['bankId'], $user, $requestData);
+    $result = $appController->requestTopUpMobile($args['bankId'], $user, $requestData);
     if ($result['code'] == 200) {
         return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
     } else {
@@ -442,7 +442,7 @@ $app->post('/api/v2/{bankId}/app/transaction/fund-transfer', function (Request $
     $user = userAuthVerify();
     $requestData = requestParse($request);
 
-    $result = $appController->requestFundTransfer((int)$args['bankId'], $user, $requestData);
+    $result = $appController->requestFundTransfer($args['bankId'], $user, $requestData);
     if ($result['code'] == 200) {
         return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
     } else {
@@ -454,7 +454,7 @@ $app->post('/api/v2/{bankId}/app/transaction/utilities', function (Request $requ
     $user = userAuthVerify();
     $requestData = requestParse($request);
 
-    $result = $appController->postUtilities($user, (int)$args['bankId'], $requestData);
+    $result = $appController->postUtilities($user, $args['bankId'], $requestData);
 
     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
 });
@@ -463,7 +463,7 @@ $app->post('/api/v2/{bankId}/app/transaction/customer-debit-card-block', functio
     $user = userAuthVerify();
     $requestData = requestParse($request);
 
-    $result = $appController->blockCustomerDebitCard($user, (int)$args['bankId'], $requestData);
+    $result = $appController->blockCustomerDebitCard($user, $args['bankId'], $requestData);
 
     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
 });
@@ -472,7 +472,7 @@ $app->post('/api/v2/{bankId}/app/transaction/request-cheque-book', function (Req
     $user = userAuthVerify();
     $requestData = requestParse($request);
 
-    $result = $appController->requestChequeBook($user, (int)$args['bankId'], $requestData);
+    $result = $appController->requestChequeBook($user, $args['bankId'], $requestData);
 
     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
 });
@@ -481,7 +481,7 @@ $app->post('/api/v2/{bankId}/app/transaction/request-cheque-stop-payment', funct
     $user = userAuthVerify();
     $requestData = requestParse($request);
 
-    $result = $appController->requestChequeStopPayment($user, (int)$args['bankId'], $requestData);
+    $result = $appController->requestChequeStopPayment($user, $args['bankId'], $requestData);
 
     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
 });
@@ -498,7 +498,7 @@ $app->post('/api/v2/{bankId}/app/transaction/request-cheque-stop-payment', funct
 $app->get('/api/v2/{bankId}/app/card-wallet', function (Request $request, Response $response, array $args) use ($appController) {
     $user = userAuthVerify();
 
-    $result = $appController->getCardWallet($user, (int)$args['bankId']);
+    $result = $appController->getCardWallet($user, $args['bankId']);
 
     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
 });
@@ -508,7 +508,7 @@ $app->delete('/api/v2/{bankId}/app/card-wallet', function (Request $request, Res
     $user = userAuthVerify();
     $requestData = requestParse($request);
 
-    $result = $appController->deleteCardWallet($user, (int)$args['bankId'], $requestData);
+    $result = $appController->deleteCardWallet($user, $args['bankId'], $requestData);
 
     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
 });
@@ -520,7 +520,7 @@ $app->post('/api/v2/{bankId}/app/card-wallet', function (Request $request, Respo
     $requestData = requestParse($request);
 
 
-    $result = $appController->postCardWallet($user, (int)$args['bankId'], $requestData);
+    $result = $appController->postCardWallet($user, $args['bankId'], $requestData);
 
     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
 });
@@ -530,7 +530,7 @@ $app->post('/api/v2/{bankId}/app/card-wallet/add-funds', function (Request $requ
     $user = userAuthVerify();
     $requestData = requestParse($request);
 
-    $result = $appController->addFundsToCardWallet($user, (int)$args['bankId'], $requestData);
+    $result = $appController->addFundsToCardWallet($user, $args['bankId'], $requestData);
 
     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
 });
@@ -545,7 +545,7 @@ $app->post('/api/v2/{bankId}/app/extra/customer-faq', function (Request $request
     $user = userAuthVerify();
     $requestData = requestParse($request);
 
-    $result = $appController->customerFAQ($user, (int)$args['bankId'], $requestData);
+    $result = $appController->customerFAQ($user, $args['bankId'], $requestData);
 
     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
 });
@@ -555,7 +555,7 @@ $app->post('/api/v2/{bankId}/app/extra/customer-query', function (Request $reque
     $user = userAuthVerify();
     $requestData = requestParse($request);
 
-    $result = $appController->customerQuery($user, (int)$args['bankId'], $requestData);
+    $result = $appController->customerQuery($user, $args['bankId'], $requestData);
 
     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
 });
@@ -565,7 +565,7 @@ $app->post('/api/v2/{bankId}/app/extra/broadcast-messages', function (Request $r
     $user = userAuthVerify();
     $requestData = requestParse($request);
 
-    $result = $appController->broadcastMessages($user, (int)$args['bankId'], $requestData);
+    $result = $appController->broadcastMessages($user, $args['bankId'], $requestData);
 
     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
 });
@@ -576,7 +576,7 @@ $app->post('/api/v2/{bankId}/app/extra/request-loan', function (Request $request
     $user = userAuthVerify();
     $requestData = requestParse($request);
 
-    $result = $appController->requestLoan($user, (int)$args['bankId'], $requestData);
+    $result = $appController->requestLoan($user, $args['bankId'], $requestData);
 
     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
 });
@@ -591,7 +591,7 @@ $app->post('/api/v2/{bankId}/app/extra/request-loan', function (Request $request
 $app->get('/api/v2/{bankId}/app/piggy', function (Request $request, Response $response, array $args) use ($appController) {
     $user = userAuthVerify();
 
-    $result = $appController->getPiggyList($user, (int)$args['bankId']);
+    $result = $appController->getPiggyList($user, $args['bankId']);
 
     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
 });
@@ -601,7 +601,7 @@ $app->post('/api/v2/{bankId}/app/piggy', function (Request $request, Response $r
     $user = userAuthVerify();
     $requestData = requestParse($request);
 
-    $result = $appController->createPiggyAccount($user, (int)$args['bankId'], $requestData);
+    $result = $appController->createPiggyAccount($user, $args['bankId'], $requestData);
 
     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
 });
@@ -611,7 +611,7 @@ $app->put('/api/v2/{bankId}/app/piggy/withdrawal', function (Request $request, R
     $user = userAuthVerify();
     $requestData = requestParse($request);
 
-    $result = $appController->piggyWithdraw($user, (int)$args['bankId'], $requestData);
+    $result = $appController->piggyWithdraw($user, $args['bankId'], $requestData);
 
     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
 });
@@ -627,7 +627,7 @@ $app->get('/api/v2/{bankId}/app/messages', function (Request $request, Response 
     $user = userAuthVerify();
     $requestData = requestParse($request);
 
-    $result = $appController->getMessagesList($user, (int)$args['bankId'], $requestData);
+    $result = $appController->getMessagesList($user, $args['bankId'], $requestData);
 
     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
 });
@@ -636,7 +636,7 @@ $app->get('/api/v2/{bankId}/app/messages', function (Request $request, Response 
 $app->get('/api/v2/{bankId}/app/beneficiaries', function (Request $request, Response $response, array $args) use ($appController) {
     $user = userAuthVerify();
 
-    $result = $appController->getBeneficiariesList($user, (int)$args['bankId']);
+    $result = $appController->getBeneficiariesList($user, $args['bankId']);
 
     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
 });
@@ -645,8 +645,8 @@ $app->delete('/api/v2/{bankId}/app/beneficiaries', function (Request $request, R
     $user = userAuthVerify();
     $requestData = requestParse($request);
 
-    $result = $appController->deleteBeneficiaries($user, (int)$args['bankId'], $requestData);
-    $result['data']['body'] = $appController->getBeneficiariesList($user, (int)$args['bankId'])['data'];
+    $result = $appController->deleteBeneficiaries($user, $args['bankId'], $requestData);
+    $result['data']['body'] = $appController->getBeneficiariesList($user, $args['bankId'])['data'];
     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
 });
 
