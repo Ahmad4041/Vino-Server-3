@@ -136,6 +136,15 @@ class Database
                 'password' => 'q4M@i93v',
                 'charset' => 'utf8',
             ],
+            '018' => [
+                'driver' => 'sqlsrv',
+                'host' => '10.0.0.28',
+                'port' => '1433',
+                'database' => 'MicroFinance',
+                'username' => 'kiriji',
+                'password' => 'q4M@i93v',
+                'charset' => 'utf8',
+            ],
         ],
     ];
 

@@ -122,6 +122,12 @@ class AuthController
             }
         } catch (Exception $e) {
             // var_dump($e->getMessage());
+            $data = [
+                'username' => 'None',
+                'token' => 'None',
+                'type' => 'None',
+                'pin' => 'none'
+            ];
             return sendCustomResponse('Database Connection Unreachable', $data, ErrorCodes::$FAIL_LOGIN[0], 200);
         }
     }
