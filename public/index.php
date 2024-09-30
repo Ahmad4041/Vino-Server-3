@@ -21,6 +21,11 @@ use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use GuzzleHttp\Client;
 use Rakit\Validation\Validator;
+use Dotenv\Dotenv;
+
+// Load the .env file
+$dotenv = Dotenv::createImmutable(__DIR__);
+$dotenv->load();
 
 
 // $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
@@ -650,11 +655,12 @@ $app->delete('/api/v2/{bankId}/app/beneficiaries', function (Request $request, R
     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
 });
 
-$app->get('/images', function (Request $request, Response $response, array $args) use ($appController) {
-    // $user = userAuthVerify();
+$app->get('/images/{fileId}', function (Request $request, Response $response, array $args) use ($appController) {
+    requireAuthentication();
 
-    $requestData = requestParse($request);
-    $result = $appController->fetchImage($requestData['fileId']);
+    // Extract fileId from the path parameters
+    $fileId = $args['fileId'];
+    $result = $appController->fetchImage($fileId);
 
     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
 });
