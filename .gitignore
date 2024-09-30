@@ -1,8 +1,8 @@
 # Ignore configuration files
-config/*.php
+/config/*.php
 
 # Ignore log files
-logs/
+/logs/
 *.log
 
 # Ignore temporary files
@@ -10,14 +10,15 @@ temp/
 *.tmp
 
 # Ignore vendor folder (if using Composer)
-vendor/
-vendor/autoload.php/
-vendor/composer/
-vendor/guzzlehttp/
+/vendor/
+vendor/autoload.php
+/vendor/composer/
+/vendor/guzzlehttp/
 
 # Ignore environment file
 .env
 .history
 .vscode
-#Images
-src/controllers/images/
+
+# Images directory
+/src/controllers/images/
