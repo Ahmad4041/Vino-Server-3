@@ -842,43 +842,71 @@ class AppApiController
         }
     }
 
+    public function fileExistsWithoutExtension($filePath)
+    {
+        // Get the base filename without the extension
+        $basePath = pathinfo($filePath, PATHINFO_FILENAME);
+
+        // Get the directory path
+        $directory = pathinfo($filePath, PATHINFO_DIRNAME);
+
+        // Scan the directory for files
+        $files = scandir($directory);
+
+        // Check if any file starts with the base filename
+        foreach ($files as $file) {
+            if (strpos($file, $basePath) === 0) {
+                return true; // File found
+            }
+        }
+
+        return false; // File not found
+    }
+
+    // Example usage
+
+
     public function fetchImage($imageId)
     {
+        ob_clean();
         try {
             // Define the image directory path
             $imageDir = __DIR__ . '/images/';
-            $imagePath = $imageDir . $imageId;
-
+            $imagePath = $imageDir . $imageId . '.jpg';
+    
             // Check if the file exists
             if (!file_exists($imagePath)) {
                 throw new Exception('Image not found');
             }
-
+    
             // Get MIME type of the image
             $finfo = finfo_open(FILEINFO_MIME_TYPE);
             $mimeType = finfo_file($finfo, $imagePath);
             finfo_close($finfo);
-
+    
+           
+    
             // Output headers
             header('Content-Type: ' . $mimeType);
             header('Content-Length: ' . filesize($imagePath));
-
+            header('Content-Disposition: inline; filename="' . basename($imagePath) . '"');
+    
             // Output the image content
             readfile($imagePath);
             exit(); // Stop further execution after outputting the image
-
+    
         } catch (Exception $e) {
             error_log("Image fetch error: " . $e->getMessage());
-            return [
+            header("HTTP/1.0 404 Not Found");
+            echo json_encode([
                 'dcode' => 404,
                 'code' => 404,
                 'message' => $e->getMessage(),
                 'data' => null
-            ];
+            ]);
+            exit();
         }
     }
-
-
 
     public function getTransaction($bankid, $request)
     {

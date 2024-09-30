@@ -9,8 +9,9 @@ function requireAuthentication()
         exit;
     } else {
         // Fetch username and password from environment variables
-        $validUsername = getenv('AUTH_USERNAME');
-        $validPassword = getenv('AUTH_PASSWORD');
+        $validUsername = $_ENV['AUTH_USERNAME'];
+        $validPassword = $_ENV['AUTH_PASSWORD'];
+        
 
         if ($_SERVER['PHP_AUTH_USER'] !== $validUsername || $_SERVER['PHP_AUTH_PW'] !== $validPassword) {
             header('WWW-Authenticate: Basic realm="Restricted Access"');

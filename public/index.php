@@ -8,6 +8,7 @@ require_once '../src/helpers/auth.php';
 require_once '../src/helpers/requestParse.php';
 require_once '../src/helpers/userAuthCheck.php';
 require_once '../src/helpers/generateRequestID.php';
+require_once '../src/helpers/requireImageAuth.php';
 require '../src/models/UtilityDemo.php';
 
 require '../src/controllers/AppApiController.php';
@@ -24,7 +25,7 @@ use Rakit\Validation\Validator;
 use Dotenv\Dotenv;
 
 // Load the .env file
-$dotenv = Dotenv::createImmutable(__DIR__);
+$dotenv = Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->load();
 
 
@@ -659,8 +660,9 @@ $app->get('/images/{fileId}', function (Request $request, Response $response, ar
     requireAuthentication();
 
     // Extract fileId from the path parameters
-    $fileId = $args['fileId'];
-    $result = $appController->fetchImage($fileId);
+    // $fileId = $args['fileId:.*'] ;
+    $filename = $args['fileId'];
+    $result = $appController->fetchImage($filename);
 
     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
 });
@@ -668,6 +670,10 @@ $app->get('/images/{fileId}', function (Request $request, Response $response, ar
 
 
 
-
+try{
 $app->run();
+}catch(Exception $e){
+    return sendCustomResponse($e->getMessage(), null, 404, 404);
+}
+
 ?>
