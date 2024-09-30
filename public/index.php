@@ -650,7 +650,14 @@ $app->delete('/api/v2/{bankId}/app/beneficiaries', function (Request $request, R
     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
 });
 
+$app->get('/images', function (Request $request, Response $response, array $args) use ($appController) {
+    // $user = userAuthVerify();
 
+    $requestData = requestParse($request);
+    $result = $appController->fetchImage($requestData['fileId']);
+
+    return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+});
 
 
 

@@ -842,6 +842,43 @@ class AppApiController
         }
     }
 
+    public function fetchImage($imageId)
+    {
+        try {
+            // Define the image directory path
+            $imageDir = __DIR__ . '/images/';
+            $imagePath = $imageDir . $imageId;
+
+            // Check if the file exists
+            if (!file_exists($imagePath)) {
+                throw new Exception('Image not found');
+            }
+
+            // Get MIME type of the image
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mimeType = finfo_file($finfo, $imagePath);
+            finfo_close($finfo);
+
+            // Output headers
+            header('Content-Type: ' . $mimeType);
+            header('Content-Length: ' . filesize($imagePath));
+
+            // Output the image content
+            readfile($imagePath);
+            exit(); // Stop further execution after outputting the image
+
+        } catch (Exception $e) {
+            error_log("Image fetch error: " . $e->getMessage());
+            return [
+                'dcode' => 404,
+                'code' => 404,
+                'message' => $e->getMessage(),
+                'data' => null
+            ];
+        }
+    }
+
+
 
     public function getTransaction($bankid, $request)
     {
