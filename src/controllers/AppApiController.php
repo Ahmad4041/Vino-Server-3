@@ -873,28 +873,28 @@ class AppApiController
             // Define the image directory path
             $imageDir = __DIR__ . '/images/';
             $imagePath = $imageDir . $imageId . '.jpg';
-    
+
             // Check if the file exists
             if (!file_exists($imagePath)) {
                 throw new Exception('Image not found');
             }
-    
+
             // Get MIME type of the image
             $finfo = finfo_open(FILEINFO_MIME_TYPE);
             $mimeType = finfo_file($finfo, $imagePath);
             finfo_close($finfo);
-    
-           
-    
+
+
+
             // Output headers
             header('Content-Type: ' . $mimeType);
             header('Content-Length: ' . filesize($imagePath));
             header('Content-Disposition: inline; filename="' . basename($imagePath) . '"');
-    
+
             // Output the image content
             readfile($imagePath);
             exit(); // Stop further execution after outputting the image
-    
+
         } catch (Exception $e) {
             error_log("Image fetch error: " . $e->getMessage());
             header("HTTP/1.0 404 Not Found");

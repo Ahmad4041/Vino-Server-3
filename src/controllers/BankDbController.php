@@ -913,7 +913,7 @@ class BankDbController
             'BVN' => $request['bvn'] ?? '',
             'Next_Of_Kin' => $request['Next_Of_Kin'] ?? '',
             'Next_Of_Kin_Add' => $request['Next_Of_Kin_Add'] ?? '',
-            'Mandate' => $request['Mandate'] ?? '',
+            'Mandate' => $request['username'] ?? '',
             'Domain' => $request['Domain'] ?? '',
             'Acct_Officer' => $request['Acct_Officer'] ?? '',
             'ATMNo' => $request['ATMNo'] ?? '',
@@ -1529,21 +1529,20 @@ class BankDbController
     }
 
 
-    function createCardWallet($username, $request,$bankid,$bankname)
+    function createCardWallet($username, $request, $bankid, $bankname)
     {
         $authcode = $request['authorizationCode'];
         $cardno = $request['last4'];
         // 2. Fetch All the Cards from Database against Username {Database: tblMobileCardVault => Username} []
-        try{
+        try {
             $query = "SELECT * FROM tblMobileCardVault WHERE Username = ?;";
             // Prepare and execute the select query
             $stmt = $this->dbConnection->prepare($query);
             $stmt->execute([$username]);
             $cards = $stmt->fetch(PDO::FETCH_ASSOC);
-             // 2.1 : Check if Card Exist or not by comparing the All cards 
+            // 2.1 : Check if Card Exist or not by comparing the All cards 
             foreach ($cards as $card) {
-                if($request['Sno']==$card['Sno'])
-                {
+                if ($request['Sno'] == $card['Sno']) {
                     return [
                         'code' => 1038,
                         'message' => 'The Card is already Added!',
@@ -1557,25 +1556,23 @@ class BankDbController
             $stmt = $this->dbConnection->prepare($query);
             $stmt->execute([$username]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
-            $accountid=null;
+            $accountid = null;
             // 2.1 : Get Valid Account Linked to that user
             foreach ($user as $userdata) {
-                $accountid=$userdata['AccountID'];
+                $accountid = $userdata['AccountID'];
             }
-            if($accountid==null)
-            {
+            if ($accountid == null) {
                 return [
-                'code' => 1038,
-                'message' => 'Customer not found',
-                'data' => '',
+                    'code' => 1038,
+                    'message' => 'Customer not found',
+                    'data' => '',
                 ];
             }
-             // 3. Call Paystack Gateway for charge the customer based on passing data [name , email , account , bankcode , bankname , card* , ]
-            $paystack=new PayStackController();
-            $charge=$paystack->charge($username,'viralcomputer@gmail.com', $accountid , $bankid,$bankname, $request,5000);
+            // 3. Call Paystack Gateway for charge the customer based on passing data [name , email , account , bankcode , bankname , card* , ]
+            $paystack = new PayStackController();
+            $charge = $paystack->charge($username, 'viralcomputer@gmail.com', $accountid, $bankid, $bankname, $request, 5000);
 
-            if($charge['status']== 'OPEN_URL')
-            {
+            if ($charge['status'] == 'OPEN_URL') {
                 return [
                     'code' => 200,
                     'message' => 'Open URL Request via paystack',
@@ -1584,32 +1581,30 @@ class BankDbController
             }
             // Create LOG request of API response in Kafka (Optional)
             // Store LOG into Database 
-            if($charge['status']=='ACCEPTED')
-            {
-            // CardVault cardVault = new CardVault();
-            // cardVault.setUsername(auth.getName());
-            // cardVault.setCardNo(card.getCardNo());
-            // cardVault.setCardName(card.getAccountName());
-            // cardVault.setCardExpireMonth(card.getExpMonth());
-            // cardVault.setCardExpireYear(card.getExpYear());
-            // cardVault.setCardCVV(card.getCvv());
-            // cardVault.setAuthCode(charge.getAuthCode());
-            // cardVault.setCardType(charge.getCardType());
-            // cardVault.setCardBank(card.getBank());
-            // cardVault.setCardChannel(card.getChannel());
-            // cardVault.setCardSignature(card.getSignature());
-            // cardVault.setCountryCode(card.getCountryCode());
-            // cardVault.setTransId(charge.getReference());
-            // cardVault.setDate(new Date());
-            // cardVault.setActive(charge.isReusable() ? "Active" : "Inactive");
+            if ($charge['status'] == 'ACCEPTED') {
+                // CardVault cardVault = new CardVault();
+                // cardVault.setUsername(auth.getName());
+                // cardVault.setCardNo(card.getCardNo());
+                // cardVault.setCardName(card.getAccountName());
+                // cardVault.setCardExpireMonth(card.getExpMonth());
+                // cardVault.setCardExpireYear(card.getExpYear());
+                // cardVault.setCardCVV(card.getCvv());
+                // cardVault.setAuthCode(charge.getAuthCode());
+                // cardVault.setCardType(charge.getCardType());
+                // cardVault.setCardBank(card.getBank());
+                // cardVault.setCardChannel(card.getChannel());
+                // cardVault.setCardSignature(card.getSignature());
+                // cardVault.setCountryCode(card.getCountryCode());
+                // cardVault.setTransId(charge.getReference());
+                // cardVault.setDate(new Date());
+                // cardVault.setActive(charge.isReusable() ? "Active" : "Inactive");
 
 
-            // cardVault = cardVaultRepository.saveAndFlush(cardVault);
-            // log.info("Card Added to Fund Wallet {}", cardVault);
-            }
-            else{
+                // cardVault = cardVaultRepository.saveAndFlush(cardVault);
+                // log.info("Card Added to Fund Wallet {}", cardVault);
+            } else {
                 // log . warn("card required to authenticate with required properties {}", charge);
-                if ($charge['status']== 'ERROR') {
+                if ($charge['status'] == 'ERROR') {
                     // throw new VinoException(charge . getTitle());
 
                 }
@@ -1635,9 +1630,6 @@ class BankDbController
                 //     'active' => $latestRecord['Active'],
                 // ],
             ];
-
-            
-
         } catch (Exception $e) {
             return [
                 'code' => 500,
@@ -1645,9 +1637,9 @@ class BankDbController
                 'data' => '',
             ];
         }
-        
-                
-       
+
+
+
 
 
 
