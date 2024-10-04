@@ -656,13 +656,20 @@ $app->delete('/api/v2/{bankId}/app/beneficiaries', function (Request $request, R
     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
 });
 
-$app->get('/images/{fileId}', function (Request $request, Response $response, array $args) use ($appController) {
-    requireAuthentication();
 
-    // Extract fileId from the path parameters
-    // $fileId = $args['fileId:.*'] ;
-    $filename = $args['fileId'];
-    $result = $appController->fetchImage($filename);
+
+
+// ********************************************************************************************
+// **************************************************************************************
+// ********************************************************************************
+// ******************************************** Admin endpoimts START ************************************************
+
+
+
+$app->post('/api/v2/admin/project-run', function (Request $request, Response $response, array $args) use ($appController) {
+    $requestData = requestParse($request);
+
+    $result = $appController->projectLiveStatus($requestData);
 
     return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
 });
@@ -670,9 +677,9 @@ $app->get('/images/{fileId}', function (Request $request, Response $response, ar
 
 
 
-try{
-$app->run();
-}catch(Exception $e){
+try {
+    $app->run();
+} catch (Exception $e) {
     return sendCustomResponse($e->getMessage(), null, 404, 404);
 }
 

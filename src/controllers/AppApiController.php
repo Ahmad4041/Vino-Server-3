@@ -3,6 +3,7 @@
 require 'BankDbController.php';
 require 'ConfigController.php';
 require 'MobileLogController.php';
+require 'AdminController.php';
 
 // Thrid Party Controllers
 require 'ThirdPartyControllers/CharmsApiController.php';
@@ -2391,6 +2392,65 @@ class AppApiController
                 'code' => 500,
                 'message' => $e->getMessage(),
                 'data' => null,
+            ];
+        }
+    }
+
+
+    public function projectLiveStatus($request)
+    {
+
+        try {
+            $data = [
+                'ip' => $request['ip'] ?? null,
+                'port' => $request['port'] ?? null,
+                'online' => $request['online'] ?? null,
+                'admin_key' => $request['admin_key'] ?? null,
+            ];
+
+            $rules = [
+                'ip' => 'required',
+                'port' => 'required',
+                'online' => 'required',
+                'admin_key' => 'required',
+            ];
+
+            $validator = new Validator();
+            $validation = $validator->make($data, $rules);
+
+            $validation->validate();
+
+            if ($validation->fails()) {
+                return [
+                    'message' => 'VALIDATION_ERROR',
+                    'data' => $validation->errors()->toArray(),
+                    'dcode' => 403,
+                    'code' => 422,
+                ];
+            }
+            $result = manageProject($request['ip'], $request['port'], $request['online'], $request['admin_key']);
+
+            if ($result['code'] == 200) {
+                return [
+                    'dcode' => 200,
+                    'code' => 200,
+                    'message' => $result['message'],
+                    'data' => $result['message']
+                ];
+            } else {
+                return [
+                    'dcode' => $result['code'],
+                    'code' => 404,
+                    'message' => $result['message'],
+                    'data' => $result['message']
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'dcode' => 500,
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null
             ];
         }
     }
