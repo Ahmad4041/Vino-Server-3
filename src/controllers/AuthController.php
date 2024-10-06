@@ -8,7 +8,7 @@ use Rakit\Validation\Validator;
 class AuthController
 {
     private $key = '00112233445566778899';
-    private $debug = true;
+    private $debug = false;
 
     private function generateToken($username, $bankId, $accountId, $deviceId)
     {
