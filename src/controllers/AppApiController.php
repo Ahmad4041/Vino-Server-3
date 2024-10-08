@@ -156,7 +156,7 @@ class AppApiController
             } else {
                 return [
                     'dcode' => $regExistCustomer['code'],
-                    'code' => 203,
+                    'code' => 400,
                     'message' => $regExistCustomer['message'],
                     'data' => null
                 ];
