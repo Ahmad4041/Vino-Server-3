@@ -567,6 +567,9 @@ class AppApiController
             $data['networks'] = $configData['networks'];
             $data['utilites'] = $configData['utilities'];
             $bankListData = $localDbConnection->fetchBankListData();
+            $bankListData[0]['code']=$bankid;
+            $name= $configConnection->getConfigKeyValue($bankid, 'app_name');
+            $bankListData[0]['name']="$name (Internal)";
             $data['bank_list'] = $bankListData;
         }
 

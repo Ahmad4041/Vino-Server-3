@@ -964,7 +964,7 @@ class BankDbController
     public function registerExistCustomerBank($requestData)
     {
         try {
-            // Check if customer already exists
+            // Check if customer already exists tblMobileUser
             if ($this->checkCustomerExists($requestData['accountID'], $requestData['internetID'])) {
                 return [
                     'code' => ErrorCodes::$FAIL_CUSTOMER_EXIST[0],
@@ -972,7 +972,7 @@ class BankDbController
                 ];
             }
 
-            // Check if user already exists
+            // Check if user already exists tblMobileUser
             if ($this->checkUserExists($requestData['username'])) {
                 return [
                     'code' => ErrorCodes::$FAIL_USER_ALREADY_EXIST[0],
@@ -980,7 +980,7 @@ class BankDbController
                 ];
             }
 
-            // Check mobile registration eligibility
+            // Check mobile registration eligibility tblMobileReg
             if ($this->checkMobileRegistration($requestData['accountID'], $requestData['internetID'])) {
                 return [
                     'code' => ErrorCodes::$FAIL_USER_MOBILE_REGISTRATION_ELIGIBILITY[0],
