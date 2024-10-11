@@ -458,7 +458,58 @@ class AppApiController
             ];
         }
     }
+    public function usernameVerify($bankid, $request)
+    {
 
+        try {
+            $data = [
+                'username' => $request['username'] ?? null,
+            ];
+
+            $rules = [
+                'username' => 'required',
+            ];
+
+            $validator = new Validator();
+            $validation = $validator->make($data, $rules);
+
+            $validation->validate();
+
+            if ($validation->fails()) {
+                return [
+                    'message' => 'VALIDATION_ERROR',
+                    'data' => $validation->errors()->toArray(),
+                    'dcode' => 403,
+                    'code' => 422,
+                ];
+            }
+            $bankDbConnection = new BankDbController(Database::getConnection($bankid));
+            $verifyUserName = $bankDbConnection->registerExistCustomerName($request['username']);
+
+            if ($verifyUserName['code'] == 200) {
+                return [
+                    'dcode' => ErrorCodes::$SUCCESS_USERNAME_VALIDATION[0],
+                    'code' => 200,
+                    'message' => ErrorCodes::$SUCCESS_USERNAME_VALIDATION[1],
+                    'data' => ErrorCodes::$SUCCESS_USERNAME_VALIDATION[1]
+                ];
+            } else {
+                return [
+                    'dcode' => $verifyUserName['code'],
+                    'code' => 400,
+                    'message' => $verifyUserName['message'],
+                    'data' => $verifyUserName['message']
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'dcode' => 500,
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null
+            ];
+        }
+    }
 
     public function getAccountType($bankid)
     {

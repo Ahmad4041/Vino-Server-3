@@ -5,6 +5,7 @@ class ErrorCodes
     public static $SUCCESS_LOGIN = [2000, "Authenticate Success"];
     public static $SUCCESS_PIN_CREATED = [2001, "Transaction PIN Registered"];
     public static $SUCCESS_PIN_VALIDATION = [2002, "Transaction PIN Valid"];
+    public static $SUCCESS_USERNAME_VALIDATION = [2002, "Sucessfully Valid Username"];
     public static $SUCCESS_USER_CREATED = [2003, "User account has been created successfully"];
     public static $SUCCESS_BANK_ACCOUNT_CREATED = [2004, "Bank account has been created"];
     public static $SUCCESS_BANK_ACCOUNT_FOUND = [2005, "Bank Account currently available"];

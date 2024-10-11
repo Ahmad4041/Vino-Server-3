@@ -260,6 +260,19 @@ $app->post('/api/v2/{bankId}/app/user/pin-verify', function (Request $request, R
 });
 
 
+$app->post('/api/v2/{bankId}/app/user/username-verify', function (Request $request, Response $response, array $args) use ($appController) {
+    // $user = userAuthVerify();
+    $requestData = requestParse($request);
+
+    $result = $appController->usernameVerify($args['bankId'], $requestData,);
+
+    if ($result['code'] == 200) {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    } else {
+        return sendCustomResponse($result['message'], $result['data'], $result['dcode'], $result['code']);
+    }
+});
+
 // ********************************************************************************************
 // **************************************************************************************
 // ********************************************************************************

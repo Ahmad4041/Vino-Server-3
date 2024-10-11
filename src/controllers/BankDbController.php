@@ -16,14 +16,21 @@ class BankDbController
     }
     private function checkUserExists($username)
     {
-        $sql = "SELECT * FROM tblMobileUsers WHERE Username = :username AND Active = 'N' AND AType = 'Default'";
-
+        $sql = "SELECT * FROM tblMobileUsers WHERE Username = :username AND Active = 'N' AND AType = 'Default'"; // Wrong Query Active column is not considered
         $stmt = $this->dbConnection->prepare($sql);
         $stmt->bindParam(':username', $username, PDO::PARAM_STR);
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
-
+    private function checkUserExists2($username)
+    {
+        // $sql = "SELECT * FROM tblMobileUsers WHERE Username = :username AND Active = 'N' AND AType = 'Default'"; // Wrong Query Active column is not considered
+        $sql = "SELECT * FROM tblMobileUsers WHERE Username = :username  AND AType = 'Default'"; 
+        $stmt = $this->dbConnection->prepare($sql);
+        $stmt->bindParam(':username', $username, PDO::PARAM_STR);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
     private function getAccountClass($accountType)
     {
         $sql = "SELECT Acct FROM tblaccount WHERE AcctCode = ?";
@@ -959,13 +966,36 @@ class BankDbController
             'message' => 'Data insertion failed for Saving Account',
         ];
     }
+    public function registerExistCustomerName($username)
+    {
+        try {
 
+            // Check if user already exists tblMobileUser
+            if ($this->checkUserExists2($username)) {
+                return [
+                    'code' => ErrorCodes::$FAIL_USER_ALREADY_EXIST[0],
+                    'message' => ErrorCodes::$FAIL_USER_ALREADY_EXIST[1],
+                ];
+            }
+
+            return [
+                    'code' => 200,
+                    'message' => 'UserName does not exist..',
+                ];
+         
+        } catch (Exception $e) {
+            return [
+                'code' => 500,
+                'message' => $e->getMessage(),
+            ];
+        }
+    }
 
     public function registerExistCustomerBank($requestData)
     {
         try {
             // Check if customer already exists tblMobileUser
-            if ($this->checkCustomerExists($requestData['accountID'], $requestData['internetID'])) {
+            if ($this->checkCustomerExists($requestData['accountID'], "0".$requestData['internetID'])) {
                 return [
                     'code' => ErrorCodes::$FAIL_CUSTOMER_EXIST[0],
                     'message' => ErrorCodes::$FAIL_CUSTOMER_EXIST[1],
@@ -981,7 +1011,7 @@ class BankDbController
             }
 
             // Check mobile registration eligibility tblMobileReg
-            if ($this->checkMobileRegistration($requestData['accountID'], $requestData['internetID'])) {
+            if ($this->checkMobileRegistration($requestData['accountID'], "0".$requestData['internetID'])) {
                 return [
                     'code' => ErrorCodes::$FAIL_USER_MOBILE_REGISTRATION_ELIGIBILITY[0],
                     'message' => ErrorCodes::$FAIL_USER_MOBILE_REGISTRATION_ELIGIBILITY[1],
@@ -992,7 +1022,7 @@ class BankDbController
                 'Username' => $requestData['username'],
                 'Password' => $requestData['password'],
                 'AccountID' => $requestData['accountID'],
-                'InternetID' => $requestData['internetID'],
+                'InternetID' => "0".$requestData['internetID'],
                 'Ddate' => date('Y-m-d H:i:s'),
                 'Active' => 1,
                 'AType' => 'Default',
