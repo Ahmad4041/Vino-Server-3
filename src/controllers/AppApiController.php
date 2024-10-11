@@ -620,7 +620,7 @@ class AppApiController
             $bankListData = $localDbConnection->fetchBankListData();
             $bankListData[0]['code']=$bankid;
             $name= $configConnection->getConfigKeyValue($bankid, 'app_name');
-            $bankListData[0]['name']="$name (Internal)";
+            $bankListData[0]['name']="$name Microfinance Bank (Internal)";
             $data['bank_list'] = $bankListData;
         }
 

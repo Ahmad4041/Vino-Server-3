@@ -56,6 +56,30 @@ class BankDbController
         $stmt = $this->dbConnection->prepare($sql);
         return $stmt->execute(array_values($data));
     }
+    
+    private function deleteFromMobileReg($internetID,$accountID)
+    {
+        $stmt = $this->dbConnection->prepare("DELETE FROM tblMobileReg WHERE InternetID = :internetid AND AccountID = :accountid");
+
+        $stmt->bindParam(':internetid', $internetID, PDO::PARAM_STR);
+        $stmt->bindParam(':accountid', $accountID, PDO::PARAM_STR);
+
+        $result = $stmt->execute();
+
+        if ($stmt->rowCount() > 0) {
+            return [
+                'code' => 200,
+                'message' => 'Mobile Registration Data Deleted',
+                'data' => null
+            ];
+        } else {
+            return [
+                'code' => 403,
+                'message' => 'Mobile Registration Data Not Found!',
+                'data' => []
+            ];
+        }
+    }
 
     private function checkCustomerExists($accountID, $internetID)
     {
@@ -994,8 +1018,15 @@ class BankDbController
     public function registerExistCustomerBank($requestData)
     {
         try {
+            // Check mobile registration eligibility tblMobileReg
+            if (!$this->checkMobileRegistration($requestData['accountID'], $requestData['internetID'])) {
+                return [
+                    'code' => ErrorCodes::$FAIL_USER_MOBILE_REGISTRATION_ELIGIBILITY[0],
+                    'message' => ErrorCodes::$FAIL_USER_MOBILE_REGISTRATION_ELIGIBILITY[1],
+                ];
+            }
             // Check if customer already exists tblMobileUser
-            if ($this->checkCustomerExists($requestData['accountID'], "0".$requestData['internetID'])) {
+            if ($this->checkCustomerExists($requestData['accountID'],$requestData['internetID'])) {
                 return [
                     'code' => ErrorCodes::$FAIL_CUSTOMER_EXIST[0],
                     'message' => ErrorCodes::$FAIL_CUSTOMER_EXIST[1],
@@ -1003,20 +1034,14 @@ class BankDbController
             }
 
             // Check if user already exists tblMobileUser
-            if ($this->checkUserExists($requestData['username'])) {
+            if ($this->checkUserExists2($requestData['username'])) {
                 return [
                     'code' => ErrorCodes::$FAIL_USER_ALREADY_EXIST[0],
                     'message' => ErrorCodes::$FAIL_USER_ALREADY_EXIST[1],
                 ];
             }
 
-            // Check mobile registration eligibility tblMobileReg
-            if ($this->checkMobileRegistration($requestData['accountID'], "0".$requestData['internetID'])) {
-                return [
-                    'code' => ErrorCodes::$FAIL_USER_MOBILE_REGISTRATION_ELIGIBILITY[0],
-                    'message' => ErrorCodes::$FAIL_USER_MOBILE_REGISTRATION_ELIGIBILITY[1],
-                ];
-            }
+            
 
             $newUser = [
                 'Username' => $requestData['username'],
@@ -1029,10 +1054,21 @@ class BankDbController
             ];
 
             if ($this->insertIntoMobileUser($newUser)) {
-                return [
-                    'code' => 200,
-                    'message' => 'Data Inserted',
-                ];
+                $deleteData=$this->deleteFromMobileReg($requestData['internetID'],$requestData['accountID']);
+                if($deleteData['code']== 200)
+                {
+                    return [
+                        'code' => 200,
+                        'message' => 'Data Inserted | Deletion Successfully',
+                    ];
+                }else{
+                    return [
+                        'code' => 201,
+                        'message' => 'Data Insertion Successful | Deleteion Failed !',
+                    ];
+                }
+
+              
             } else {
                 return [
                     'code' => 201,
