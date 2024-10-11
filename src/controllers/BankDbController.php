@@ -1047,7 +1047,7 @@ class BankDbController
                 'Username' => $requestData['username'],
                 'Password' => $requestData['password'],
                 'AccountID' => $requestData['accountID'],
-                'InternetID' => "0".$requestData['internetID'],
+                'InternetID' => $requestData['internetID'],
                 'Ddate' => date('Y-m-d H:i:s'),
                 'Active' => 1,
                 'AType' => 'Default',
